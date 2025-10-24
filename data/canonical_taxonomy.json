@@ -1,0 +1,31 @@
+{
+  "categories": [
+    "Books & Media",
+    "Clothing & Accessories",
+    "Electronics & Gadgets",
+    "Food & Beverages",
+    "Health & Beauty",
+    "Home & Garden",
+    "Jewelry & Watches",
+    "Kids & Baby",
+    "Office & Stationery",
+    "Pet Supplies",
+    "Sports & Outdoors",
+    "Toys & Games",
+    "Art & Crafts",
+    "Automotive",
+    "Party Supplies & Decorations",
+    "Gift Cards & Experiences",
+    "Seasonal & Holiday",
+    "Wellness & Self-Care",
+    "Travel & Luggage",
+    "Music & Instruments",
+    "Collectibles & Memorabilia",
+    "Flowers & Plants",
+    "Personalized Gifts",
+    "Subscription Boxes",
+    "Eco-Friendly & Sustainable",
+    "Luxury & Premium"
+  ],
+  "description": "Canonical gift product taxonomy for Present-Agent. Map all vendor categories to these standard categories for consistent recommendation logic and graph traversal."
+}

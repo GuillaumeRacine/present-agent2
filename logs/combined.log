@@ -1,0 +1,90 @@
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 12:46:53","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","error":{"classification":"UNKNOWN","code":"ServiceUnavailable","diagnosticRecord":{"CURRENT_SCHEMA":"/","OPERATION":"","OPERATION_CODE":"0"},"gqlStatus":"50N42","gqlStatusDescription":"error: general processing exception - unexpected error. Could not perform discovery. No routing servers available. Known routing table: RoutingTable[database=default database, expirationTime=0, currentTime=1761324413068, routers=[], readers=[], writers=[]]","name":"Neo4jError","retriable":true},"level":"error","message":"Failed to initialize Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 12:46:53"}
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 15:54:24","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","level":"info","message":"Neo4j driver initialized successfully","service":"present-agent2","timestamp":"2025-10-24 15:54:24"}
+{"environment":"development","level":"info","message":"Closing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 15:54:24"}
+{"environment":"development","level":"info","message":"Neo4j driver closed successfully","service":"present-agent2","timestamp":"2025-10-24 15:54:24"}
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 15:56:18","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","level":"info","message":"Neo4j driver initialized successfully","service":"present-agent2","timestamp":"2025-10-24 15:56:18"}
+{"environment":"development","level":"info","message":"🚀 Starting schema setup...","service":"present-agent2","timestamp":"2025-10-24 15:56:18"}
+{"environment":"development","level":"info","message":"Setting up Neo4j schema...","service":"present-agent2","timestamp":"2025-10-24 15:56:18"}
+{"environment":"development","level":"info","message":"Creating Neo4j constraints...","service":"present-agent2","timestamp":"2025-10-24 15:56:18"}
+{"environment":"development","event":"schema","level":"info","message":"SCHEMA_SETUP","name":"product_id","operation":"constraint","service":"present-agent2","status":"success","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","event":"schema","level":"info","message":"SCHEMA_SETUP","name":"category_name","operation":"constraint","service":"present-agent2","status":"success","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","level":"info","message":"Constraints created successfully","service":"present-agent2","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","level":"info","message":"Creating Neo4j indexes...","service":"present-agent2","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","event":"schema","level":"info","message":"SCHEMA_SETUP","name":"product_price","operation":"index","service":"present-agent2","status":"success","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","event":"schema","level":"info","message":"SCHEMA_SETUP","name":"product_available","operation":"index","service":"present-agent2","status":"success","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","level":"info","message":"Indexes created successfully","service":"present-agent2","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","level":"info","message":"Creating vector index for embeddings...","service":"present-agent2","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","event":"schema","level":"info","message":"SCHEMA_SETUP","name":"product_embeddings","operation":"vector_index","service":"present-agent2","status":"success","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","level":"info","message":"Vector index created successfully","service":"present-agent2","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","level":"info","message":"Schema setup complete ✅","service":"present-agent2","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","level":"info","message":"🔍 Verifying schema...","service":"present-agent2","timestamp":"2025-10-24 15:56:19"}
+{"environment":"development","level":"info","message":"Verifying schema setup...","service":"present-agent2","timestamp":"2025-10-24 15:56:19"}
+{"constraints":2,"environment":"development","indexes":6,"level":"info","message":"Schema verification complete","service":"present-agent2","timestamp":"2025-10-24 15:56:20","vectorIndexes":1}
+{"environment":"development","level":"info","message":"Schema setup completed successfully ✅","service":"present-agent2","timestamp":"2025-10-24 15:56:20"}
+{"environment":"development","level":"info","message":"Closing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 15:56:20"}
+{"environment":"development","level":"info","message":"Neo4j driver closed successfully","service":"present-agent2","timestamp":"2025-10-24 15:56:20"}
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 15:56:28","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","level":"info","message":"Neo4j driver initialized successfully","service":"present-agent2","timestamp":"2025-10-24 15:56:29"}
+{"environment":"development","level":"info","message":"Verifying schema setup...","service":"present-agent2","timestamp":"2025-10-24 15:56:29"}
+{"constraints":2,"environment":"development","indexes":6,"level":"info","message":"Schema verification complete","service":"present-agent2","timestamp":"2025-10-24 15:56:29","vectorIndexes":1}
+{"environment":"development","level":"info","message":"Closing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 15:56:29"}
+{"environment":"development","level":"info","message":"Neo4j driver closed successfully","service":"present-agent2","timestamp":"2025-10-24 15:56:29"}
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 16:11:16","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","level":"info","message":"Neo4j driver initialized successfully","service":"present-agent2","timestamp":"2025-10-24 16:11:16"}
+{"environment":"development","level":"info","message":"🧪 Testing ingestion with 100 products (NO CATEGORIES)...","service":"present-agent2","timestamp":"2025-10-24 16:11:16"}
+{"environment":"development","level":"info","message":"📦 Step 1: Loading products...","service":"present-agent2","timestamp":"2025-10-24 16:11:17"}
+{"environment":"development","level":"info","message":"✅ Loaded 100 products","service":"present-agent2","timestamp":"2025-10-24 16:11:24"}
+{"environment":"development","level":"info","message":"🤖 Step 2: Generating embeddings...","service":"present-agent2","timestamp":"2025-10-24 16:11:24"}
+{"environment":"development","level":"info","message":"💾 Storing embeddings in Neo4j...","service":"present-agent2","timestamp":"2025-10-24 16:11:28"}
+{"environment":"development","level":"info","message":"✅ Generated and stored 100 embeddings","service":"present-agent2","timestamp":"2025-10-24 16:11:36"}
+{"environment":"development","level":"info","message":"🔍 Verifying ingestion...","service":"present-agent2","timestamp":"2025-10-24 16:11:36"}
+{"environment":"development","level":"info","message":"✅ Sample ingestion completed successfully","service":"present-agent2","timestamp":"2025-10-24 16:11:36","totalProducts":100,"totalTimeMs":20404,"withEmbeddings":100}
+{"environment":"development","level":"info","message":"Closing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 16:11:36"}
+{"environment":"development","level":"info","message":"Neo4j driver closed successfully","service":"present-agent2","timestamp":"2025-10-24 16:11:36"}
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 16:15:29","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","level":"info","message":"Neo4j driver initialized successfully","service":"present-agent2","timestamp":"2025-10-24 16:15:30"}
+{"environment":"development","event":"search","level":"info","message":"SEARCH_INITIATED","query":"birthday gift for dad who loves coffee","service":"present-agent2","timestamp":"2025-10-24 16:15:30"}
+{"environment":"development","level":"info","message":"Step 1: Extracting context from query...","service":"present-agent2","timestamp":"2025-10-24 16:15:30"}
+{"environment":"development","error":{},"level":"error","message":"Context extraction failed","query":"birthday gift for dad who loves coffee","service":"present-agent2","timestamp":"2025-10-24 16:15:30"}
+{"context":{"categories":[],"interests":[],"occasion":null,"priceRange":{"max":1000,"min":0},"recipient":null,"sentiment":"casual","urgency":"planned"},"environment":"development","level":"info","message":"Context extracted","service":"present-agent2","timestamp":"2025-10-24 16:15:30"}
+{"environment":"development","level":"info","message":"Step 2: Generating query embedding...","service":"present-agent2","timestamp":"2025-10-24 16:15:30"}
+{"environment":"development","level":"info","message":"Step 3: Searching products by vector similarity...","service":"present-agent2","timestamp":"2025-10-24 16:15:32"}
+{"environment":"development","error":{"classification":"CLIENT_ERROR","code":"Neo.ClientError.Statement.ArgumentError","diagnosticRecord":{"CURRENT_SCHEMA":"/","OPERATION":"","OPERATION_CODE":"0","_classification":"CLIENT_ERROR"},"gqlStatus":"22003","gqlStatusDescription":"error: data exception - numeric value out of range. The numeric value 10.0 is outside the required range.","name":"Neo4jError","rawClassification":"CLIENT_ERROR","retriable":false},"level":"error","message":"Vector search failed","service":"present-agent2","timestamp":"2025-10-24 16:15:32"}
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 16:15:51","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","level":"info","message":"Neo4j driver initialized successfully","service":"present-agent2","timestamp":"2025-10-24 16:15:51"}
+{"environment":"development","event":"search","level":"info","message":"SEARCH_INITIATED","query":"birthday gift for dad who loves coffee","service":"present-agent2","timestamp":"2025-10-24 16:15:51"}
+{"environment":"development","level":"info","message":"Step 1: Extracting context from query...","service":"present-agent2","timestamp":"2025-10-24 16:15:51"}
+{"environment":"development","error":{},"level":"error","message":"Context extraction failed","query":"birthday gift for dad who loves coffee","service":"present-agent2","timestamp":"2025-10-24 16:15:51"}
+{"context":{"categories":[],"interests":[],"occasion":null,"priceRange":{"max":1000,"min":0},"recipient":null,"sentiment":"casual","urgency":"planned"},"environment":"development","level":"info","message":"Context extracted","service":"present-agent2","timestamp":"2025-10-24 16:15:51"}
+{"environment":"development","level":"info","message":"Step 2: Generating query embedding...","service":"present-agent2","timestamp":"2025-10-24 16:15:51"}
+{"environment":"development","level":"info","message":"Step 3: Searching products by vector similarity...","service":"present-agent2","timestamp":"2025-10-24 16:15:52"}
+{"environment":"development","error":{"classification":"CLIENT_ERROR","code":"Neo.ClientError.Statement.ArgumentError","diagnosticRecord":{"CURRENT_SCHEMA":"/","OPERATION":"","OPERATION_CODE":"0","_classification":"CLIENT_ERROR"},"gqlStatus":"22003","gqlStatusDescription":"error: data exception - numeric value out of range. The numeric value 10.0 is outside the required range.","name":"Neo4jError","rawClassification":"CLIENT_ERROR","retriable":false},"level":"error","message":"Vector search failed","service":"present-agent2","timestamp":"2025-10-24 16:15:52"}
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 16:16:12","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","level":"info","message":"Neo4j driver initialized successfully","service":"present-agent2","timestamp":"2025-10-24 16:16:12"}
+{"environment":"development","event":"search","level":"info","message":"SEARCH_INITIATED","query":"birthday gift for dad who loves coffee","service":"present-agent2","timestamp":"2025-10-24 16:16:12"}
+{"environment":"development","level":"info","message":"Step 1: Extracting context from query...","service":"present-agent2","timestamp":"2025-10-24 16:16:12"}
+{"environment":"development","error":{},"level":"error","message":"Context extraction failed","query":"birthday gift for dad who loves coffee","service":"present-agent2","timestamp":"2025-10-24 16:16:12"}
+{"context":{"categories":[],"interests":[],"occasion":null,"priceRange":{"max":1000,"min":0},"recipient":null,"sentiment":"casual","urgency":"planned"},"environment":"development","level":"info","message":"Context extracted","service":"present-agent2","timestamp":"2025-10-24 16:16:12"}
+{"environment":"development","level":"info","message":"Step 2: Generating query embedding...","service":"present-agent2","timestamp":"2025-10-24 16:16:12"}
+{"environment":"development","level":"info","message":"Step 3: Searching products by vector similarity...","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"embeddingDimensions":1536,"environment":"development","event":"vector_search","executionTimeMs":311,"level":"info","message":"VECTOR_SEARCH_EXECUTED","resultsCount":10,"service":"present-agent2","timestamp":"2025-10-24 16:16:13","topK":10}
+{"environment":"development","level":"info","message":"Found 10 candidate products","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"environment":"development","level":"info","message":"Step 4: Generating rationales for top 5 products...","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"environment":"development","error":{},"level":"error","message":"Rationale generation failed","productId":"10034635604252","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"environment":"development","error":{},"level":"error","message":"Rationale generation failed","productId":"10027","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"environment":"development","error":{},"level":"error","message":"Rationale generation failed","productId":"10027200938284","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"environment":"development","error":{},"level":"error","message":"Rationale generation failed","productId":"10058275160364","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"environment":"development","error":{},"level":"error","message":"Rationale generation failed","productId":"10015","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"avgConfidence":0.85,"avgScore":0.8,"environment":"development","event":"recommendations","level":"info","message":"RECOMMENDATIONS_GENERATED","query":"birthday gift for dad who loves coffee","recommendations":[{"confidence":0.85,"productId":"10034635604252","score":1,"title":"Glam Box Arrangement"},{"confidence":0.85,"productId":"10027","score":0.9,"title":"Build Your Own Holiday Set"},{"confidence":0.85,"productId":"10027200938284","score":0.8,"title":"Diner Talk | 500 Piece | AI Assistance"},{"confidence":0.85,"productId":"10058275160364","score":0.7,"title":"Tea Tin Treasures | 1000 Piece"},{"confidence":0.85,"productId":"10015","score":0.6,"title":"Best-Sellers Discovery Set"}],"recommendationsCount":5,"service":"present-agent2","timestamp":"2025-10-24 16:16:13","totalExecutionTimeMs":1148}
+{"environment":"development","level":"info","message":"✅ Generated 5 recommendations in 1148ms","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"environment":"development","level":"info","message":"Closing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"environment":"development","level":"info","message":"Neo4j driver closed successfully","service":"present-agent2","timestamp":"2025-10-24 16:16:13"}
+{"database":"neo4j","environment":"development","level":"info","message":"Initializing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 16:25:29","uri":"neo4j+s://e76e08e6.databases.neo4j.io"}
+{"environment":"development","level":"info","message":"Neo4j driver initialized successfully","service":"present-agent2","timestamp":"2025-10-24 16:25:30"}
+{"environment":"development","level":"info","message":"Verifying schema setup...","service":"present-agent2","timestamp":"2025-10-24 16:25:30"}
+{"constraints":2,"environment":"development","indexes":6,"level":"info","message":"Schema verification complete","service":"present-agent2","timestamp":"2025-10-24 16:25:30","vectorIndexes":1}
+{"environment":"development","level":"info","message":"Closing Neo4j driver","service":"present-agent2","timestamp":"2025-10-24 16:25:30"}
+{"environment":"development","level":"info","message":"Neo4j driver closed successfully","service":"present-agent2","timestamp":"2025-10-24 16:25:30"}

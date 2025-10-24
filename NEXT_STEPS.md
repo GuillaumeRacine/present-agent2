@@ -34,7 +34,17 @@
 
 ## 🎯 Next: Phase 2 - Core Implementation
 
-### Priority 1: Neo4j Schema Setup
+**⚠️ UPDATE:** GitHub issues have been created for all priority tasks!
+- **Issue #3:** Setup Neo4j Schema (HIGH - Foundation)
+- **Issue #1:** Complete Explorer Agent (CRITICAL)
+- **Issue #2:** Complete Memory Agent (HIGH)
+- **Issue #4:** Create CLI Test Interface (HIGH)
+
+See GitHub Issues for detailed specifications: https://github.com/GuillaumeRacine/present-agent2/issues
+
+---
+
+### Priority 1: Neo4j Schema Setup (Issue #3)
 
 **Create:** `scripts/setup-schema.ts`
 
@@ -63,9 +73,9 @@ async function setupSchema() {
 
 ---
 
-### Priority 2: Agent Orchestration System
+### Priority 2: Agent Orchestration System ✅ COMPLETE
 
-**Create:** `src/services/orchestrator.ts`
+**Created:** `src/services/orchestrator.ts`
 
 ```typescript
 class RecommendationOrchestrator {
@@ -117,9 +127,11 @@ class RecommendationOrchestrator {
 
 ---
 
-### Priority 3: Implement Explorer Agent (MOST CRITICAL)
+### Priority 3: Implement Explorer Agent (MOST CRITICAL) - Issue #1
 
-**Create:** `src/services/agents/explorer.ts`
+**Status:** ⚠️ Partially complete - needs hybrid Cypher query implementation
+
+**File:** `src/services/agents/explorer.ts`
 
 This is the core discovery engine combining graph + embeddings.
 
@@ -160,40 +172,29 @@ class ExplorerAgent {
 
 ---
 
-### Priority 4: Implement Other Core Agents
+### Priority 4: Agent Implementations Status
 
-**In Order:**
+**✅ Fully Complete (6/10):**
+1. **Listener Agent** (`src/services/agents/listener.ts`) ✅
+2. **Relationship Agent** (`src/services/agents/relationship.ts`) ✅
+3. **Constraints Agent** (`src/services/agents/constraints.ts`) ✅
+4. **Meaning Agent** (`src/services/agents/meaning.ts`) ✅
+5. **Storyteller Agent** (`src/services/agents/storyteller.ts`) ✅
+6. **Presenter Agent** (`src/services/agents/presenter.ts`) ✅
 
-1. **Listener Agent** (`src/services/agents/listener.ts`)
-   - Extract context from user query using Claude
-   - Parse explicit facts + infer emotional context
-   - Reference: `.claude/agents/listener-agent.md`
-
-2. **Meaning Agent** (`src/services/agents/meaning.ts`)
-   - Identify what would be meaningful
-   - Determine gift archetype and emotional message
-   - Reference: `.claude/agents/meaning-agent.md`
-
+**⚠️ Partially Complete (4/10):**
+1. **Memory Agent** (`src/services/agents/memory.ts`) - Issue #2
+   - Structure ready, needs Neo4j queries
+2. **Explorer Agent** (`src/services/agents/explorer.ts`) - Issue #1
+   - Skeleton ready, needs hybrid Cypher query (CRITICAL)
 3. **Validator Agent** (`src/services/agents/validator.ts`)
-   - Rigorous quality gate
-   - Binary pass/fail for each candidate
-   - Reference: `.claude/agents/validator-agent.md`
-
-4. **Storyteller Agent** (`src/services/agents/storyteller.ts`)
-   - Craft 2-3 sentence personal reasoning
-   - Connect product to recipient's life
-   - Reference: `.claude/agents/storyteller-agent.md`
-
-5. **Presenter Agent** (`src/services/agents/presenter.ts`)
-   - Format final recommendations
-   - Strategic ordering + warm tone
-   - Reference: `.claude/agents/presenter-agent.md`
-
-**Note:** Memory, Relationship, Constraints agents can be simpler MVP versions initially.
+   - 80% complete, needs LLM appropriateness check
+4. **Learning Agent** (`src/services/agents/learning.ts`)
+   - Basic tracking works, advanced features TODO
 
 ---
 
-### Priority 5: CLI Testing Interface
+### Priority 5: CLI Testing Interface - Issue #4
 
 **Create:** `scripts/cli.ts`
 

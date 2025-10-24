@@ -1,0 +1,23 @@
+{
+  "inputs": [
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/Antiques&CollectiblesCAS.json",
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/ApparelCAS.json",
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/Arts&EntertainmentCAS.json",
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/Autos&vehiculesUSS.json",
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/Beauty&FitnessUSS.json",
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/Gift & special events products (1).json",
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/Gift & special events products.json",
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/Product.json",
+    "/Volumes/Crucial X8/Code/Present-Agent/data/raw/Produits variés.json"
+  ],
+  "total_input_items": 51986,
+  "total_unified_items": 41686,
+  "duplicates_filtered_by_url": 10300,
+  "empty_descriptions": 3428,
+  "empty_skus": 7970,
+  "empty_categories": 8020,
+  "currencies": {
+    "USD": 37433,
+    "CAD": 4253
+  }
+}
