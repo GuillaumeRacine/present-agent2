@@ -213,20 +213,20 @@ export async function createOrchestrator(): Promise<RecommendationOrchestrator> 
   const { StorytellerAgent } = await import('./agents/storyteller');
   const { PresenterAgent } = await import('./agents/presenter');
 
-  // Initialize dependencies (Neo4j, OpenAI clients)
+  // Initialize dependencies (Neo4j, LLM clients)
   const neo4jClient = await import('../lib/neo4j').then((m) => m.createNeo4jClient());
-  const openaiClient = await import('../lib/openai').then((m) => m.createOpenAIClient());
+  const llmClient = await import('../lib/llm').then((m) => m.createOpenAIClient());
 
   // Create agent instances
-  const listener = new ListenerAgent(openaiClient);
+  const listener = new ListenerAgent();
   const memory = new MemoryAgent(neo4jClient);
-  const relationship = new RelationshipAgent(openaiClient);
+  const relationship = new RelationshipAgent(llmClient);
   const constraints = new ConstraintsAgent();
-  const meaning = new MeaningAgent(openaiClient);
+  const meaning = new MeaningAgent(llmClient);
   const explorer = new ExplorerAgent(neo4jClient);
-  const validator = new ValidatorAgent(openaiClient);
-  const storyteller = new StorytellerAgent(openaiClient);
-  const presenter = new PresenterAgent(openaiClient);
+  const validator = new ValidatorAgent(llmClient);
+  const storyteller = new StorytellerAgent(llmClient);
+  const presenter = new PresenterAgent(llmClient);
 
   return new RecommendationOrchestrator(
     listener,

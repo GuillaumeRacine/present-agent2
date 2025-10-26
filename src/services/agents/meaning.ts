@@ -48,6 +48,16 @@ Analyze the context and determine:
 3. What core values it should align with
 4. What would personally resonate with the recipient
 
+CRITICAL: For "interestPathways", you MUST use ONLY these exact interest names (lowercase):
+["art", "coffee", "cooking", "fishing", "fitness", "gaming", "gardening", "hiking", "music",
+ "outdoors", "photography", "reading", "skincare", "sports", "tea", "tech", "travel", "yoga"]
+
+Extract interests from the user's query and map them to these exact names. For example:
+- "loves coffee" → ["coffee"]
+- "enjoys reading" → ["reading"]
+- "likes hiking and outdoors" → ["hiking", "outdoors"]
+- "into tech and gaming" → ["tech", "gaming"]
+
 Return JSON:
 {
   "meaningFramework": {
@@ -68,7 +78,7 @@ Return JSON:
   },
   "discoveryHints": {
     "semanticQueries": ["..."],
-    "interestPathways": ["..."],
+    "interestPathways": ["coffee", "reading"],
     "archetypeFilters": ["..."]
   }
 }`;

@@ -77,4 +77,12 @@ export async function generateEmbeddingsBatch(
   return embeddings;
 }
 
+/**
+ * Create OpenAI client (alias for getOpenAI)
+ * Used by orchestrator to get OpenAI instance
+ */
+export function createOpenAIClient(): OpenAI {
+  return getOpenAI();
+}
+
 export default getOpenAI;

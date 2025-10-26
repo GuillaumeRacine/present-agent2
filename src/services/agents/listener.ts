@@ -8,12 +8,12 @@
 
 import { BaseAgent } from './base';
 import { ListenerInput, ListenerOutput } from '../../types/agents';
-import OpenAI from 'openai';
+import { chatCompletion } from '../../lib/llm.js';
 
 export class ListenerAgent extends BaseAgent<ListenerInput, ListenerOutput> {
   name = 'Listener';
 
-  constructor(private openai: OpenAI) {
+  constructor() {
     super();
   }
 
@@ -70,20 +70,14 @@ Return as JSON matching this schema:
 
 Only include fields that are explicitly mentioned or can be confidently inferred.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const content = await chatCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: query },
       ],
-      response_format: { type: 'json_object' },
       temperature: 0.3,
+      jsonMode: true,
     });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No response from OpenAI');
-    }
 
     return JSON.parse(content);
   }

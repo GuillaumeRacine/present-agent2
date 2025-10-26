@@ -39,9 +39,12 @@ export async function initNeo4j(config: Neo4jConfig): Promise<Driver> {
       config.uri,
       neo4j.auth.basic(config.username, config.password),
       {
-        maxConnectionPoolSize: 50,
-        connectionAcquisitionTimeout: 60000,
-        maxTransactionRetryTime: 30000
+        maxConnectionPoolSize: 10, // Reduced to prevent connection exhaustion
+        connectionAcquisitionTimeout: 120000, // 2 minutes
+        maxTransactionRetryTime: 60000, // 1 minute
+        connectionTimeout: 60000, // 1 minute
+        maxConnectionLifetime: 3600000, // 1 hour - rotate connections
+        disableLosslessIntegers: true, // Better performance for large numbers
       }
     );
 
@@ -156,6 +159,14 @@ export async function closeNeo4j(): Promise<void> {
     logger.error('Failed to close Neo4j driver', { error });
     throw error;
   }
+}
+
+/**
+ * Create Neo4j client (alias for getDriver)
+ * Used by orchestrator to get driver instance
+ */
+export function createNeo4jClient(): Driver {
+  return getDriver();
 }
 
 // Graceful shutdown on process exit

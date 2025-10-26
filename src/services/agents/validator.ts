@@ -126,12 +126,25 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
   }
 
   private async checkRelevance(candidate: any, context: any) {
-    // Use LLM to assess relevance
-    const score = candidate.scores.hybridScore;
+    // Use hybrid score when available, fall back to vector score
+    const hybridScore = candidate.scores.hybridScore;
+    const vectorScore = candidate.scores.vectorScore;
+    const graphScore = candidate.scores.graphScore || 0;
+
+    // TEMPORARY FIX: When graph scores are 0, hybrid scores max out at 0.40
+    // Allow vector-only matches until graph scoring is fixed
+    // Pass if either:
+    // 1. Hybrid score is good (graph + vector working together)
+    // 2. Vector score is good (semantic match, even without graph)
+    const passed = hybridScore > 0.6 || vectorScore > 0.5;
+
+    // Use the better of the two scores, but scale vector score down slightly
+    // since it's only partial signal without graph context
+    const effectiveScore = Math.max(hybridScore, vectorScore * 0.75);
 
     return {
-      passed: score > 0.6, // Threshold
-      score,
+      passed,
+      score: effectiveScore,
     };
   }
 
