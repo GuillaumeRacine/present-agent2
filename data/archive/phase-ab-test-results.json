@@ -1,0 +1,318 @@
+{
+  "testDate": "2025-10-30",
+  "phasesTested": ["A", "B"],
+  "queries": [
+    {
+      "query": "gift for someone who loves wine",
+      "interest": "wine",
+      "category": "niche",
+      "results": {
+        "success": true,
+        "confidenceRange": "0.289 - 0.400",
+        "topConfidence": 0.400,
+        "graphScoreRange": "0.0 - 0.21",
+        "vectorScoreRange": "0.539 - 0.589",
+        "matchType": "text_fallback",
+        "productsReturned": 5,
+        "relevantProducts": 4,
+        "topProducts": [
+          {
+            "title": "Gift for Dog Lovers – Dog Mother, Wine Lover",
+            "price": 49,
+            "confidence": 0.400,
+            "graphScore": 0.21,
+            "vectorScore": 0.589,
+            "matchedInterests": [null],
+            "relevance": "high"
+          },
+          {
+            "title": "Vineyard Sweets",
+            "price": 33.99,
+            "confidence": 0.377,
+            "graphScore": 0.21,
+            "vectorScore": 0.544,
+            "matchedInterests": [null],
+            "relevance": "high"
+          },
+          {
+            "title": "Large Blown Glass White Wine Glasses",
+            "price": 11,
+            "confidence": 0.376,
+            "graphScore": 0.21,
+            "vectorScore": 0.542,
+            "matchedInterests": [null],
+            "relevance": "high"
+          },
+          {
+            "title": "Wine Wiener Wine Stopper",
+            "price": 14.95,
+            "confidence": 0.375,
+            "graphScore": 0.21,
+            "vectorScore": 0.539,
+            "matchedInterests": [null],
+            "relevance": "medium"
+          },
+          {
+            "title": "Exclusive 3-Piece Gift",
+            "price": 41,
+            "confidence": 0.289,
+            "graphScore": 0.0,
+            "vectorScore": 0.594,
+            "matchedInterests": [null],
+            "relevance": "low"
+          }
+        ]
+      }
+    },
+    {
+      "query": "gift for coffee enthusiast",
+      "interest": "coffee",
+      "category": "common",
+      "results": {
+        "success": true,
+        "confidenceRange": "0.446 - 0.464",
+        "topConfidence": 0.464,
+        "graphScoreRange": "0.315 - 0.332",
+        "vectorScoreRange": "0.559 - 0.596",
+        "matchType": "graph_match",
+        "productsReturned": 5,
+        "relevantProducts": 5,
+        "topProducts": [
+          {
+            "title": "Coffee Body Polish",
+            "price": 22,
+            "confidence": 0.464,
+            "graphScore": 0.332,
+            "vectorScore": 0.596,
+            "matchedInterests": ["coffee"],
+            "relevance": "high"
+          },
+          {
+            "title": "Coffee Body Polish (2oz)",
+            "price": 22,
+            "confidence": 0.460,
+            "graphScore": 0.332,
+            "vectorScore": 0.587,
+            "matchedInterests": ["coffee"],
+            "relevance": "high"
+          },
+          {
+            "title": "Reverie Roast",
+            "price": 18,
+            "confidence": 0.458,
+            "graphScore": 0.332,
+            "vectorScore": 0.583,
+            "matchedInterests": ["coffee"],
+            "relevance": "high"
+          },
+          {
+            "title": "Coffee Face Mask",
+            "price": 58,
+            "confidence": 0.450,
+            "graphScore": 0.332,
+            "vectorScore": 0.568,
+            "matchedInterests": ["coffee"],
+            "relevance": "high"
+          },
+          {
+            "title": "Coffee Face Mask (1.75oz)",
+            "price": 58,
+            "confidence": 0.446,
+            "graphScore": 0.332,
+            "vectorScore": 0.559,
+            "matchedInterests": ["coffee"],
+            "relevance": "high"
+          }
+        ]
+      }
+    },
+    {
+      "query": "gift for yoga practitioner",
+      "interest": "yoga",
+      "category": "common",
+      "results": {
+        "success": true,
+        "confidenceRange": "0.426 - 0.446",
+        "topConfidence": 0.446,
+        "graphScoreRange": "0.315 - 0.332",
+        "vectorScoreRange": "0.536 - 0.559",
+        "matchType": "graph_match",
+        "productsReturned": 5,
+        "relevantProducts": 5,
+        "topProducts": [
+          {
+            "title": "enlight™ lean bolster",
+            "price": 60,
+            "confidence": 0.446,
+            "graphScore": 0.332,
+            "vectorScore": 0.559,
+            "matchedInterests": ["yoga"],
+            "relevance": "high"
+          },
+          {
+            "title": "Shala Yoga Rug",
+            "price": 88,
+            "confidence": 0.443,
+            "graphScore": 0.332,
+            "vectorScore": 0.554,
+            "matchedInterests": ["yoga"],
+            "matchedValues": ["handmade", "sustainable"],
+            "relevance": "high"
+          },
+          {
+            "title": "Breathe Easy Yoga Bag",
+            "price": 36,
+            "confidence": 0.441,
+            "graphScore": 0.332,
+            "vectorScore": 0.549,
+            "matchedInterests": ["yoga"],
+            "relevance": "high"
+          },
+          {
+            "title": "Recycled Wool Blanket",
+            "price": 52,
+            "confidence": 0.439,
+            "graphScore": 0.332,
+            "vectorScore": 0.546,
+            "matchedInterests": ["yoga"],
+            "relevance": "high"
+          },
+          {
+            "title": "Essential Props Kit",
+            "price": 90.1,
+            "confidence": 0.439,
+            "graphScore": 0.332,
+            "vectorScore": 0.546,
+            "matchedInterests": ["yoga"],
+            "relevance": "high"
+          }
+        ]
+      }
+    },
+    {
+      "query": "gift for tech lover",
+      "interest": "technology",
+      "category": "common",
+      "results": {
+        "success": true,
+        "confidenceRange": "0.374 - 0.392",
+        "topConfidence": 0.392,
+        "graphScoreRange": "0.245 - 0.280",
+        "vectorScoreRange": "0.504 - 0.506",
+        "matchType": "graph_match",
+        "productsReturned": 5,
+        "relevantProducts": 5,
+        "topProducts": [
+          {
+            "title": "Smart Rechargeable Sonic Toothbrush",
+            "price": 50,
+            "confidence": 0.392,
+            "graphScore": 0.280,
+            "vectorScore": 0.504,
+            "matchedInterests": ["technology"],
+            "matchedValues": ["sustainable"],
+            "relevance": "medium"
+          },
+          {
+            "title": "Sonic Toothbrush",
+            "price": 30,
+            "confidence": 0.382,
+            "graphScore": 0.262,
+            "vectorScore": 0.501,
+            "matchedInterests": ["technology"],
+            "relevance": "medium"
+          },
+          {
+            "title": "Sonic Toothbrush",
+            "price": 35,
+            "confidence": 0.376,
+            "graphScore": 0.245,
+            "vectorScore": 0.506,
+            "matchedInterests": ["technology"],
+            "relevance": "medium"
+          },
+          {
+            "title": "Sonic Toothbrush",
+            "price": 35,
+            "confidence": 0.375,
+            "graphScore": 0.245,
+            "vectorScore": 0.504,
+            "matchedInterests": ["technology"],
+            "relevance": "medium"
+          },
+          {
+            "title": "Sonic Toothbrush",
+            "price": 30,
+            "confidence": 0.374,
+            "graphScore": 0.262,
+            "vectorScore": 0.506,
+            "matchedInterests": ["technology"],
+            "relevance": "medium"
+          }
+        ]
+      }
+    },
+    {
+      "query": "gift for sustainable living advocate",
+      "interest": "sustainable living",
+      "category": "niche",
+      "results": {
+        "success": true,
+        "confidenceRange": "0.280 - 0.282",
+        "topConfidence": 0.282,
+        "graphScoreRange": "0.0 - 0.0",
+        "vectorScoreRange": "0.560 - 0.618",
+        "matchType": "text_fallback",
+        "productsReturned": 5,
+        "relevantProducts": 1,
+        "topProducts": [
+          {
+            "title": "Omnilux Gift Card",
+            "price": 50,
+            "confidence": 0.282,
+            "graphScore": 0.0,
+            "vectorScore": 0.563,
+            "matchedInterests": [null],
+            "relevance": "low"
+          },
+          {
+            "title": "Subscriber Surprise Gift",
+            "price": 30,
+            "confidence": 0.281,
+            "graphScore": 0.0,
+            "vectorScore": 0.562,
+            "matchedInterests": [null],
+            "relevance": "low"
+          },
+          {
+            "title": "Product Gift Card",
+            "price": 25,
+            "confidence": 0.280,
+            "graphScore": 0.0,
+            "vectorScore": 0.560,
+            "matchedInterests": [null],
+            "relevance": "low"
+          },
+          {
+            "title": "Exclusive 3-Piece Gift",
+            "price": 41,
+            "confidence": 0.280,
+            "graphScore": 0.0,
+            "vectorScore": 0.560,
+            "matchedInterests": [null],
+            "relevance": "low"
+          },
+          {
+            "title": "E-Gift Card",
+            "price": 10,
+            "confidence": 0.280,
+            "graphScore": 0.0,
+            "vectorScore": 0.594,
+            "matchedInterests": [null],
+            "relevance": "low"
+          }
+        ]
+      }
+    }
+  ]
+}

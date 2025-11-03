@@ -127,8 +127,8 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
 
       // 3. Execute hybrid Cypher query
       const cypher = `
-        // 1. Vector similarity search across all 4 embeddings
-        CALL db.index.vector.queryNodes('product_embedding', 30, $queryEmbedding)
+        // 1. Vector similarity search across all 4 embeddings (expanded from 30 to 100 for better coverage)
+        CALL db.index.vector.queryNodes('product_embedding', 100, $queryEmbedding)
         YIELD node AS product, score AS semanticScore
 
         // Get other vector scores
@@ -146,12 +146,31 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
           AND product.price >= $budgetMin
           AND product.price <= $budgetMax
 
-        // 3. Graph traversal - Interest matching
+        // 3. Graph traversal - Interest matching with text fallback for unknown interests
         OPTIONAL MATCH (product)-[mi:MATCHES_INTEREST]->(i:Interest)
         WHERE i.name IN $interests
+
+        // Text fallback: if no graph match, check if product title/description contains interest keywords
         WITH product, vectorScore,
-          COLLECT(DISTINCT {name: i.name, strength: mi.relevance_score}) AS matchedInterests,
-          COALESCE(AVG(mi.relevance_score), 0) AS interestScore
+          COLLECT(DISTINCT {name: i.name, strength: mi.relevance_score}) AS graphMatchedInterests,
+          COALESCE(AVG(mi.relevance_score), 0) AS graphInterestScore,
+          [interest IN $interests WHERE
+            toLower(product.title) CONTAINS toLower(interest) OR
+            toLower(product.description) CONTAINS toLower(interest)
+          ] AS textMatchedInterests
+
+        // Combine graph and text matches, use text match with score 0.6 if no graph match exists
+        WITH product, vectorScore,
+          CASE
+            WHEN SIZE(graphMatchedInterests) > 0 THEN graphMatchedInterests
+            WHEN SIZE(textMatchedInterests) > 0 THEN [interest IN textMatchedInterests | {name: interest, strength: 0.6}]
+            ELSE []
+          END AS matchedInterests,
+          CASE
+            WHEN graphInterestScore > 0 THEN graphInterestScore
+            WHEN SIZE(textMatchedInterests) > 0 THEN 0.6
+            ELSE 0
+          END AS interestScore
 
         // 4. Graph traversal - Value alignment (STRICT for requirements)
         OPTIONAL MATCH (product)-[av:ALIGNS_WITH]->(v:Value)
@@ -215,15 +234,29 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
 
       const candidates = result.records.map((record) => this.recordToCandidate(record));
 
+      // Log interest matching statistics
+      const graphMatches = result.records.filter(r => {
+        const interests = r.get('matchedInterests') || [];
+        return interests.some((m: any) => m.strength !== 0.6);
+      }).length;
+      const textMatches = result.records.filter(r => {
+        const interests = r.get('matchedInterests') || [];
+        return interests.some((m: any) => m.strength === 0.6);
+      }).length;
+      this.log(`Interest matching: ${graphMatches} via graph, ${textMatches} via text fallback`);
+
       // Log top candidates with scores for debugging
       if (candidates.length > 0) {
         this.log('Top 3 candidates:');
         candidates.slice(0, 3).forEach((c, i) => {
+          const record = result.records[i];
+          const matchedInterests = record.get('matchedInterests') || [];
+          const matchType = matchedInterests.some((m: any) => m.strength === 0.6) ? 'text' : 'graph';
           this.log(
             `  ${i + 1}. ${c.product.title} - Graph: ${c.scores.graphScore.toFixed(3)}, ` +
             `Vector: ${c.scores.vectorScore.toFixed(3)}, ` +
             `Hybrid: ${c.scores.hybridScore.toFixed(3)}, ` +
-            `Interests: [${c.matchReasons.matchedInterests.join(', ')}]`
+            `Interests: [${c.matchReasons.matchedInterests.join(', ')}] (${matchType})`
           );
         });
       }

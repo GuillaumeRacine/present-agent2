@@ -48,10 +48,20 @@ export class ConstraintsAgent extends BaseAgent<ConstraintsInput, ConstraintsOut
     // Use relationship-calibrated budget if available, otherwise listener budget
     const budget = relationshipBudget || listenerBudget;
 
+    const baseMin = budget?.min || 0;
+    const baseMax = budget?.max || 1000;
+    const isStrict = listenerBudget?.flexibility === 'strict';
+
+    // Apply ±25% flexibility to budget range (unless strict)
+    // This allows products slightly above or below the stated budget
+    const flexibilityFactor = isStrict ? 1.0 : 0.25;
+    const adjustedMin = baseMin * (1 - flexibilityFactor);
+    const adjustedMax = baseMax * (1 + flexibilityFactor);
+
     return {
-      min: budget?.min || 0,
-      max: budget?.max || 1000,
-      isStrict: listenerBudget?.flexibility === 'strict',
+      min: Math.max(0, adjustedMin), // Ensure min doesn't go below 0
+      max: adjustedMax,
+      isStrict,
     };
   }
 

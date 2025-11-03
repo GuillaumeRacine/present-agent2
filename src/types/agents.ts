@@ -97,6 +97,11 @@ export interface MemoryOutput {
     source: 'past_purchases' | 'past_likes' | 'user_profile';
   }>;
 
+  // NEW: Enhanced recipient profile from RecipientLearner sub-agent
+  enrichedRecipient?: any; // RecipientProfile from recipient.ts
+  recipientKnowledgeDepth?: number;
+  recipientKnowledgeGaps?: string[];
+
   // Meta
   recalledAt: Date;
 }
@@ -116,6 +121,7 @@ export interface RelationshipOutput {
   // Relationship analysis
   relationshipAnalysis: {
     type: string; // 'parent', 'romantic_partner', 'close_friend', etc.
+    intimacyLevel?: 'intimate' | 'close' | 'casual' | 'professional'; // FIXED: Added intimacyLevel
     closeness: 'intimate' | 'close' | 'casual' | 'professional';
     duration?: 'new' | 'established' | 'longtime';
     socialNorms: {

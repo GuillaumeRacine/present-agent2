@@ -1,0 +1,545 @@
+{
+  "timestamp": "2025-11-03T12:45:05.680Z",
+  "summary": {
+    "total": 6,
+    "passed": 5,
+    "failed": 1
+  },
+  "results": [
+    {
+      "testName": "Data Integrity",
+      "passed": false,
+      "details": {
+        "productCount": 41704,
+        "interestCount": 14117,
+        "relCount": 308754,
+        "orphanCount": 4012
+      }
+    },
+    {
+      "testName": "Interest Distribution",
+      "passed": true,
+      "details": {
+        "topInterests": [
+          {
+            "name": "fashion",
+            "count": 10551,
+            "avgRelevance": 0.77
+          },
+          {
+            "name": "collecting",
+            "count": 8324,
+            "avgRelevance": 0.76
+          },
+          {
+            "name": "home-decor",
+            "count": 4930,
+            "avgRelevance": 0.74
+          },
+          {
+            "name": "self-care",
+            "count": 4777,
+            "avgRelevance": 0.7
+          },
+          {
+            "name": "art",
+            "count": 4492,
+            "avgRelevance": 0.78
+          },
+          {
+            "name": "travel",
+            "count": 3977,
+            "avgRelevance": 0.66
+          },
+          {
+            "name": "outdoor activities",
+            "count": 3845,
+            "avgRelevance": 0.67
+          },
+          {
+            "name": "skincare",
+            "count": 3560,
+            "avgRelevance": 0.82
+          },
+          {
+            "name": "beauty",
+            "count": 3546,
+            "avgRelevance": 0.83
+          },
+          {
+            "name": "cosmetics",
+            "count": 2924,
+            "avgRelevance": 0.77
+          },
+          {
+            "name": "gifts",
+            "count": 2893,
+            "avgRelevance": 0.62
+          },
+          {
+            "name": "accessories",
+            "count": 2840,
+            "avgRelevance": 0.73
+          },
+          {
+            "name": "collectibles",
+            "count": 2718,
+            "avgRelevance": 0.74
+          },
+          {
+            "name": "sustainability",
+            "count": 2677,
+            "avgRelevance": 0.65
+          },
+          {
+            "name": "fitness",
+            "count": 2496,
+            "avgRelevance": 0.75
+          },
+          {
+            "name": "automotive",
+            "count": 2404,
+            "avgRelevance": 0.9
+          },
+          {
+            "name": "comfort",
+            "count": 2393,
+            "avgRelevance": 0.76
+          },
+          {
+            "name": "wellness",
+            "count": 2283,
+            "avgRelevance": 0.68
+          },
+          {
+            "name": "makeup",
+            "count": 2188,
+            "avgRelevance": 0.89
+          },
+          {
+            "name": "interior-design",
+            "count": 2107,
+            "avgRelevance": 0.75
+          }
+        ],
+        "highQualityCount": 15
+      }
+    },
+    {
+      "testName": "Sample Product Quality",
+      "passed": true,
+      "details": {
+        "samples": [
+          {
+            "id": "prod_dde3b0c73618c85062f4fc42c27b33583438ae10",
+            "title": "Cashmere & Linen Sweater",
+            "interests": [
+              {
+                "name": "fashion",
+                "relevance": 0.95
+              },
+              {
+                "name": "luxury",
+                "relevance": 0.65
+              },
+              {
+                "name": "minimalism",
+                "relevance": 0.7
+              },
+              {
+                "name": "sustainable fashion",
+                "relevance": 0.8
+              },
+              {
+                "name": "seasonal fashion",
+                "relevance": 0.55
+              },
+              {
+                "name": "cashmere",
+                "relevance": 0.85
+              },
+              {
+                "name": "linen",
+                "relevance": 0.75
+              },
+              {
+                "name": "second-hand-shopping",
+                "relevance": 0.6
+              }
+            ]
+          },
+          {
+            "id": "15718",
+            "title": "Hand Wash Soleil de Tanger",
+            "interests": [
+              {
+                "name": "skincare",
+                "relevance": 0.95
+              },
+              {
+                "name": "self-care",
+                "relevance": 0.65
+              },
+              {
+                "name": "moisturizing",
+                "relevance": 0.7
+              },
+              {
+                "name": "luxury",
+                "relevance": 0.6
+              },
+              {
+                "name": "fragrance",
+                "relevance": 0.6
+              },
+              {
+                "name": "home fragrance",
+                "relevance": 0.65
+              },
+              {
+                "name": "aromatherapy",
+                "relevance": 0.8
+              },
+              {
+                "name": "bath",
+                "relevance": 0.7
+              },
+              {
+                "name": "eco-friendly",
+                "relevance": 0.75
+              }
+            ]
+          },
+          {
+            "id": "prod_af60189e93eac6b501b02adf6aa473402358885d",
+            "title": "A  Pair of Theatrical Carved Pilasters Fancifully Moulded and Hand Finished",
+            "interests": [
+              {
+                "name": "collecting",
+                "relevance": 0.7
+              },
+              {
+                "name": "interior-design",
+                "relevance": 0.8
+              },
+              {
+                "name": "history",
+                "relevance": 0.75
+              },
+              {
+                "name": "cinema",
+                "relevance": 0.65
+              },
+              {
+                "name": "architecture",
+                "relevance": 0.85
+              },
+              {
+                "name": "art history",
+                "relevance": 0.55
+              },
+              {
+                "name": "theatre",
+                "relevance": 0.95
+              },
+              {
+                "name": "vintage decor",
+                "relevance": 0.6
+              },
+              {
+                "name": "exotic design",
+                "relevance": 0.5
+              }
+            ]
+          },
+          {
+            "id": "prod_48a52f414dac2ba9f6d79f39985f920e96450589",
+            "title": "WWI Inert Hales Pattern No. 2 Percussion Cap Fragmentation Rifle Grenade",
+            "interests": [
+              {
+                "name": "collecting",
+                "relevance": 0.85
+              },
+              {
+                "name": "education",
+                "relevance": 0.6
+              },
+              {
+                "name": "military history",
+                "relevance": 0.95
+              },
+              {
+                "name": "antiques",
+                "relevance": 0.65
+              },
+              {
+                "name": "world war i",
+                "relevance": 0.9
+              },
+              {
+                "name": "military enthusiasts",
+                "relevance": 0.8
+              },
+              {
+                "name": "war reenactment",
+                "relevance": 0.75
+              },
+              {
+                "name": "explosive ordnance",
+                "relevance": 0.7
+              }
+            ]
+          },
+          {
+            "id": "2742",
+            "title": "Essentialist Belt Pack",
+            "interests": [
+              {
+                "name": "fitness",
+                "relevance": 0.5
+              },
+              {
+                "name": "travel",
+                "relevance": 0.65
+              },
+              {
+                "name": "fishing",
+                "relevance": 0.6
+              },
+              {
+                "name": "outdoor-adventures",
+                "relevance": 0.75
+              },
+              {
+                "name": "kayaking",
+                "relevance": 0.8
+              },
+              {
+                "name": "boating",
+                "relevance": 0.7
+              },
+              {
+                "name": "paddleboarding",
+                "relevance": 0.9
+              }
+            ]
+          }
+        ],
+        "avgInterestCount": "8.2"
+      }
+    },
+    {
+      "testName": "Interest Matching Scenarios",
+      "passed": true,
+      "details": {
+        "scenarios": [
+          {
+            "query": "coffee",
+            "expectedCount": 50,
+            "description": "Coffee lovers"
+          },
+          {
+            "query": "outdoor activities",
+            "expectedCount": 100,
+            "description": "Outdoor enthusiasts"
+          },
+          {
+            "query": "fashion",
+            "expectedCount": 500,
+            "description": "Fashion interested"
+          },
+          {
+            "query": "tech",
+            "expectedCount": 50,
+            "description": "Tech enthusiasts"
+          }
+        ],
+        "passedCount": 4
+      }
+    },
+    {
+      "testName": "Duplicate Cleanup Verification",
+      "passed": true,
+      "details": {
+        "duplicatePatternsFound": 0
+      }
+    },
+    {
+      "testName": "Recommendation Quality",
+      "passed": true,
+      "details": {
+        "query": {
+          "interests": [
+            "coffee",
+            "reading",
+            "art"
+          ],
+          "description": "Gift for someone who loves coffee, reading, and art"
+        },
+        "recommendations": [
+          {
+            "id": "6212",
+            "title": "Brown Bear - Coffee Art | Instructor: Chris",
+            "price": 10,
+            "matchedInterests": [
+              {
+                "interest": "coffee",
+                "relevance": 0.9
+              },
+              {
+                "interest": "art",
+                "relevance": 0.95
+              }
+            ],
+            "avgRelevance": 0.93
+          },
+          {
+            "id": "6222",
+            "title": "X Marks The Spot - Coffee Art | Instructor: Chris",
+            "price": 10,
+            "matchedInterests": [
+              {
+                "interest": "coffee",
+                "relevance": 0.9
+              },
+              {
+                "interest": "art",
+                "relevance": 0.95
+              }
+            ],
+            "avgRelevance": 0.93
+          },
+          {
+            "id": "3608",
+            "title": "Habit Coffee Shop Victoria BC | Watercolour Art Print",
+            "price": 27.5,
+            "matchedInterests": [
+              {
+                "interest": "coffee",
+                "relevance": 0.95
+              },
+              {
+                "interest": "art",
+                "relevance": 0.9
+              }
+            ],
+            "avgRelevance": 0.93
+          },
+          {
+            "id": "989",
+            "title": "First I Drink The Coffee Then I Do the Things",
+            "price": 68,
+            "matchedInterests": [
+              {
+                "interest": "coffee",
+                "relevance": 0.95
+              },
+              {
+                "interest": "art",
+                "relevance": 0.85
+              }
+            ],
+            "avgRelevance": 0.9
+          },
+          {
+            "id": "1554",
+            "title": "Raven, Reading Glasses",
+            "price": 25,
+            "matchedInterests": [
+              {
+                "interest": "reading",
+                "relevance": 0.9
+              },
+              {
+                "interest": "art",
+                "relevance": 0.85
+              }
+            ],
+            "avgRelevance": 0.88
+          },
+          {
+            "id": "2878",
+            "title": "Dance at Bougival - Magnetic Bookmark",
+            "price": 5.95,
+            "matchedInterests": [
+              {
+                "interest": "reading",
+                "relevance": 0.8
+              },
+              {
+                "interest": "art",
+                "relevance": 0.95
+              }
+            ],
+            "avgRelevance": 0.88
+          },
+          {
+            "id": "2879",
+            "title": "Paris Street; Rainy Day - Magnetic Bookmark",
+            "price": 5.95,
+            "matchedInterests": [
+              {
+                "interest": "reading",
+                "relevance": 0.85
+              },
+              {
+                "interest": "art",
+                "relevance": 0.9
+              }
+            ],
+            "avgRelevance": 0.88
+          },
+          {
+            "id": "3616",
+            "title": "Raindrops on the Window | Watercolour Art Print",
+            "price": 27.5,
+            "matchedInterests": [
+              {
+                "interest": "coffee",
+                "relevance": 0.8
+              },
+              {
+                "interest": "art",
+                "relevance": 0.95
+              }
+            ],
+            "avgRelevance": 0.88
+          },
+          {
+            "id": "3035",
+            "title": "Dockside Mornings, Original Painting",
+            "price": 3500,
+            "matchedInterests": [
+              {
+                "interest": "coffee",
+                "relevance": 0.75
+              },
+              {
+                "interest": "art",
+                "relevance": 0.95
+              }
+            ],
+            "avgRelevance": 0.85
+          },
+          {
+            "id": "8520",
+            "title": "REX Kaffee",
+            "price": 175,
+            "matchedInterests": [
+              {
+                "interest": "coffee",
+                "relevance": 0.95
+              },
+              {
+                "interest": "art",
+                "relevance": 0.75
+              }
+            ],
+            "avgRelevance": 0.85
+          }
+        ],
+        "count": 10
+      }
+    }
+  ]
+}

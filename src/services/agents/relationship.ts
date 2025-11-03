@@ -48,6 +48,7 @@ Return JSON with this structure:
 {
   "relationshipAnalysis": {
     "type": "...",
+    "intimacyLevel": "intimate|close|casual|professional",
     "closeness": "intimate|close|casual|professional",
     "duration": "new|established|longtime",
     "socialNorms": {

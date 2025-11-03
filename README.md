@@ -1,448 +1,326 @@
-# 🎁 Present-Agent2
+# Present-Agent2: AI-Powered Gift Recommendation System
 
-**Status**: ✅ MVP Ready | Multi-agent gift recommendation system with Neo4j + Vector Embeddings
+A sophisticated multi-agent AI system that provides personalized gift recommendations using graph-based knowledge representation, vector embeddings, and context-aware reasoning.
 
-AI-powered gift recommendation engine that uses graph databases and multi-agent orchestration to understand context and deliver personalized recommendations.
+## Overview
 
----
+Present-Agent2 uses a 10-agent architecture to understand context, analyze relationships, and recommend thoughtful gifts by learning about recipients over time. The system combines Neo4j graph database, vector embeddings, and LLM-powered agents to deliver personalized recommendations.
 
-## 🚀 Quick Start
+## Key Features
 
-```bash
-# Install
-npm install
+- **Multi-Agent Architecture**: 10 specialized agents work together to understand context and make recommendations
+- **Graph-Based Knowledge**: Neo4j stores products, recipients, relationships, and conversation history
+- **Hybrid Search**: Combines vector similarity and graph relationships for intelligent product discovery
+- **Recipient Learning**: Builds comprehensive profiles that improve with each interaction
+- **Conversation Persistence**: Stores complete conversation history for analytics and learning
+- **Web Interface**: Modern React/Next.js frontend for testing and iteration
+- **Persona Testing Framework**: Automated testing with diverse user personas
 
-# Test the system
-npx tsx scripts/cli.ts --scenario=dad-birthday
+## Architecture
 
-# Or interactive mode
-npx tsx scripts/cli.ts
-```
+### 10-Agent System
 
-**First time?** See [Getting Started](#-getting-started) for full setup.
+1. **Listener Agent** - Extracts context from user queries
+2. **Memory Agent** - Recalls user history and recipient profiles
+3. **Relationship Agent** - Analyzes relationship dynamics
+4. **Constraints Agent** - Validates requirements (budget, timing, preferences)
+5. **Meaning Agent** - Identifies meaningful gift criteria
+6. **Explorer Agent** - Discovers product candidates using hybrid search
+7. **Validator Agent** - Ensures quality and appropriateness
+8. **Storyteller Agent** - Crafts personal reasoning for recommendations
+9. **Presenter Agent** - Formats final presentation
+10. **Recipient Learner Agent** - Builds and enriches recipient profiles
 
----
+### Tech Stack
 
-## 📊 Current Status
+- **Backend**: Node.js, TypeScript, Express
+- **Frontend**: Next.js 15, React 19, Tailwind CSS
+- **Database**: Neo4j (graph + vector)
+- **AI**: OpenAI GPT-4, Cohere embeddings
+- **Testing**: Custom persona framework
 
-**✅ System is functional and ready for testing!**
-
-- **41,704 products** with real OpenAI embeddings ingested
-- **166,816 embeddings** (4 types per product: semantic, style, sentiment, use_case)
-- **129,233 graph relationships** (interests, values, occasions)
-- **9-agent orchestration** pipeline executing successfully
-- **Graph scoring working** (0.21-0.28 for interest matches)
-- **Response time**: 21-25 seconds (acceptable for quality)
-
-**Recent Fixes (Oct 26, 2025)**:
-1. ✅ Fixed validator threshold bug (was rejecting all candidates)
-2. ✅ Fixed interest extraction (now correctly maps to database nodes)
-3. ✅ Added fallback recommendations (never returns zero results)
-
-See [docs/FIXES_COMPLETE.md](docs/FIXES_COMPLETE.md) for detailed fix documentation.
-
----
-
-## 🎯 What This Does
-
-Present-Agent2 provides **personalized gift recommendations** by:
-
-1. **Understanding context** through conversational input
-2. **Extracting meaning** via multi-agent analysis (9 specialized agents)
-3. **Graph traversal** to find products matching interests, values, occasions
-4. **Vector similarity** for semantic relevance
-5. **Hybrid scoring** combining graph (60%) + vector (40%)
-6. **Personalized reasoning** explaining why each gift fits
-
-**Example Query**:
-> "Birthday gift for my dad who loves coffee and reading. Budget $40-65."
-
-**Result**: 4-5 relevant recommendations with reasoning, scores, and links.
-
----
-
-## 🏗️ Architecture
-
-### Multi-Agent Orchestration Pipeline
-
-```
-User Query → 9 Specialized Agents → Recommendations
-
-1. 🎧 Listener     - Extract context (recipient, occasion, budget, interests)
-2. 🧠 Memory       - Recall past conversations and patterns
-3. 👥 Relationship - Analyze relationship dynamics
-4. 🔒 Constraints  - Validate hard requirements
-5. 🎯 Meaning      - Identify emotional significance
-6. 🔍 Explorer     - Discover candidates (hybrid search)
-7. ✅ Validator    - Quality gate (relevance, budget, appropriateness)
-8. 📖 Storyteller  - Craft personalized reasoning
-9. 🎁 Presenter    - Format final recommendations
-```
-
-### Technology Stack
-
-- **Database**: Neo4j 5.8 (graph + vector indexes)
-- **Embeddings**: OpenAI text-embedding-3-small (1536 dims)
-- **LLM**: GPT-4o (context analysis), GPT-4o-mini (formatting)
-- **Language**: TypeScript (strict mode)
-- **Runtime**: Node.js 20+
-
-### Graph + Vector Hybrid
-
-**Graph Score** (60% weight):
-- Interest matching (35%)
-- Value alignment (25%)
-- Occasion suitability (25%)
-- Social proof (15%)
-
-**Vector Score** (40% weight):
-- Semantic similarity (40%)
-- Style match (25%)
-- Sentiment match (20%)
-- Use case match (15%)
-
-**Hybrid Score** = `0.6 × graphScore + 0.4 × vectorScore`
-
----
-
-## 📦 Data
-
-### Product Database
-- **41,704 products** from Uncommon Goods export
-- **Categories**: 27 canonical categories
-- **Price range**: $5 - $500+
-- **Real embeddings**: All products have 4 OpenAI embeddings
-
-### Graph Relationships
-- **43,441** MATCHES_INTEREST (coffee, reading, art, etc.)
-- **11,088** ALIGNS_WITH (sustainable, handmade, etc.)
-- **31,678** SUITABLE_FOR (birthday, wedding, etc.)
-
-### Interest Nodes (18 total)
-```
-art, coffee, cooking, fishing, fitness, gaming, gardening, hiking,
-music, outdoors, photography, reading, skincare, sports, tea, tech,
-travel, yoga
-```
-
----
-
-## 🛠️ Getting Started
+## Quick Start
 
 ### Prerequisites
-- Node.js 20+
-- Neo4j Cloud account (or local Neo4j 5.x)
+
+- Node.js 18+ and npm
+- Neo4j Aura account or local Neo4j instance
 - OpenAI API key
+- Cohere API key (optional, for embeddings)
 
-### Setup
+### Installation
 
-1. **Clone and install**
+1. **Clone and install dependencies**:
+   ```bash
+   npm install
+   cd frontend && npm install && cd ..
+   ```
+
+2. **Set up environment variables**:
+   Create `.env.local` in the root directory:
+   ```env
+   # Core APIs
+   OPENAI_API_KEY=your_openai_key
+   COHERE_API_KEY=your_cohere_key
+   ANTHROPIC_API_KEY=your_anthropic_key
+
+   # Neo4j Database
+   NEO4J_URL=your_neo4j_url
+   NEO4J_USERNAME=neo4j
+   NEO4J_PASSWORD=your_password
+   NEO4J_DATABASE=neo4j
+
+   # Server Configuration
+   BACKEND_PORT=3000
+   PORT=3001
+   ```
+
+3. **Set up Neo4j schema**:
+   ```bash
+   npm run setup:schema
+   ```
+
+4. **Ingest product data** (optional):
+   ```bash
+   npm run ingest:products
+   ```
+
+### Running the Application
+
+#### Full Stack (Recommended)
 ```bash
-git clone <repo-url>
-cd Present-Agent2
-npm install
+npm run dev
+```
+This starts:
+- Backend API server on `http://localhost:3000`
+- Frontend UI on `http://localhost:3001`
+
+#### Separate Terminals
+
+Terminal 1 (Backend):
+```bash
+npm run server
 ```
 
-2. **Configure environment**
+Terminal 2 (Frontend):
 ```bash
-cp .env.example .env.local
+cd frontend && npm run dev
 ```
 
-Edit `.env.local`:
+### Testing
+
+Run the persona testing framework:
 ```bash
-# Neo4j (required)
-NEO4J_URL=neo4j+s://your-instance.databases.neo4j.io
-NEO4J_PASSWORD=your-password
+# Quick test (3 personas)
+npm run test:personas:quick
 
-# OpenAI (required for embeddings and LLM)
-OPENAI_API_KEY=sk-...
+# Full test (all personas)
+npm run test:personas:list
 
-# Optional
-COHERE_API_KEY=...  # For re-ranking (not yet implemented)
+# Single persona
+npm run test:persona -- "Tech Enthusiast Dad"
 ```
 
-3. **Verify database connection**
-```bash
-npx tsx scripts/check-neo4j.ts
-```
+## Project Structure
 
-4. **Test the system**
-```bash
-# Use preset scenario
-npx tsx scripts/cli.ts --scenario=dad-birthday
-
-# Or interactive mode
-npx tsx scripts/cli.ts
-
-# Or quick test
-npx tsx scripts/test-workflow.ts
-```
-
-### Data Ingestion (If Needed)
-
-If starting fresh or adding new products:
-
-```bash
-# Ingest products with embeddings (~4 minutes for 41k products)
-NODE_OPTIONS="--max-old-space-size=4096 --expose-gc" npx tsx scripts/ingest-products.ts
-
-# Verify ingestion
-npx tsx scripts/check-neo4j.ts
-```
-
-See [docs/PRODUCT_INGESTION_COMPLETE.md](docs/PRODUCT_INGESTION_COMPLETE.md) for details.
-
----
-
-## 🧪 Testing
-
-### Interactive CLI
-
-```bash
-# Interactive mode - choose scenario or type query
-npx tsx scripts/cli.ts
-
-# Use preset scenario
-npx tsx scripts/cli.ts --scenario=dad-birthday
-npx tsx scripts/cli.ts --scenario=girlfriend-birthday
-
-# Debug mode (show execution trace)
-npx tsx scripts/cli.ts --debug
-
-# List available scenarios
-npx tsx scripts/cli.ts --list-scenarios
-```
-
-### CLI Features
-- 🎯 Interactive query input
-- 📊 Real-time agent progress indicators
-- 🎁 Beautiful formatted recommendations
-- 🔍 View detailed product scores (graph/vector/hybrid)
-- 👁️ Execution trace viewer
-- ✨ Multiple test scenarios
-
-### Available Test Scenarios
-
-1. **dad-birthday**: Dad who loves coffee, reading, gardening ($40-65)
-2. **girlfriend-birthday**: New girlfriend into yoga, vegan cooking ($50-80)
-3. **quick-test**: Simple coffee gift query
-
-### Programmatic Testing
-
-```bash
-# Run basic workflow test
-npx tsx scripts/test-workflow.ts
-
-# Debug graph scores
-npx tsx scripts/investigate-graph-scores.ts
-
-# Test actual Cypher query
-npx tsx scripts/test-actual-query.ts
-
-# Check database health
-npx tsx scripts/check-neo4j.ts
-```
-
----
-
-## 📚 Documentation
-
-### Essential Docs
-- **[docs/FIXES_COMPLETE.md](docs/FIXES_COMPLETE.md)** - Latest bug fixes and system status
-- **[docs/PRODUCT_INGESTION_COMPLETE.md](docs/PRODUCT_INGESTION_COMPLETE.md)** - Data ingestion details
-- **[docs/TESTING_REPORT.md](docs/TESTING_REPORT.md)** - Comprehensive test results
-- **[docs/product_vision.md](docs/product_vision.md)** - Original product vision
-
-### Architecture Docs
-- **[docs/GRAPH_SCHEMA_V2.md](docs/GRAPH_SCHEMA_V2.md)** - Complete graph schema design
-- **[docs/IMPLEMENTATION_COMPLETE.md](docs/IMPLEMENTATION_COMPLETE.md)** - Implementation details
-- **[docs/AGENTS.md](docs/AGENTS.md)** - Agent system documentation
-
-### Development Guides
-- **[docs/CLAUDE.md](docs/CLAUDE.md)** - Quick reference for Claude Code agents
-- **[docs/SESSION_SUMMARY.md](docs/SESSION_SUMMARY.md)** - Latest session summary
-
----
-
-## 🎯 Performance Metrics
-
-### Current Performance (Oct 26, 2025)
-- **Response Time**: 21-25 seconds total
-  - Listener: 3-5 seconds (LLM context extraction)
-  - Meaning: 4-6 seconds (LLM emotional analysis)
-  - Relationship: 3-4 seconds (LLM dynamics)
-  - Explorer: 1-2 seconds (database + embeddings)
-  - Storyteller: 5-6 seconds (LLM reasoning)
-  - Other agents: < 3 seconds
-
-- **Recommendations**: 4-5 per query
-- **Graph Scores**: 0.21-0.28 (when interests match)
-- **Vector Scores**: 0.50-0.56 (semantic similarity)
-- **Hybrid Scores**: 0.32-0.39 (combined)
-- **Success Rate**: 100% (no crashes)
-
-### Quality Metrics
-- Products match user interests ✅
-- Within budget ✅
-- Relevant reasoning generated ✅
-- Graph traversal working ✅
-
-**Bottleneck**: LLM operations (88-92% of time) - expected and acceptable for quality.
-
----
-
-## 🔧 Development
-
-### Project Structure
 ```
 Present-Agent2/
 ├── src/
-│   ├── db/              # Database schema
-│   ├── lib/             # Core libraries (Neo4j, OpenAI, logger)
-│   ├── services/        # Business logic
-│   │   └── agents/      # 9 specialized agents
-│   ├── types/           # TypeScript types
-│   └── utils/           # Utilities
-├── scripts/             # CLI and testing scripts
-├── data/                # Product data (not in git)
-└── docs/                # Documentation (*.md files)
+│   ├── services/
+│   │   ├── agents/           # 10 specialized agents
+│   │   ├── orchestrator.ts   # Agent coordination
+│   │   ├── conversation-persister.ts  # Conversation storage
+│   │   └── feedback-collector.ts      # Learning from feedback
+│   ├── lib/
+│   │   ├── neo4j.ts          # Database connection
+│   │   └── logger.ts         # Logging configuration
+│   ├── types/
+│   │   ├── agents.ts         # Agent type definitions
+│   │   └── recipient.ts      # Recipient data types
+│   ├── scripts/
+│   │   ├── ingest-products.ts   # Product data ingestion
+│   │   └── test-personas.ts     # Persona testing
+│   └── server.ts             # Express API server
+├── frontend/
+│   ├── app/
+│   │   ├── page.tsx          # Chat UI
+│   │   ├── logs/             # Conversation logs
+│   │   ├── products/         # Product explorer
+│   │   └── api/              # API routes
+│   └── ...
+├── docs/                     # Documentation
+├── test-results/             # Persona test reports
+└── personas/                 # Test persona definitions
 ```
 
-### Key Files
-- `src/services/orchestrator.ts` - Main orchestration logic
-- `src/services/agents/` - 9 agent implementations
-- `scripts/cli.ts` - Interactive CLI interface
-- `scripts/ingest-products.ts` - Data ingestion pipeline
+## API Endpoints
 
-### Code Standards
-- TypeScript strict mode (no `any`)
-- Comprehensive error handling
-- Structured logging (Winston)
-- Type safety throughout
+### Recommendation API
 
-### Making Changes
-
-1. **Test changes**:
-   ```bash
-   npx tsx scripts/test-workflow.ts
-   ```
-
-2. **Debug issues**:
-   ```bash
-   npx tsx scripts/cli.ts --debug
-   ```
-
-3. **Check logs**:
-   ```bash
-   tail -f logs/combined.log
-   tail -f logs/error.log
-   ```
-
----
-
-## 🐛 Troubleshooting
-
-### No Recommendations Returned
-
-**Check**:
-1. Embeddings generated? Run `npx tsx scripts/check-neo4j.ts`
-2. Graph relationships exist? Check MATCHES_INTEREST count
-3. Budget too restrictive? Try wider range
-
-**Debug**:
-```bash
-npx tsx scripts/cli.ts --debug
-# View execution trace to see where pipeline fails
+**POST** `/api/recommend`
+```json
+{
+  "userQuery": "Gift for my mom who loves gardening",
+  "userId": "user-123",
+  "sessionId": "session-456"
+}
 ```
 
-### Low Graph Scores
+### Conversation History
 
-**Expected**: Graph scores of 0.21-0.28 are correct when only interests match.
+**GET** `/api/conversations?userId=user-123&limit=50`
 
-**Why**: Graph score formula requires matches in multiple areas:
-- Interests (35%) ← Usually matches
-- Values (25%) ← Rarely matches
-- Occasions (25%) ← Rarely matches
-- Social proof (15%) ← No data yet
+**GET** `/api/conversations/:sessionId`
 
-**To improve**: Add more product relationships for values/occasions.
+**GET** `/api/conversations/stats?userId=user-123`
 
-### Connection Errors
+### Products
 
-**Neo4j**: Check `.env.local` has correct `NEO4J_URL` and `NEO4J_PASSWORD`
-**OpenAI**: Check `OPENAI_API_KEY` is valid
+**GET** `/api/products?search=coffee&minPrice=0&maxPrice=100`
 
----
+**GET** `/api/products/stats`
 
-## 🚀 Next Steps
+See [docs/API.md](docs/API.md) for complete API documentation.
 
-### Immediate Improvements (Non-blocking)
-1. **Improve graph scores** - Add Value/Occasion matching (currently only Interests work well)
-2. **Fix intimacy level** - Relationship agent returns undefined
-3. **Tune diversity** - Ensure variety in recommendations
-4. **Add more test scenarios** - Expand beyond dad/girlfriend
+## Current Status
 
-### Short-term (1-2 weeks)
-1. Test with user personas (Sarah, Mike, Lisa)
-2. Collect quality metrics
-3. Performance optimizations (parallelize LLM calls)
-4. Add caching layer
+**Phase C Complete**: Interest taxonomy expanded to 14,000+ interests using LLM extraction
+- **41,704 products** in catalog
+- **14,117 unique interests** extracted
+- **308,754 interest relationships**
+- **Data quality**: 83.3% tests passing
 
-### Medium-term (3-4 weeks)
-1. Learning agent (update weights based on user feedback)
-2. Re-ranking with Cohere
-3. Social proof (track user selections)
-4. Web interface
+**Recent Improvements:**
+- ✅ Normalized taxonomy: Merged 2,437 duplicate interests
+- 🔄 Fixing 4,012 orphaned products (in progress)
+- ⚠️  Recommendation quality needs improvement (0% persona success rate)
 
-See [docs/TESTING_REPORT.md](docs/TESTING_REPORT.md) for detailed recommendations.
+**See**: [System Quality Report](data/system-quality-report.md) for detailed analysis
 
----
+## Documentation
 
-## 📊 Success Metrics
+### Core Documentation
+- **[System Quality Report](data/system-quality-report.md)** ⭐ Current system analysis & roadmap
+- **[Architecture](docs/ARCHITECTURE.md)** - Complete system architecture
+- **[API Documentation](docs/API.md)** - API endpoints and usage
+- **[Documentation Index](docs/DOCUMENTATION_INDEX.md)** - All documentation
 
-### Current Achievements
-- ✅ System returns relevant recommendations
-- ✅ Interest extraction works correctly
-- ✅ Graph traversal operational
-- ✅ Hybrid scoring functional
-- ✅ Multi-agent orchestration stable
+### Guides & References
+- **[Frontend Guide](docs/FRONTEND_GUIDE.md)** - Complete frontend documentation
+- **[Persona Testing](docs/PERSONA_TESTING_FRAMEWORK.md)** - Testing framework guide
+- **[Graph Schema](docs/GRAPH_SCHEMA_V2.md)** - Neo4j database schema
+- **[Agents](docs/AGENTS.md)** - Agent architecture and workflows
+- **[Testing Guide](docs/guides/TESTING_GUIDE.md)** - Recommendation testing
+- **[Authentication](docs/AUTHENTICATION_IMPLEMENTATION.md)** - Auth implementation
 
-### Target Metrics (To Measure)
-- Recommendation relevance: > 8.0/10
-- User satisfaction: > 80%
-- Confidence accuracy: > 0.7
-- Response time: < 10 seconds (stretch goal)
+### Archives
+- **[Phase A & B Reports](docs/archive/phase-ab/)** - Historical test reports
 
----
+## Development
 
-## 🙏 Credits
-
-**Data Source**: Uncommon Goods product export (41,704 products)
-**Built with**: Claude Code multi-agent system
-**Database**: Neo4j Aura (cloud)
-**Embeddings**: OpenAI text-embedding-3-small
-
----
-
-## 📄 License
-
-[License TBD]
-
----
-
-## 🎉 Try It Now!
+### npm Scripts
 
 ```bash
-# Quick test
-npx tsx scripts/cli.ts --scenario=dad-birthday
+# Development
+npm run dev              # Run full stack (backend + frontend)
+npm run server           # Backend only
+npm run server:dev       # Backend with watch mode
 
-# Your own query
-npx tsx scripts/cli.ts
+# Database
+npm run setup:schema     # Initialize Neo4j schema
+npm run ingest:products  # Load product data
+
+# Testing
+npm run test:personas:quick    # Quick persona test
+npm run test:personas:list     # List all personas
+npm run test:persona -- "name" # Test specific persona
+
+# Build
+npm run build            # Build for production
 ```
 
-**Questions?** Check [docs/FIXES_COMPLETE.md](docs/FIXES_COMPLETE.md) for latest system status.
+### Adding New Products
+
+Products can be ingested from CSV:
+
+```bash
+npm run ingest:products -- path/to/products.csv
+```
+
+CSV format:
+```csv
+product_id,name,description,price,vendor,category
+p001,Product Name,Description,29.99,Vendor Name,Category
+```
+
+### Creating Custom Personas
+
+Add a new JSON file to `personas/`:
+
+```json
+{
+  "name": "Persona Name",
+  "profile": {
+    "description": "Description of the persona",
+    "shopping_behavior": "How they shop for gifts"
+  },
+  "test_cases": [
+    {
+      "query": "Gift for my friend who loves hiking",
+      "expected_themes": ["outdoor", "adventure", "nature"]
+    }
+  ]
+}
+```
+
+## Conversation Persistence
+
+All user conversations are automatically persisted to Neo4j, including:
+
+- User queries and responses
+- Recommendations with reasoning
+- Agent execution timings
+- Context extraction
+- Recipient profiles
+- Success/failure status
+
+This enables:
+- Viewing conversation history in the frontend
+- Learning from past interactions
+- Debugging and analytics
+- Improving recommendations over time
+
+## Monitoring and Logging
+
+Logs are written to:
+- `logs/combined.log` - All logs
+- `logs/error.log` - Errors only
+- Console output during development
+
+Log levels: `error`, `warn`, `info`, `debug`
+
+Configure in `.env.local`:
+```env
+LOG_LEVEL=info
+```
+
+## Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Test with persona framework
+4. Submit a pull request
+
+## License
+
+Private project - All rights reserved
+
+## Contact
+
+For questions or issues, please open a GitHub issue.
 
 ---
 
-**Last Updated**: October 26, 2025
-**Status**: MVP Ready for Testing 🚀
+**Version**: 2.1.0
+**Last Updated**: November 3, 2025
+**Status**: In Development - Quality Improvements in Progress
