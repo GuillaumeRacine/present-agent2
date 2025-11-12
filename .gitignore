@@ -44,3 +44,14 @@ next-env.d.ts
 # Vercel
 .vercel
 .env.local
+
+# Temporary files and checkpoints
+.tmp/
+*.checkpoint.json
+.gift-attributes-checkpoint.json
+
+# Test files
+test-*.ts
+test-*.js
+demo-*.ts
+validate-*.ts

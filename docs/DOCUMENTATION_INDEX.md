@@ -62,6 +62,19 @@ docs/
 │
 └── [Other docs]
     ├── AGENTS.md                      # Agent architecture
+    ├── contributor/                   # Contributor onboarding
+    │   └── AGENTS.md                  # Repository guidelines
+    ├── agents/                        # Agent-specific bundles
+    │   ├── listener/                  # Listener enhancements + checklists
+    │   ├── storyteller/               # Storyteller deep dives
+    │   ├── meaning/                   # Meaning agent reports
+    │   └── validator/                 # Validator improvements
+    ├── performance/                   # Cache & explorer optimization
+    │   ├── cache/                     # Cache implementation docs
+    │   └── explorer/                  # Explorer performance reports
+    ├── improvements/                  # Daily and rollout summaries
+    ├── relationships/                 # Relationship modeling guides
+    ├── quality/                       # QA strategy + validation
     ├── CONVERSATION_PERSISTENCE.md    # History storage
     ├── FRONTEND_GUIDE.md              # Frontend docs
     ├── FRONTEND_COMPLETE.md           # Frontend summary
@@ -169,6 +182,16 @@ docs/
 - Performance tracking
 - Phase C progress
 - Troubleshooting
+
+### Contributor Workflow
+**File**: [contributor/AGENTS.md](contributor/AGENTS.md)
+**Purpose**: Repository guidelines and contributor standards
+**Topics**:
+- Project structure and agent module layout
+- Required dev/test commands
+- Coding style and naming conventions
+- Testing expectations and coverage targets
+- Commit/PR checklist + security tips
 
 ---
 

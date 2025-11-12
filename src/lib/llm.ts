@@ -8,9 +8,16 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from './logger.js';
+import { withEmbeddingCache } from './cache.js';
 
 let openaiClient: OpenAI | null = null;
 let anthropicClient: Anthropic | null = null;
+
+// API key health tracking
+let openaiKeyValid: boolean | null = null;
+let anthropicKeyValid: boolean | null = null;
+let lastWarningTime = 0;
+const WARNING_COOLDOWN = 60000; // Show warning max once per minute
 
 /**
  * Initialize clients
@@ -26,6 +33,19 @@ function initClients() {
     anthropicClient = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY
     });
+  }
+}
+
+/**
+ * Show user-friendly warning about API key issues (with cooldown)
+ */
+function showApiKeyWarning(provider: 'OpenAI' | 'Claude', fallback: string) {
+  const now = Date.now();
+  if (now - lastWarningTime > WARNING_COOLDOWN) {
+    logger.warn(`⚠️  API KEY WARNING: ${provider} API key has expired or is invalid!`);
+    logger.warn(`   System is running with fallback to ${fallback}, but performance may be affected.`);
+    logger.warn(`   Please update your ${provider === 'OpenAI' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY'} in .env.local`);
+    lastWarningTime = now;
   }
 }
 
@@ -55,11 +75,23 @@ export async function chatCompletion(params: {
         throw new Error('No response from OpenAI');
       }
 
+      openaiKeyValid = true;
       logger.debug('OpenAI chat completion successful');
       return content;
 
-    } catch (error) {
-      logger.warn('OpenAI failed, falling back to Claude', { error });
+    } catch (error: any) {
+      openaiKeyValid = false;
+
+      // Check if it's an API key error
+      const isKeyError = error?.status === 401 ||
+                        error?.code === 'invalid_api_key' ||
+                        error?.message?.includes('API key');
+
+      if (isKeyError) {
+        showApiKeyWarning('OpenAI', 'Claude');
+      } else {
+        logger.warn('OpenAI failed, falling back to Claude', { error: error?.message });
+      }
     }
   }
 
@@ -88,11 +120,24 @@ export async function chatCompletion(params: {
         throw new Error('Unexpected response type from Claude');
       }
 
+      anthropicKeyValid = true;
       logger.debug('Claude chat completion successful');
       return content.text;
 
-    } catch (error) {
-      logger.error('Claude also failed', { error });
+    } catch (error: any) {
+      anthropicKeyValid = false;
+
+      // Check if it's an API key error
+      const isKeyError = error?.status === 401 ||
+                        error?.type === 'authentication_error' ||
+                        error?.message?.includes('API key');
+
+      if (isKeyError && openaiKeyValid === false) {
+        logger.error('⚠️  BOTH API KEYS INVALID: OpenAI and Claude API keys have expired!');
+        logger.error('   Please update both OPENAI_API_KEY and ANTHROPIC_API_KEY in .env.local');
+      }
+
+      logger.error('Claude also failed', { error: error?.message });
       throw new Error('Both OpenAI and Claude failed');
     }
   }
@@ -103,6 +148,7 @@ export async function chatCompletion(params: {
 /**
  * Generate embedding - REQUIRES OpenAI API key
  * NO MOCK DATA - will throw error if OpenAI is not available
+ * Automatically cached with 24-hour TTL
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   initClients();
@@ -111,21 +157,24 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     throw new Error('CRITICAL: OpenAI API key required for embeddings. Mock embeddings are disabled to ensure recommendation quality. Set OPENAI_API_KEY environment variable.');
   }
 
-  try {
-    logger.debug('Generating OpenAI embedding');
-    const response = await openaiClient.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: text,
-      encoding_format: 'float'
-    });
+  // Use cache wrapper - automatically handles caching logic
+  return withEmbeddingCache(text, async (text: string) => {
+    try {
+      logger.debug('Generating OpenAI embedding (cache miss)');
+      const response = await openaiClient!.embeddings.create({
+        model: 'text-embedding-3-small',
+        input: text,
+        encoding_format: 'float'
+      });
 
-    logger.debug('OpenAI embedding generation successful');
-    return response.data[0].embedding;
+      logger.debug('OpenAI embedding generation successful');
+      return response.data[0].embedding;
 
-  } catch (error) {
-    logger.error('OpenAI embedding failed - NO FALLBACK TO MOCK DATA', { error });
-    throw new Error('Failed to generate real embedding. Mock embeddings disabled for recommendation quality.');
-  }
+    } catch (error) {
+      logger.error('OpenAI embedding failed - NO FALLBACK TO MOCK DATA', { error });
+      throw new Error('Failed to generate real embedding. Mock embeddings disabled for recommendation quality.');
+    }
+  });
 }
 
 // MOCK EMBEDDINGS REMOVED - ONLY REAL OPENAI EMBEDDINGS ALLOWED
@@ -134,6 +183,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 /**
  * Generate embeddings in batch - REQUIRES OpenAI API key
  * NO MOCK DATA - will throw error if OpenAI is not available
+ * Uses individual caching per text for better cache reuse
  */
 export async function generateEmbeddingsBatch(
   texts: string[],
@@ -145,29 +195,73 @@ export async function generateEmbeddingsBatch(
     throw new Error('CRITICAL: OpenAI API key required for embeddings. Mock embeddings are disabled to ensure recommendation quality. Set OPENAI_API_KEY environment variable.');
   }
 
+  // Check cache for each text individually
+  // This allows better reuse across different batch operations
   const embeddings: number[][] = [];
+  const uncachedTexts: string[] = [];
+  const uncachedIndices: number[] = [];
 
-  for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize);
-
+  for (let i = 0; i < texts.length; i++) {
     try {
-      logger.debug(`Generating OpenAI embeddings for batch ${Math.floor(i / batchSize) + 1}`);
-      const response = await openaiClient.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: batch,
-        encoding_format: 'float'
-      });
-
-      const batchEmbeddings = response.data.map(d => d.embedding);
-      embeddings.push(...batchEmbeddings);
-
-    } catch (error) {
-      logger.error(`OpenAI batch embedding failed - NO FALLBACK TO MOCK DATA`, { error });
-      throw new Error('Failed to generate real embeddings. Mock embeddings disabled for recommendation quality.');
+      const embedding = await generateEmbedding(texts[i]);
+      embeddings[i] = embedding;
+    } catch {
+      // If cache miss or error, queue for batch generation
+      uncachedTexts.push(texts[i]);
+      uncachedIndices.push(i);
     }
   }
 
+  // Generate embeddings for uncached texts in batches
+  if (uncachedTexts.length > 0) {
+    logger.debug(`Generating ${uncachedTexts.length} embeddings (${texts.length - uncachedTexts.length} from cache)`);
+
+    for (let i = 0; i < uncachedTexts.length; i += batchSize) {
+      const batch = uncachedTexts.slice(i, i + batchSize);
+      const batchIndices = uncachedIndices.slice(i, i + batchSize);
+
+      try {
+        logger.debug(`Generating OpenAI embeddings for batch ${Math.floor(i / batchSize) + 1}`);
+        const response = await openaiClient.embeddings.create({
+          model: 'text-embedding-3-small',
+          input: batch,
+          encoding_format: 'float'
+        });
+
+        const batchEmbeddings = response.data.map(d => d.embedding);
+
+        // Store in result array and cache
+        for (let j = 0; j < batchEmbeddings.length; j++) {
+          embeddings[batchIndices[j]] = batchEmbeddings[j];
+          // Cache each embedding individually
+          await withEmbeddingCache(batch[j], async () => batchEmbeddings[j]);
+        }
+
+      } catch (error) {
+        logger.error(`OpenAI batch embedding failed - NO FALLBACK TO MOCK DATA`, { error });
+        throw new Error('Failed to generate real embeddings. Mock embeddings disabled for recommendation quality.');
+      }
+    }
+  } else {
+    logger.debug(`All ${texts.length} embeddings retrieved from cache`);
+  }
+
   return embeddings;
+}
+
+/**
+ * Get API key health status
+ */
+export function getApiKeyStatus(): {
+  openai: boolean | null;
+  anthropic: boolean | null;
+  hasValidKey: boolean;
+} {
+  return {
+    openai: openaiKeyValid,
+    anthropic: anthropicKeyValid,
+    hasValidKey: openaiKeyValid === true || anthropicKeyValid === true
+  };
 }
 
 /**

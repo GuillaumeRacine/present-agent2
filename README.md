@@ -206,6 +206,7 @@ See [docs/API.md](docs/API.md) for complete API documentation.
 - **[Documentation Index](docs/DOCUMENTATION_INDEX.md)** - All documentation
 
 ### Guides & References
+- **[Repository Guidelines](docs/contributor/AGENTS.md)** - Contributor workflow and standards
 - **[Frontend Guide](docs/FRONTEND_GUIDE.md)** - Complete frontend documentation
 - **[Persona Testing](docs/PERSONA_TESTING_FRAMEWORK.md)** - Testing framework guide
 - **[Graph Schema](docs/GRAPH_SCHEMA_V2.md)** - Neo4j database schema

@@ -22,6 +22,7 @@ Complete documentation for the Present-Agent2 AI-powered gift recommendation sys
 - **[Phase C Deploying](phases/PHASE_C_DEPLOYING.md)** - LLM interest extraction (IN PROGRESS)
 
 ### Guides & References
+- **[Repository Guidelines](contributor/AGENTS.md)** - Contributor workflow and standards
 - **[Batched Deployment Guide](guides/BATCHED_DEPLOYMENT.md)** - Large-scale deployment patterns
 - **[Monitoring Guide](guides/MONITORING.md)** - System monitoring and alerting
 - **[Conversation Persistence](CONVERSATION_PERSISTENCE.md)** - History storage system
@@ -54,6 +55,15 @@ Complete documentation for the Present-Agent2 AI-powered gift recommendation sys
 - **[FRONTEND_COMPLETE.md](FRONTEND_COMPLETE.md)** - Frontend implementation summary
 - **[product_vision.md](product_vision.md)** - Original product vision
 - **[CLAUDE.md](CLAUDE.md)** - Claude-specific documentation
+
+### Documentation Collections
+
+- `contributor/` - Contributor onboarding materials (e.g., Repository Guidelines)
+- `agents/` - Agent-specific deep dives grouped by agent (listener, storyteller, meaning, validator)
+- `performance/` - Cache and explorer optimization references
+- `improvements/` - Ongoing implementation notes and daily improvement logs
+- `relationships/` - Relationship modeling and value-matching guides
+- `quality/` - QA playbooks and validation strategies
 
 ## Key Features
 
