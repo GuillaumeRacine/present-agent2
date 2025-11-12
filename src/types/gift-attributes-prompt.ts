@@ -176,12 +176,27 @@ GROUP 11: EMOTIONAL TONE (6 attributes)
 
 ANALYSIS GUIDELINES:
 • Infer attributes based on the product's NATURE, not just explicit keywords
-• A product can have MANY attributes across multiple groups (10-20 is common)
+• A product can have MANY attributes across multiple groups (20-30 is common, aim for comprehensive coverage)
 • Consider the GIFT-GIVING CONTEXT: What type of gift experience does this create?
 • Think about WHY someone would give this as a gift and HOW it would be received
 • Only mark attributes as TRUE if they genuinely and clearly apply
 • Consider BOTH obvious and subtle attributes (e.g., a book can be isEducational, isPortable, isPassive, isIndoor, AND isCalming)
-• Price influences some attributes: under $50 → isBudgetFriendly, over $200 → isSplurgeWorthy/isLuxury
+• Price influences some attributes: under $50 → isBudgetFriendly, over $100 → isLuxury, over $150 → isSplurgeWorthy
+
+DIMENSION GROUP CHECKLIST (ensure comprehensive coverage):
+✓ GROUP 1 (Experience & Time): 1-3 attributes expected - Consider durability, consumption, time value
+✓ GROUP 2 (Sentiment & Emotional): 0-4 attributes expected - Think personalization potential, emotional meaning, symbolic value
+✓ GROUP 3 (Function & Utility): 3-6 attributes expected - Core functionality, practical aspects, maintenance
+✓ GROUP 4 (Social & Relationship): 1-5 attributes expected - Who uses it? Alone or together? Age/gender considerations
+✓ GROUP 5 (Aesthetic & Design): 2-5 attributes expected - Visual style, design language, aesthetic appeal
+✓ GROUP 6 (Learning & Growth): 0-4 attributes expected - Does it teach, inspire, help achieve goals, expand thinking?
+✓ GROUP 7 (Sustainability & Ethics): 0-3 attributes expected - Check for eco/handmade/local/ethical signals
+✓ GROUP 8 (Physical & Sensory): 3-7 attributes expected - Texture, size, weight, sensory experience
+✓ GROUP 9 (Usage Context): 2-5 attributes expected - Where/when/how is it used? Skill level required?
+✓ GROUP 10 (Value & Uniqueness): 2-4 attributes expected - Price positioning, availability, uniqueness, trend status
+✓ GROUP 11 (Emotional Tone): 1-3 attributes expected - Overall vibe/feeling (whimsical, serious, playful, calming, etc.)
+
+CRITICAL: Review each dimension group systematically. Don't skip groups 2, 6, 7, or 11 - these are often overlooked but add crucial gift-matching context!
 
 COMPREHENSIVE EXAMPLES (showing multi-dimensional analysis):
 
@@ -191,8 +206,8 @@ Example 1: "Handmade Leather Journal with Custom Embossing"
 Example 2: "Cooking Class for Two - Italian Cuisine"
 → isExperiential, isEducational, isMemoryMaking, isShared, isActive, isSkillBuilding, isIntimateGathering, isCreative, isImmediateGratification, isCrowdPleaser, isGenderNeutral, isAllAges, isPlayful, isEnergetic, isSocial, isRomantic (if for couples)
 
-Example 3: "Smart Watch with Fitness Tracking"
-→ isTechEnabled, isPractical, isWellness, isPortable, isActive, isProductivityEnhancing, isUpgradable, isMultiFunctional, isModern, isEveryday, isDurable, isSplurgeWorthy (if expensive), isTrendy, isMainstream, isIndoor, isOutdoor, isTravel
+Example 3: "Professional Chef's Knife Set - German Steel ($180)"
+→ isPractical, isLastingValue, isLuxury, isDurable, isRepairable, isSkillBuilding, isAspirational, isHome, isIndoor, isSplurgeWorthy, isTimeless, isElegant, isTactile, isSharp, isCreative, isSerious
 
 Example 4: "Vintage Wine Collection (3 bottles, $250)"
 → isLuxury, isConsumable, isEdible, isSplurgeWorthy, isVintage, isElegant, isSophisticated, isShared, isConversationStarter, isCollectible, isCelebratory, isRespectful, isPassive, isFragrant, isIndoor, isHostingRelated, isIntimateGathering
@@ -208,6 +223,12 @@ Example 7: "Limited Edition Art Print by Famous Artist"
 
 Example 8: "Board Game - Strategy & Fun for Groups"
 → isShared, isPlayful, isFamilyFriendly, isPartyFocused, isConversationStarter, isEnergetic, isCrowdPleaser, isLastingValue, isIndoor, isPassive, isActive (mentally), isAllAges, isGenderNeutral, isEducational (strategy), isBudgetFriendly, isMainstream
+
+Example 9: "Cashmere Scarf - Hand-woven ($85)"
+→ isPractical, isLuxury, isPortable, isWarm, isElegant, isHandcrafted, isTactile, isLastingValue, isTimeless, isTravel, isIndoor, isOutdoor, isSplurgeWorthy, isComforting, isGenderNeutral, isEthicallySourced, isTextured, isSubtle
+
+Example 10: "Insulated Water Bottle - Stainless Steel ($22)"
+→ isPractical, isPortable, isEasyToMaintain, isDurable, isRepairable, isTravel, isIndoor, isOutdoor, isActive, isWellness, isBudgetFriendly, isMainstream, isEcoFriendly, isAllAges, isGenderNeutral, isModern, isReadyToUse
 
 ═══════════════════════════════════════════════════════════════
 

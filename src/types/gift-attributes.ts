@@ -522,6 +522,91 @@ export function inferAttributesFromProduct(product: {
 import { generateComprehensiveAttributePrompt } from './gift-attributes-prompt.js';
 
 /**
+ * Semantic Validation Rules
+ * Ensures LLM output is logically consistent
+ */
+const MUTUALLY_EXCLUSIVE_PAIRS: [keyof GiftAttributes, keyof GiftAttributes][] = [
+  ['isBudgetFriendly', 'isLuxury'],
+  ['isBudgetFriendly', 'isSplurgeWorthy'],
+  ['isCompact', 'isBulky'],
+  ['isOneTimeUse', 'isLastingValue'],
+  ['isMinimalist', 'isBold'],
+  ['isSubtle', 'isVisuallyStriking'],
+];
+
+/**
+ * Apply semantic validation to ensure logical consistency
+ * @param attributes - Raw attributes from LLM
+ * @param price - Product price for validation
+ * @returns Validated and corrected attributes
+ */
+function applySemanticValidation(
+  attributes: Partial<GiftAttributes>,
+  price?: number
+): Partial<GiftAttributes> {
+  const validated = { ...attributes };
+
+  // Rule 1: Resolve mutually exclusive pairs (keep stronger signal)
+  for (const [attr1, attr2] of MUTUALLY_EXCLUSIVE_PAIRS) {
+    if (validated[attr1] && validated[attr2]) {
+      // For price-based conflicts, trust the price
+      if ((attr1 === 'isBudgetFriendly' || attr2 === 'isBudgetFriendly') && price) {
+        if (price <= 50) {
+          validated['isBudgetFriendly'] = true;
+          validated['isLuxury'] = false;
+          validated['isSplurgeWorthy'] = false;
+        } else if (price >= 150) {
+          validated['isBudgetFriendly'] = false;
+          validated['isSplurgeWorthy'] = true;
+        } else if (price >= 100) {
+          validated['isBudgetFriendly'] = false;
+          validated['isLuxury'] = true;
+        }
+      } else {
+        // For other conflicts, remove second attribute (arbitrary but consistent)
+        validated[attr2] = false;
+      }
+    }
+  }
+
+  // Rule 2: Price-based validation
+  if (price) {
+    // Budget-friendly: under $50
+    if (price > 50 && validated['isBudgetFriendly']) {
+      validated['isBudgetFriendly'] = false;
+    }
+    if (price <= 50 && !validated['isBudgetFriendly']) {
+      validated['isBudgetFriendly'] = true;
+    }
+
+    // Luxury: over $100
+    if (price < 100 && validated['isLuxury']) {
+      validated['isLuxury'] = false;
+    }
+
+    // Splurge-worthy: over $150
+    if (price < 150 && validated['isSplurgeWorthy']) {
+      validated['isSplurgeWorthy'] = false;
+    }
+    if (price >= 150) {
+      validated['isSplurgeWorthy'] = true;
+    }
+  }
+
+  // Rule 3: Conditional requirements
+  // If collectible, should have lastingValue or isUnique
+  if (validated['isCollectible'] && !validated['isLastingValue'] && !validated['isUnique']) {
+    validated['isLastingValue'] = true;
+  }
+
+  // Rule 4: Indoor/Outdoor can both be true for versatile products
+  // Active/Passive can both be true for multi-dimensional products
+  // No change needed - these are not strictly exclusive
+
+  return validated;
+}
+
+/**
  * Infer gift attributes using LLM with comprehensive 100-attribute analysis (GPT-4o-mini)
  *
  * @param product - Product with title, description, price, vendor, interests
@@ -546,7 +631,7 @@ export async function inferAttributesFromProductLLM(product: {
       messages: [
         { role: 'user', content: prompt }
       ],
-      temperature: 0.3,
+      temperature: 0.5,
       jsonMode: true
     });
 
@@ -561,7 +646,10 @@ export async function inferAttributesFromProductLLM(product: {
       }
     }
 
-    return validAttributes;
+    // Apply semantic validation to ensure logical consistency
+    const semanticallyValidated = applySemanticValidation(validAttributes, product.price);
+
+    return semanticallyValidated;
 
   } catch (error: any) {
     // Log error but don't throw - return empty attributes as fallback
