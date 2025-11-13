@@ -30,7 +30,9 @@
     "attributes:test-llm:20": "tsx scripts/test-llm-attributes.ts 20",
     "attributes:populate:llm": "tsx scripts/populate-gift-attributes.ts --live --use-llm",
     "attributes:populate:llm-test": "tsx scripts/populate-gift-attributes.ts --limit 100 --use-llm",
-    "attributes:populate:llm-resume": "tsx scripts/populate-gift-attributes.ts --live --use-llm --resume"
+    "attributes:populate:llm-resume": "tsx scripts/populate-gift-attributes.ts --live --use-llm --resume",
+    "attributes:populate:missing": "tsx scripts/populate-missing-attributes.ts",
+    "attributes:status": "tsx scripts/check-attribute-status.ts"
   },
   "keywords": [
     "recommendation-engine",

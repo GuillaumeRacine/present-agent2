@@ -152,103 +152,111 @@ async function populateGiftAttributes(
     let totalTokens = checkpoint?.stats.totalTokens || 0;
     const processedIds: string[] = checkpoint?.processedIds || [];
 
-    // LLM rate limiting (100 requests per minute = 600ms per request)
-    const LLM_DELAY_MS = 600;
+    // Parallel processing configuration
+    const CONCURRENCY = 10; // Process 10 products at a time
     const CHECKPOINT_INTERVAL = 100; // Save checkpoint every 100 products
 
-    // Process products
+    // Process products in batches
     const startTime = Date.now();
-    for (let i = 0; i < products.length; i++) {
-      const product = products[i];
-
+    const processProduct = async (product: Product) => {
       try {
-        spinner.start(`${useLLM ? 'LLM inference' : 'Processing'}: ${processed + 1}/${products.length + (checkpoint?.stats.processed || 0)}`);
-
         // Infer attributes (LLM or keyword-based)
         let attributes;
+        let tokens = 0;
+
         if (useLLM) {
           attributes = await inferAttributesFromProductLLM(product);
 
-          // Rate limiting for LLM
-          if (i < products.length - 1) {
-            await sleep(LLM_DELAY_MS);
-          }
-
           // Estimate tokens (rough: ~3 tokens per word)
-          const estimatedTokens = Math.ceil(
+          tokens = Math.ceil(
             (product.title.split(' ').length +
              (product.description || '').split(' ').length) * 3
           );
-          totalTokens += estimatedTokens;
         } else {
           attributes = inferAttributesFromProduct(product);
         }
 
+        let hasAttributes = false;
         if (Object.keys(attributes).length > 0) {
-          withAttributes++;
+          hasAttributes = true;
 
           if (!dryRun) {
             // Update product in Neo4j
-            await session.run(`
-              MATCH (p:Product {id: $productId})
-              SET p.is_experiential = $isExperiential,
-                  p.is_memory_making = $isMemoryMaking,
-                  p.is_sentimental = $isSentimental,
-                  p.is_personalized = $isPersonalized,
-                  p.is_practical = $isPractical,
-                  p.is_luxury = $isLuxury,
-                  p.is_aspirational = $isAspirational,
-                  p.is_educational = $isEducational,
-                  p.is_shared = $isShared,
-                  p.is_conversation_starter = $isConversationStarter,
-                  p.is_lasting_value = $isLastingValue,
-                  p.is_consumable = $isConsumable,
-                  p.is_artistic = $isArtistic,
-                  p.is_minimalist = $isMinimalist,
-                  p.attributes_updated_at = datetime()
-            `, {
-              productId: product.id,
-              isExperiential: attributes.isExperiential || false,
-              isMemoryMaking: attributes.isMemoryMaking || false,
-              isSentimental: attributes.isSentimental || false,
-              isPersonalized: attributes.isPersonalized || false,
-              isPractical: attributes.isPractical || false,
-              isLuxury: attributes.isLuxury || false,
-              isAspirational: attributes.isAspirational || false,
-              isEducational: attributes.isEducational || false,
-              isShared: attributes.isShared || false,
-              isConversationStarter: attributes.isConversationStarter || false,
-              isLastingValue: attributes.isLastingValue || false,
-              isConsumable: attributes.isConsumable || false,
-              isArtistic: attributes.isArtistic || false,
-              isMinimalist: attributes.isMinimalist || false,
-            });
-          } else {
-            // Dry run - log sample
-            if (processed < 5) {
-              const attrNames = Object.keys(attributes).filter(k => attributes[k as keyof typeof attributes]);
-              console.log(`  [DRY RUN] ${product.title.substring(0, 50)}... → [${attrNames.join(', ')}]`);
+            const updateSession = driver.session();
+            try {
+              await updateSession.run(`
+                MATCH (p:Product {id: $productId})
+                SET p.is_experiential = $isExperiential,
+                    p.is_memory_making = $isMemoryMaking,
+                    p.is_sentimental = $isSentimental,
+                    p.is_personalized = $isPersonalized,
+                    p.is_practical = $isPractical,
+                    p.is_luxury = $isLuxury,
+                    p.is_aspirational = $isAspirational,
+                    p.is_educational = $isEducational,
+                    p.is_shared = $isShared,
+                    p.is_conversation_starter = $isConversationStarter,
+                    p.is_lasting_value = $isLastingValue,
+                    p.is_consumable = $isConsumable,
+                    p.is_artistic = $isArtistic,
+                    p.is_minimalist = $isMinimalist,
+                    p.attributes_updated_at = datetime()
+              `, {
+                productId: product.id,
+                isExperiential: attributes.isExperiential || false,
+                isMemoryMaking: attributes.isMemoryMaking || false,
+                isSentimental: attributes.isSentimental || false,
+                isPersonalized: attributes.isPersonalized || false,
+                isPractical: attributes.isPractical || false,
+                isLuxury: attributes.isLuxury || false,
+                isAspirational: attributes.isAspirational || false,
+                isEducational: attributes.isEducational || false,
+                isShared: attributes.isShared || false,
+                isConversationStarter: attributes.isConversationStarter || false,
+                isLastingValue: attributes.isLastingValue || false,
+                isConsumable: attributes.isConsumable || false,
+                isArtistic: attributes.isArtistic || false,
+                isMinimalist: attributes.isMinimalist || false,
+              });
+            } finally {
+              await updateSession.close();
             }
           }
         }
 
-        processed++;
-        processedIds.push(product.id);
-
-        // Save checkpoint periodically (only for LLM mode)
-        if (useLLM && !dryRun && processed % CHECKPOINT_INTERVAL === 0) {
-          saveCheckpoint({
-            processedIds,
-            stats: { processed, withAttributes, failed, totalTokens }
-          });
-        }
-
-        spinner.succeed(`Processed ${processed}/${products.length + (checkpoint?.stats.processed || 0)} products`);
-
+        return { success: true, productId: product.id, hasAttributes, tokens };
       } catch (error) {
-        spinner.fail(`Product failed: ${error}`);
-        failed++;
+        return { success: false, productId: product.id, error, hasAttributes: false, tokens: 0 };
       }
+    };
+
+    // Process in concurrent batches
+    for (let i = 0; i < products.length; i += CONCURRENCY) {
+      const batch = products.slice(i, i + CONCURRENCY);
+      spinner.start(`${useLLM ? 'LLM inference' : 'Processing'}: ${processed}/${products.length + (checkpoint?.stats.processed || 0)}`);
+
+      const results = await Promise.all(batch.map(processProduct));
+
+      for (const result of results) {
+        if (result.success) {
+          processed++;
+          processedIds.push(result.productId);
+          if (result.hasAttributes) withAttributes++;
+          if (result.tokens) totalTokens += result.tokens;
+        } else {
+          failed++;
+        }
+      }
+
+      // Save checkpoint periodically (only for LLM mode)
+      if (useLLM && !dryRun && processed % CHECKPOINT_INTERVAL === 0) {
+        saveCheckpoint({
+          processedIds,
+          stats: { processed, withAttributes, failed, totalTokens }
+        });
+      }
+
+      spinner.succeed(`Processed ${processed}/${products.length + (checkpoint?.stats.processed || 0)} products`);
     }
 
     const totalProducts = products.length + (checkpoint?.stats.processed || 0);

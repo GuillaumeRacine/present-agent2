@@ -140,6 +140,11 @@ export async function chatCompletion(params: {
       logger.error('Claude also failed', { error: error?.message });
       throw new Error('Both OpenAI and Claude failed');
     }
+  } else {
+    // No Claude client available
+    if (openaiKeyValid === false) {
+      throw new Error('OpenAI failed and Claude is not configured. Set ANTHROPIC_API_KEY in .env.local for fallback support');
+    }
   }
 
   throw new Error('No LLM providers configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY');
