@@ -19,6 +19,11 @@ export abstract class BaseAgent<TInput, TOutput> implements Agent<TInput, TOutpu
    * Log agent execution (for debugging)
    */
   protected log(message: string, data?: any): void {
+    // Skip logging in quiet mode (CLI chat)
+    if (process.env.QUIET_MODE === 'true') {
+      return;
+    }
+
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] [${this.name}] ${message}`);
     if (data) {
