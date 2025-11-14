@@ -11,6 +11,10 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
+// Set quiet mode - only show errors in logs
+process.env.LOG_LEVEL = 'error';
+process.env.QUIET_MODE = 'true';
+
 import { createOrchestrator } from '../src/services/orchestrator.js';
 import { initNeo4j, closeNeo4j } from '../src/lib/neo4j.js';
 import { persistConversation } from '../src/services/conversation-persister.js';
