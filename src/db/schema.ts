@@ -41,7 +41,8 @@ export async function createConstraints(): Promise<void> {
           status: 'success'
         });
       } catch (error: any) {
-        if (error.code === 'Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists') {
+        if (error.code === 'Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists' ||
+            error.code === 'Neo.ClientError.Schema.IndexWithNameAlreadyExists') {
           logSchemaSetup({
             operation: 'constraint',
             name: constraint.name,
@@ -89,7 +90,8 @@ export async function createIndexes(): Promise<void> {
           status: 'success'
         });
       } catch (error: any) {
-        if (error.code === 'Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists') {
+        if (error.code === 'Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists' ||
+            error.code === 'Neo.ClientError.Schema.IndexWithNameAlreadyExists') {
           logSchemaSetup({
             operation: 'index',
             name: index.name,

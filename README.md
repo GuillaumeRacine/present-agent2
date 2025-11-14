@@ -218,16 +218,17 @@ See [docs/API.md](docs/API.md) for complete API documentation.
 - ✅ Agent performance analysis and optimization roadmap
 
 **See**:
-- [Attribute System Validation Report](ATTRIBUTE_SYSTEM_VALIDATION_REPORT.md) for quality metrics
-- [Agent Performance Analysis](AGENT_PERFORMANCE_ANALYSIS.md) for optimization roadmap
-- [User Testing Guide](USER_TESTING_GUIDE.md) for testing instructions
+- [Attribute System Validation Report](docs/reports/ATTRIBUTE_SYSTEM_VALIDATION_REPORT.md) for quality metrics
+- [Agent Performance Analysis](docs/reports/AGENT_PERFORMANCE_ANALYSIS.md) for optimization roadmap
+- [User Testing Guide](docs/guides/USER_TESTING_GUIDE.md) for testing instructions
 
 ## Documentation
 
 ### Core Documentation
-- **[Attribute System Validation](ATTRIBUTE_SYSTEM_VALIDATION_REPORT.md)** ⭐ System status & quality metrics
-- **[Agent Performance Analysis](AGENT_PERFORMANCE_ANALYSIS.md)** ⭐ Agent scoring & optimization roadmap
-- **[User Testing Guide](USER_TESTING_GUIDE.md)** - How to test recommendations
+- **[Attribute System Validation](docs/reports/ATTRIBUTE_SYSTEM_VALIDATION_REPORT.md)** ⭐ System status & quality metrics
+- **[Agent Performance Analysis](docs/reports/AGENT_PERFORMANCE_ANALYSIS.md)** ⭐ Agent scoring & optimization roadmap
+- **[User Testing Guide](docs/guides/USER_TESTING_GUIDE.md)** - How to test recommendations
+- **[Complete Attribute Guide](docs/guides/COMPLETE_ATTRIBUTE_POPULATION_GUIDE.md)** - Attribute population setup
 - **[Architecture](docs/ARCHITECTURE.md)** - Complete system architecture
 - **[API Documentation](docs/API.md)** - API endpoints and usage
 - **[Documentation Index](docs/DOCUMENTATION_INDEX.md)** - All documentation

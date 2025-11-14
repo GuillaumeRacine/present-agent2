@@ -13,14 +13,17 @@ import { MemoryInput, MemoryOutput, ListenerOutput } from '../../types/agents.js
 import { Driver } from 'neo4j-driver';
 import { logger } from '../../lib/logger.js';
 import { RecipientLearner } from './recipient-learner.js';
+import { GiverProfiler } from './giver-profiler.js';
 
 export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
   name = 'Memory';
   private recipientLearner: RecipientLearner;
+  private giverProfiler: GiverProfiler;
 
   constructor(private neo4j: Driver) {
     super();
     this.recipientLearner = new RecipientLearner(neo4j);
+    this.giverProfiler = new GiverProfiler(neo4j);
   }
 
   async process(input: MemoryInput): Promise<MemoryOutput> {
@@ -36,7 +39,7 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
 
       this.log(`Found ${pastConversations.length} past conversations, ${pastRecipients.length} recipients`);
 
-      // NEW: Build deep recipient profile using sub-agent
+      // Build deep recipient profile using sub-agent
       const recipientLearning = await this.recipientLearner.process({
         userId: input.userId,
         recipientName: input.listenerOutput.recipient?.name,
@@ -52,6 +55,21 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
           `knowledge depth: ${recipientLearning.confidence_level.toFixed(2)}`
         );
       }
+
+      // NEW: Build giver profile using sub-agent
+      const giverProfiling = await this.giverProfiler.process({
+        userId: input.userId,
+        currentQuery: input.listenerOutput.userQuery || '',
+        listenerContext: input.listenerOutput,
+        pastConversations,
+        pastRecipients,
+      });
+
+      this.log(
+        `🎁 Built giver profile: ${giverProfiling.giver_profile.shoppingStyle.typical_timing} shopper, ` +
+        `${giverProfiling.giver_profile.givingPhilosophy.primary_values.join('/')} values, ` +
+        `data quality: ${giverProfiling.confidence_level.toFixed(2)}`
+      );
 
       // Recognize patterns from history
       const recognizedPatterns = this.recognizePatterns(
@@ -72,6 +90,9 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
         enrichedRecipient: recipientLearning.enriched_recipient,
         recipientKnowledgeDepth: recipientLearning.confidence_level,
         recipientKnowledgeGaps: recipientLearning.knowledge_gaps,
+        giverProfile: giverProfiling.giver_profile,
+        giverInsights: giverProfiling.insights,
+        giverConfidence: giverProfiling.confidence_level,
         recalledAt: new Date(),
       };
     } catch (error) {

@@ -16,17 +16,22 @@ export interface ListenerInput {
 }
 
 export interface ListenerOutput {
+  // Original query (preserved for downstream agents)
+  userQuery?: string;
+
   // Explicit facts extracted
   recipient?: {
     name?: string;
     relationshipType?: string; // 'parent', 'partner', 'friend', 'colleague', etc.
     age?: number;
     gender?: string;
+    count?: number; // NEW: For plural recipients like "my parents"
   };
   occasion?: {
     name: string; // 'birthday', 'christmas', 'anniversary', etc.
     date?: string;
     urgency: 'immediate' | 'planned' | 'future';
+    significance?: 'major_life_event' | 'annual_celebration' | 'small_gesture'; // NEW
   };
   budget?: {
     min: number;
@@ -36,6 +41,84 @@ export interface ListenerOutput {
   interests: string[]; // Explicit interests mentioned
   values?: string[]; // e.g., 'eco-friendly', 'local', 'handmade'
   constraints?: string[]; // Hard requirements: 'must be digital', 'no alcohol'
+
+  // NEW: Enhanced constraints with structured data
+  enhancedConstraints?: {
+    budget?: {
+      min: number;
+      max: number;
+      flexibility: 'strict' | 'flexible' | 'unspecified';
+    };
+    excluded?: string[]; // "no food", "no tech", "nothing flashy"
+    required?: string[]; // "eco-friendly", "practical", "small"
+    size?: 'small' | 'medium' | 'large' | null;
+    timing?: 'urgent' | 'planned' | 'flexible';
+    space?: 'minimal' | 'moderate' | 'no_constraint'; // "doesn't take space"
+  };
+
+  // NEW: Life context extraction
+  lifeContext?: {
+    recentEvents?: string[]; // "just retired", "new job", "moved", "new baby"
+    lifeStage?: 'child' | 'teen' | 'young_adult' | 'young_professional' | 'parent' | 'midlife' | 'empty_nester' | 'retiree' | 'student';
+    livingSituation?: 'apartment' | 'house' | 'dorm' | 'downsizing' | 'shared_space' | 'unknown';
+    timeAvailability?: 'very_busy' | 'busy' | 'moderate' | 'lots_of_time' | 'unknown';
+  };
+
+  // NEW: Enhanced relationship depth
+  relationshipDepth?: {
+    type: 'parent' | 'partner' | 'sibling' | 'child' | 'friend' | 'coworker' | 'acquaintance' | 'boss' | 'client' | 'teacher';
+    closeness: 'very_close' | 'close' | 'casual' | 'professional' | 'distant';
+    duration?: 'new' | 'recent' | 'years' | 'lifetime';
+    appropriateness?: {
+      personalGifts: boolean;
+      expensiveGifts: boolean;
+      intimateGifts: boolean;
+      humorousGifts: boolean;
+    };
+  };
+
+  // NEW: Intent signals
+  intentSignals?: {
+    showThought: boolean; // "something special", "show I care"
+    impress: boolean; // "wow them", "stand out"
+    safe: boolean; // "can't go wrong", "appropriate"
+    unique: boolean; // "different", "nobody else will give"
+    lastMinute: boolean; // "urgent", "tomorrow", "forgot"
+    sentimental: boolean; // "meaningful", "from the heart"
+    practical: boolean; // "useful", "will use", "needs"
+  };
+
+  // NEW: Enhanced interest extraction
+  enhancedInterests?: {
+    explicit: Array<{
+      interest: string;
+      level?: 'casual' | 'enthusiast' | 'expert' | 'professional';
+      context?: string; // "just started yoga", "coffee snob"
+    }>;
+    inferred: Array<{
+      interest: string;
+      inferredFrom: string;
+      confidence: number;
+    }>;
+    antiInterests?: string[]; // "hates crowds", "doesn't like sweet things"
+  };
+
+  // NEW: Gift philosophy extraction
+  giftPhilosophy?: {
+    valuesMeaning: boolean; // "meaningful", "personal", "from the heart"
+    valuesPracticality: boolean; // "useful", "will use", "needs"
+    valuesExperience: boolean; // "memories", "experiences", "try new things"
+    valuesQuality: boolean; // "nice", "quality", "well-made"
+    valuesUniqueness: boolean; // "unique", "different", "one-of-a-kind"
+    valuesSustainability: boolean; // "eco-friendly", "sustainable", "ethical"
+  };
+
+  // NEW: Ambiguity detection
+  ambiguities?: Array<{
+    field: string;
+    issue: string;
+    suggestedClarification?: string;
+  }>;
 
   // Inferred emotional context
   emotionalTone?: 'excited' | 'stressed' | 'casual' | 'formal' | 'urgent';
@@ -97,10 +180,15 @@ export interface MemoryOutput {
     source: 'past_purchases' | 'past_likes' | 'user_profile';
   }>;
 
-  // NEW: Enhanced recipient profile from RecipientLearner sub-agent
+  // Enhanced recipient profile from RecipientLearner sub-agent
   enrichedRecipient?: any; // RecipientProfile from recipient.ts
   recipientKnowledgeDepth?: number;
   recipientKnowledgeGaps?: string[];
+
+  // NEW: Enhanced giver profile from GiverProfiler sub-agent
+  giverProfile?: any; // GiverProfile from giver.ts
+  giverInsights?: any[]; // GiverInsight[] from giver.ts
+  giverConfidence?: number;
 
   // Meta
   recalledAt: Date;
@@ -197,6 +285,10 @@ export interface MeaningOutput {
   // Meaning framework
   meaningFramework: {
     giftArchetype: string; // 'practical_luxury', 'experience', 'sentimental', etc.
+    archetypeConfidence: number; // 0-1 confidence in archetype identification
+    secondaryArchetype?: string; // Secondary archetype if applicable
+    secondaryConfidence?: number; // 0-1 confidence in secondary archetype
+    archetypeReasons: string[]; // Why this archetype was chosen
     emotionalMessage: string; // What this gift should communicate
     coreValues: string[]; // Values to align with
     personalRelevance: {
@@ -214,10 +306,19 @@ export interface MeaningOutput {
     socialNeeds?: string[]; // Status, belonging, identity
   };
 
+  // Enhanced constraints from meaning analysis
+  constraints?: {
+    explicitExclusions?: string[]; // User explicitly said "no X"
+    implicitExclusions?: string[]; // Inferred exclusions (e.g., "no space" → exclude large items)
+    requirements?: string[]; // Must-have attributes
+    spaceConsiderations?: 'minimalist' | 'compact' | 'normal' | 'statement-piece';
+    sustainabilityLevel?: 'required' | 'preferred' | 'neutral';
+  };
+
   // Discovery hints for Explorer
   discoveryHints: {
     semanticQueries: string[]; // Natural language queries for vector search
-    interestPathways: string[]; // Interests to traverse in graph
+    interestPathways: string[]; // Interests to traverse in graph (enhanced with compound interests)
     archetypeFilters: string[]; // Which archetypes to prioritize
   };
 
@@ -307,15 +408,30 @@ export interface ValidationResult {
     relevanceCheck: { passed: boolean; score: number };
     qualityCheck: { passed: boolean; issues: string[] };
     appropriatenessCheck: { passed: boolean; concerns: string[] };
+    archetypeCheck: { passed: boolean; score: number; reason?: string };
+    personalizationCheck: { passed: boolean; score: number; reason?: string };
+    diversityCheck: { passed: boolean; score: number; reason?: string };
+  };
+
+  // Multi-dimensional scoring
+  dimensionScores: {
+    relevanceScore: number;        // 0-1: Hybrid + vector + interest match
+    archetypeScore: number;        // 0-1: How well it matches desired archetype
+    personalizationScore: number;  // 0-1: Quality of personalization
+    diversityScore: number;        // 0-1: Contribution to diversity
   };
 
   // Overall verdict
-  overallScore: number; // 0-1
+  overallScore: number; // 0-1 (weighted average of dimension scores)
   confidence: number; // How confident in this validation?
 
   // Reasons
   passReasons?: string[];
   failReasons?: string[];
+
+  // Analytics tracking
+  rejectionCategory?: 'low_relevance' | 'archetype_mismatch' | 'poor_personalization' |
+                      'duplicate' | 'quality_issues' | 'budget' | 'constraints';
 }
 
 export interface ValidatorOutput {
@@ -335,6 +451,22 @@ export interface ValidatorOutput {
     passed: number;
     rejected: number;
     avgValidationScore: number;
+
+    // Quality metrics
+    avgRelevanceScore: number;
+    avgArchetypeScore: number;
+    avgPersonalizationScore: number;
+    diversityScore: number;
+
+    // Rejection analytics
+    rejectionsByCategory: Record<string, number>;
+    thresholdsUsed: {
+      hybridScore: number;
+      interestMatch: number;
+      archetypeMatch: number;
+      personalizationScore: number;
+    };
+    thresholdsLowered: boolean;
   };
 
   // Meta

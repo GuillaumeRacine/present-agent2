@@ -52,9 +52,10 @@ export class ConstraintsAgent extends BaseAgent<ConstraintsInput, ConstraintsOut
     const baseMax = budget?.max || 1000;
     const isStrict = listenerBudget?.flexibility === 'strict';
 
-    // Apply ±25% flexibility to budget range (unless strict)
-    // This allows products slightly above or below the stated budget
-    const flexibilityFactor = isStrict ? 1.0 : 0.25;
+    // STRICT BUDGET ENFORCEMENT: Only apply minimal flexibility for price rounding
+    // Users expect budget constraints to be respected exactly
+    // Allow only 2% flexibility for minor price variations (e.g., $39.99 vs $40)
+    const flexibilityFactor = 0.02;  // Reduced from 0.25 (25%) to 0.02 (2%)
     const adjustedMin = baseMin * (1 - flexibilityFactor);
     const adjustedMax = baseMax * (1 + flexibilityFactor);
 

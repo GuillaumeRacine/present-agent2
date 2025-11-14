@@ -25,6 +25,7 @@
     "test:real-users:hard": "tsx scripts/test-real-user-scenarios.ts hard",
     "test:real-users:expert": "tsx scripts/test-real-user-scenarios.ts expert",
     "chat": "tsx scripts/chat.ts",
+    "inspect": "tsx scripts/inspect-data.ts",
     "attributes:populate": "tsx scripts/populate-gift-attributes.ts --live",
     "attributes:test": "tsx scripts/populate-gift-attributes.ts --limit 100",
     "attributes:test-llm": "tsx scripts/test-llm-attributes.ts",
