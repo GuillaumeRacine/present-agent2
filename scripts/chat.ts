@@ -75,7 +75,6 @@ async function displayRecommendations(result: any): Promise<void> {
 }
 
 async function processQuery(query: string, config: ChatConfig): Promise<void> {
-  console.log(chalk.dim(`\n[User: ${config.userId}] [Session: ${config.sessionId}]`));
   console.log(chalk.yellow(`\n🤔 Processing: "${query}"\n`));
 
   const orchestrator = await createOrchestrator();
@@ -94,8 +93,6 @@ async function processQuery(query: string, config: ChatConfig): Promise<void> {
   );
 
   await displayRecommendations(result);
-
-  console.log(chalk.dim(`\n✓ Conversation saved to history (Total time: ${(duration / 1000).toFixed(1)}s)\n`));
 }
 
 async function interactiveMode(config: ChatConfig): Promise<void> {
