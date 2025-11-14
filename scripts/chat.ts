@@ -18,8 +18,8 @@ import readline from 'readline';
 import chalk from 'chalk';
 import boxen from 'boxen';
 
-// Default user ID (you can override with --user flag)
-const DEFAULT_USER_ID = 'gui-main';
+// Default user ID (you can override with --user flag or set your email)
+const DEFAULT_USER_ID = 'guillaume.racine.gr@gmail.com';
 
 interface ChatConfig {
   userId: string;
