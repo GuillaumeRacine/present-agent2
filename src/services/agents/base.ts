@@ -19,8 +19,10 @@ export abstract class BaseAgent<TInput, TOutput> implements Agent<TInput, TOutpu
    * Log agent execution (for debugging)
    */
   protected log(message: string, data?: any): void {
-    // Skip logging in quiet mode (CLI chat)
+    // In quiet mode (CLI chat), show simplified agent workflow
     if (process.env.QUIET_MODE === 'true') {
+      // Only show key agent activities, not data dumps
+      console.log(`   🤖 [${this.name}] ${message}`);
       return;
     }
 
