@@ -14,40 +14,40 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark">
       <body className="min-h-screen antialiased">
         <div className="min-h-screen bg-background">
           {/* Navigation */}
-          <nav className="border-b border-border">
-            <div className="max-w-5xl mx-auto px-6">
+          <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-40">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6">
               <div className="flex h-14 items-center justify-between">
                 {/* Logo & Brand */}
                 <Link href="/" className="flex items-center gap-3 group">
-                  <span className="text-sm font-medium text-foreground">Present Agent</span>
+                  <span className="text-sm sm:text-base font-medium text-foreground">Present Agent</span>
                 </Link>
 
                 {/* Navigation Links */}
                 <div className="flex items-center gap-1">
                   <Link
                     href="/"
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:text-muted-foreground transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-foreground hover:text-muted-foreground transition-colors"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    Chat
+                    <span className="hidden sm:inline">Chat</span>
                   </Link>
                   <Link
                     href="/logs"
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <ScrollText className="w-4 h-4" />
-                    Logs
+                    <span className="hidden sm:inline">Logs</span>
                   </Link>
                   <Link
                     href="/products"
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <Package className="w-4 h-4" />
-                    Products
+                    <span className="hidden sm:inline">Products</span>
                   </Link>
                 </div>
               </div>
@@ -55,7 +55,7 @@ export default function RootLayout({
           </nav>
 
           {/* Main Content */}
-          <main className="max-w-5xl mx-auto px-6 py-8">
+          <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
             {children}
           </main>
         </div>
