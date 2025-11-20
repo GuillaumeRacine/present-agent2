@@ -1,0 +1,217 @@
+{
+  "generatedAt": "2025-11-20T20:16:02.584Z",
+  "stats": {
+    "totalProducts": 41704,
+    "categoryDistribution": {},
+    "interestDistribution": {
+      "coffee": 2,
+      "reading": 2,
+      "gardening": 1,
+      "yoga": 1,
+      "cooking": 1,
+      "hiking": 1
+    },
+    "occasionDistribution": {
+      "birthday": 7,
+      "just_because": 4,
+      "christmas": 3,
+      "graduation": 1,
+      "anniversary": 1
+    },
+    "attributeDistribution": {
+      "is_practical": 23906,
+      "is_experiential": 3994,
+      "is_luxury": 12264,
+      "is_personalized": 2479
+    },
+    "priceRanges": {
+      "under25": 12216,
+      "25-50": 8558,
+      "50-100": 7135,
+      "100-200": 4924,
+      "over200": 8871
+    },
+    "vendorDistribution": {},
+    "productsWithoutInterests": 41696,
+    "productsWithoutOccasions": 41696,
+    "productsWithoutAttributes": 1
+  },
+  "gaps": {
+    "missingCategories": [],
+    "underrepresentedInterests": [
+      {
+        "interest": "tea",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "wine",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "beer",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "spirits",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "books",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "gaming",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "sports",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "fitness",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "music",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "art",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "photography",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "pets",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "travel",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "outdoor",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "camping",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "tech",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "gadgets",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "home_decor",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "fashion",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "beauty",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "wellness",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "spa",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "self_care",
+        "count": 0,
+        "ideal": 834
+      },
+      {
+        "interest": "cooking",
+        "count": 1,
+        "ideal": 834
+      },
+      {
+        "interest": "yoga",
+        "count": 1,
+        "ideal": 834
+      },
+      {
+        "interest": "gardening",
+        "count": 1,
+        "ideal": 834
+      },
+      {
+        "interest": "hiking",
+        "count": 1,
+        "ideal": 834
+      },
+      {
+        "interest": "coffee",
+        "count": 2,
+        "ideal": 834
+      },
+      {
+        "interest": "reading",
+        "count": 2,
+        "ideal": 834
+      }
+    ],
+    "priceGaps": [
+      "$100-200 (4924 products, 11.8%)"
+    ],
+    "occasionGaps": [
+      "birthday (7 products, need 2085)",
+      "christmas (3 products, need 2085)",
+      "anniversary (1 products, need 2085)",
+      "wedding (0 products, need 2085)",
+      "valentines_day (0 products, need 2085)",
+      "mothers_day (0 products, need 2085)",
+      "fathers_day (0 products, need 2085)",
+      "graduation (1 products, need 2085)",
+      "housewarming (0 products, need 2085)",
+      "thank_you (0 products, need 2085)",
+      "get_well (0 products, need 2085)",
+      "congratulations (0 products, need 2085)",
+      "retirement (0 products, need 2085)"
+    ],
+    "demographicGaps": [
+      "toys",
+      "baby",
+      "kids",
+      "teen",
+      "senior",
+      "romantic",
+      "professional",
+      "casual"
+    ]
+  }
+}

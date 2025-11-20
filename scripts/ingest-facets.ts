@@ -98,13 +98,13 @@ async function ingestFacetBatch(facets: Facet[], stats: FacetStats): Promise<voi
     const occasionFacets = facets.filter(f => f.facet_key === 'occasion');
     const priceBandFacets = facets.filter(f => f.facet_key === 'price_band');
 
-    // Ingest interest facets (create HAS_INTEREST relationships)
+    // Ingest interest facets (create MATCHES_INTEREST relationships)
     if (interestFacets.length > 0) {
       await session.run(`
         UNWIND $facets AS facet
         MATCH (p:Product {id: facet.product_id})
         MERGE (i:Interest {name: facet.facet_value})
-        MERGE (p)-[r:HAS_INTEREST]->(i)
+        MERGE (p)-[r:MATCHES_INTEREST]->(i)
         SET r.confidence = toFloat(facet.confidence),
             r.source = facet.source
       `, { facets: interestFacets });
@@ -112,13 +112,13 @@ async function ingestFacetBatch(facets: Facet[], stats: FacetStats): Promise<voi
       stats.byKey['interest'] = (stats.byKey['interest'] || 0) + interestFacets.length;
     }
 
-    // Ingest occasion facets (create HAS_OCCASION relationships)
+    // Ingest occasion facets (create SUITABLE_FOR relationships)
     if (occasionFacets.length > 0) {
       await session.run(`
         UNWIND $facets AS facet
         MATCH (p:Product {id: facet.product_id})
         MERGE (o:Occasion {name: facet.facet_value})
-        MERGE (p)-[r:HAS_OCCASION]->(o)
+        MERGE (p)-[r:SUITABLE_FOR]->(o)
         SET r.confidence = toFloat(facet.confidence),
             r.source = facet.source
       `, { facets: occasionFacets });
