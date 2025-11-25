@@ -18,6 +18,8 @@ interface ProductCardProps {
   tags?: string[];
   onSelect?: (selected: boolean) => void;
   isSelected?: boolean;
+  onFeedback?: (type: 'like' | 'dislike' | 'purchase') => void;
+  feedbackBusy?: boolean;
 }
 
 export function ProductCard({
@@ -26,7 +28,9 @@ export function ProductCard({
   reasoning,
   confidence,
   onSelect,
-  isSelected = false
+  isSelected = false,
+  onFeedback,
+  feedbackBusy = false
 }: ProductCardProps) {
   return (
     <div
@@ -96,6 +100,36 @@ export function ProductCard({
               {(confidence * 100).toFixed(0)}%
             </span>
           </div>
+
+          {/* Feedback actions */}
+          {onFeedback && (
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                disabled={feedbackBusy}
+                onClick={() => onFeedback('like')}
+                className="text-xs px-2 py-1 border border-border hover:border-green-500 hover:text-green-600 transition-colors"
+                aria-label="I like this recommendation"
+              >
+                👍 Like
+              </button>
+              <button
+                disabled={feedbackBusy}
+                onClick={() => onFeedback('dislike')}
+                className="text-xs px-2 py-1 border border-border hover:border-red-500 hover:text-red-600 transition-colors"
+                aria-label="I don't like this recommendation"
+              >
+                👎 Dislike
+              </button>
+              <button
+                disabled={feedbackBusy}
+                onClick={() => onFeedback('purchase')}
+                className="text-xs px-2 py-1 border border-border hover:border-primary hover:text-primary transition-colors"
+                aria-label="I purchased this"
+              >
+                🛒 Purchased
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

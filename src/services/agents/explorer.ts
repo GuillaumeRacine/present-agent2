@@ -21,6 +21,7 @@ import { embeddingCache } from '../../lib/embedding-cache.js';
 import { logger } from '../../lib/logger.js';
 import { ARCHETYPE_ATTRIBUTES, GiftArchetype } from '../../types/gift-attributes.js';
 import { cache, CacheTTL } from '../../lib/cache.js';
+import { generateEmbedding } from '../../lib/llm.js';
 
 interface HybridSearchParams {
   meaningFramework: MeaningOutput['meaningFramework'];
@@ -143,6 +144,14 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         useCaseQuery,
       ]);
 
+      // Optional: archetype vector (low-weight). If embedding gen fails, skip.
+      let archetypeEmbedding: number[] | null = null;
+      try {
+        archetypeEmbedding = await generateEmbedding(`archetype: ${params.meaningFramework.giftArchetype}`);
+      } catch {
+        archetypeEmbedding = null;
+      }
+
       // Log cache performance
       const cacheStats = embeddingCache.getStats();
       this.log(`Embeddings ready (cache: ${cacheStats.size} entries, ${cacheStats.totalHits} hits)`);
@@ -163,11 +172,15 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         WITH product, semanticScore,
           gds.similarity.cosine(product.style_embedding, $styleEmbedding) AS styleScore,
           gds.similarity.cosine(product.sentiment_embedding, $sentimentEmbedding) AS sentimentScore,
-          gds.similarity.cosine(product.use_case_embedding, $useCaseEmbedding) AS useCaseScore
+          gds.similarity.cosine(product.use_case_embedding, $useCaseEmbedding) AS useCaseScore,
+          CASE WHEN product.archetype_embedding IS NULL OR $archetypeEmbedding IS NULL
+               THEN 0.0
+               ELSE gds.similarity.cosine(product.archetype_embedding, $archetypeEmbedding)
+          END AS archetypeVecScore
 
         // Calculate combined vector score
         WITH product,
-          (0.40 * semanticScore + 0.25 * styleScore + 0.20 * sentimentScore + 0.15 * useCaseScore) AS vectorScore
+          (0.35 * semanticScore + 0.25 * styleScore + 0.20 * sentimentScore + 0.15 * useCaseScore + 0.05 * archetypeVecScore) AS vectorScore
 
         // Graph traversal - Interest matching with text fallback for unknown interests
         OPTIONAL MATCH (product)-[mi:MATCHES_INTEREST]->(i:Interest)
@@ -279,6 +292,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         styleEmbedding,
         sentimentEmbedding,
         useCaseEmbedding,
+        archetypeEmbedding,
         interests: params.discoveryHints.interestPathways || [],
         budgetMin: params.budget.min,
         budgetMax: params.budget.max,

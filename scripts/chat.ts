@@ -11,9 +11,10 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
-// Set quiet mode - only show errors in logs
-process.env.LOG_LEVEL = 'error';
+// Set quiet mode - suppress all logs except critical errors
+process.env.LOG_LEVEL = 'silent';
 process.env.QUIET_MODE = 'true';
+process.env.SUPPRESS_REDIS_WARNINGS = 'true';
 
 import { createOrchestrator } from '../src/services/orchestrator.js';
 import { initNeo4j, closeNeo4j } from '../src/lib/neo4j.js';
@@ -185,7 +186,7 @@ async function main() {
   // Initialize Neo4j
   await initNeo4j({
     uri: process.env.NEO4J_URL || '',
-    username: process.env.NEO4J_USERNAME || 'neo4j',
+    username: process.env.NEO4J_USERNAME || process.env.NEO4J_USER || 'neo4j',
     password: process.env.NEO4J_PASSWORD || '',
     database: process.env.NEO4J_DATABASE || 'neo4j',
   });

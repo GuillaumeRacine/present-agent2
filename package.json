@@ -35,7 +35,10 @@
     "attributes:populate:llm-test": "tsx scripts/populate-gift-attributes.ts --limit 100 --use-llm",
     "attributes:populate:llm-resume": "tsx scripts/populate-gift-attributes.ts --live --use-llm --resume",
     "attributes:populate:missing": "tsx scripts/populate-missing-attributes.ts",
-    "attributes:status": "tsx scripts/check-attribute-status.ts"
+    "attributes:status": "tsx scripts/check-attribute-status.ts",
+    "env:check": "tsx scripts/check-env.ts",
+    "tag:occasions": "tsx scripts/tag-occasions.ts",
+    "docs:organize": "./scripts/organize-docs.sh"
   },
   "keywords": [
     "recommendation-engine",

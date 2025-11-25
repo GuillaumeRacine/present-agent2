@@ -94,7 +94,7 @@ async function populateGiftAttributes(
 
   await initNeo4j({
     uri: process.env.NEO4J_URL || '',
-    username: process.env.NEO4J_USERNAME || 'neo4j',
+    username: process.env.NEO4J_USERNAME || process.env.NEO4J_USER || 'neo4j',
     password: process.env.NEO4J_PASSWORD || '',
     database: process.env.NEO4J_DATABASE || 'neo4j',
   });

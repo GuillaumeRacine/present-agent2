@@ -238,8 +238,12 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
         };
       });
     } catch (error) {
-      logger.error('Failed to query past recipients', { userId, error });
-      return [];
+      logger.warn('Failed to query past recipients, continuing without history', {
+        userId,
+        error,
+        fallback: 'empty array'
+      });
+      return []; // Graceful fallback - system can continue without history
     } finally {
       await session.close();
     }
@@ -292,8 +296,12 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
         valueAlignment: undefined,
       };
     } catch (error) {
-      logger.error('Failed to query user preferences', { userId, error });
-      return undefined;
+      logger.warn('Failed to query user preferences, continuing without preferences', {
+        userId,
+        error,
+        fallback: 'undefined'
+      });
+      return undefined; // Graceful fallback - system can continue without preferences
     } finally {
       await session.close();
     }

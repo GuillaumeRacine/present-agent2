@@ -57,30 +57,39 @@ Present-Agent2 uses a 10-agent architecture to understand context, analyze relat
    ```
 
 2. **Set up environment variables**:
-   Create `.env.local` in the root directory:
+   Copy `.env.local.example` to `.env.local` and fill in values:
    ```env
-   # Core APIs
-   OPENAI_API_KEY=your_openai_key
-   COHERE_API_KEY=your_cohere_key
-   ANTHROPIC_API_KEY=your_anthropic_key
+   # Core APIs (at least one required)
+   OPENAI_API_KEY=sk-...
+   ANTHROPIC_API_KEY=sk-ant-...
 
    # Neo4j Database
-   NEO4J_URL=your_neo4j_url
+   NEO4J_URL=neo4j+s://<your-instance>.databases.neo4j.io
    NEO4J_USERNAME=neo4j
-   NEO4J_PASSWORD=your_password
+   NEO4J_PASSWORD=...
    NEO4J_DATABASE=neo4j
 
-   # Server Configuration
+   # Server
    BACKEND_PORT=3000
-   PORT=3001
+   FRONTEND_URL=http://localhost:3001
    ```
 
-3. **Set up Neo4j schema**:
+   Notes:
+   - The code accepts both `NEO4J_USERNAME` and `NEO4J_USER` for compatibility.
+   - Do not commit or edit real keys in the repo. Keep secrets only in your local `.env.local`.
+   - Never paste real keys into issues/PRs/docs. See SECURITY.md for policy.
+
+3. **Verify environment**:
+   ```bash
+   npm run env:check
+   ```
+
+4. **Set up Neo4j schema**:
    ```bash
    npm run setup:schema
    ```
 
-4. **Ingest product data** (optional):
+5. **Ingest product data** (optional):
    ```bash
    npm run ingest:products
    ```
@@ -131,6 +140,26 @@ npm run test:personas:list
 
 # Single persona
 npm run test:persona -- "Tech Enthusiast Dad"
+```
+
+### Graph Analysis and Tagging
+
+```bash
+# Verify environment and connectivity
+npm run env:check
+
+# Analyze product graph and export summary to data/product-analysis.json
+npx tsx scripts/analyze-product-stats.ts --export
+
+# Tag products with occasions (start with dry-run, then live)
+npm run tag:occasions -- --limit 1000            # dry-run preview
+npm run tag:occasions -- --limit 1000 --live     # apply changes
+
+# Fix products missing interests using LLM-based extraction (batch and iterate)
+tsx scripts/fix-orphaned-products.ts --limit 1000 --live
+
+# Normalize duplicate interests to canonical names
+tsx scripts/normalize-interests.ts --live
 ```
 
 ## Project Structure

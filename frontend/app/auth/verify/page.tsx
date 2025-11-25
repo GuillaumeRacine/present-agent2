@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { storeSessionToken } from '@/lib/auth';
 
-export default function VerifyPage() {
+function VerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -90,4 +90,26 @@ export default function VerifyPage() {
   }
 
   return null;
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="bg-card border border-border p-8 text-center">
+            <div className="animate-pulse mb-4">
+              <div className="h-2 bg-border rounded w-24 mx-auto mb-2"></div>
+              <div className="h-2 bg-border rounded w-32 mx-auto"></div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Loading...
+            </p>
+          </div>
+        </div>
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
+  );
 }

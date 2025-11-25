@@ -26,7 +26,7 @@ cd frontend
 cp .env.local.example .env.local
 ```
 
-Edit `.env.local`:
+Edit `frontend/.env.local`:
 ```env
 BACKEND_URL=http://localhost:3000
 ```
@@ -46,6 +46,12 @@ This starts:
 ### 4. Open in Browser
 
 Navigate to `http://localhost:3001`
+
+Note: Ensure the backend `.env.local` (repo root) sets:
+```
+BACKEND_PORT=3000
+FRONTEND_URL=http://localhost:3001
+```
 
 ## Pages Overview
 

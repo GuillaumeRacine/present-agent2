@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface SuggestedAnswer {
   label: string;
-  value: any;
+  value: string | number | Record<string, any>;
   description?: string;
 }
 

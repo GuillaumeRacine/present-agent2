@@ -24,30 +24,35 @@ const devFormat = printf(({ level, message, timestamp, ...metadata }) => {
 });
 
 // Create logger instance
-const transports: winston.transport[] = [
-  // File output for all logs (always enabled)
-  new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error',
-    format: winston.format.json()
-  }),
-  new winston.transports.File({
-    filename: 'logs/combined.log',
-    format: winston.format.json()
-  })
-];
+const transports: winston.transport[] = [];
 
-// Only add console transport if not in quiet mode (CLI chat)
-if (process.env.QUIET_MODE !== 'true') {
-  transports.unshift(
-    new winston.transports.Console({
-      format: combine(
-        colorize(),
-        timestamp({ format: 'HH:mm:ss' }),
-        devFormat
-      )
+// Only add transports if not in silent mode
+if (process.env.LOG_LEVEL !== 'silent') {
+  // File output for all logs
+  transports.push(
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+      format: winston.format.json()
+    }),
+    new winston.transports.File({
+      filename: 'logs/combined.log',
+      format: winston.format.json()
     })
   );
+
+  // Only add console transport if not in quiet mode (CLI chat)
+  if (process.env.QUIET_MODE !== 'true') {
+    transports.unshift(
+      new winston.transports.Console({
+        format: combine(
+          colorize(),
+          timestamp({ format: 'HH:mm:ss' }),
+          devFormat
+        )
+      })
+    );
+  }
 }
 
 export const logger = winston.createLogger({

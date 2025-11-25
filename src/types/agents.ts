@@ -620,33 +620,131 @@ export interface OrchestratorInput {
   userQuery: string;
   userId: string;
   sessionId: string;
+
+  /** NEW: Answers to previously asked questions */
+  clarifications?: Record<string, any>;
+
+  /** NEW: Original query before enrichment */
+  originalQuery?: string;
+
+  /** NEW: Previous context to merge with */
+  previousContext?: ListenerOutput;
 }
 
-export interface OrchestratorOutput {
-  finalRecommendations: PresenterOutput;
-
-  // Full execution trace (for debugging)
-  executionTrace: {
-    listener: ListenerOutput;
-    memory: MemoryOutput;
-    relationship: RelationshipOutput;
-    constraints: ConstraintsOutput;
-    meaning: MeaningOutput;
-    explorer: ExplorerOutput;
-    validator: ValidatorOutput;
-    storyteller: StorytellerOutput;
-    presenter: PresenterOutput;
-  };
-
-  // Performance metrics
-  performance: {
-    totalExecutionTimeMs: number;
-    agentTimings: Record<string, number>;
-  };
-
-  // Meta
-  orchestratedAt: Date;
-}
+/**
+ * Enhanced orchestrator output to support dialogue modes
+ * Uses discriminated union for type safety
+ */
+export type OrchestratorOutput =
+  | {
+      /** Mode: Asking clarifying questions */
+      mode: 'clarifying';
+      /** Questions to ask user */
+      questions: any[]; // ClarifyingQuestion[] from dialogue types
+      /** Natural language presentation of questions (NEW - UX improvement) */
+      naturalLanguage?: string;
+      /** Encouragement message (NEW - UX improvement) */
+      encouragement?: string;
+      /** Show escape hatch? (NEW - UX improvement) */
+      showEscapeHatch?: boolean;
+      /** Partial context extracted so far */
+      partialContext?: ListenerOutput;
+      /** Why we're asking questions */
+      reasoning?: string;
+      /** Session identifier */
+      sessionId: string;
+      /** When processed */
+      timestamp: Date;
+      /** Performance metrics */
+      performance: {
+        totalExecutionTimeMs: number;
+        agentTimings: Record<string, number>;
+      };
+      /** Execution trace for debugging */
+      executionTrace?: {
+        listener: ListenerOutput;
+        memory: MemoryOutput;
+        dialogueManager?: any; // DialogueManagerOutput
+        dialoguePresenter?: any; // DialoguePresenterOutput
+      };
+    }
+  | {
+      /** Mode: Showing recommendations */
+      mode: 'recommendations';
+      /** Final recommendations */
+      recommendations: PresenterOutput;
+      /** Conversational intro */
+      intro?: string;
+      /** Natural language transition (NEW - UX improvement) */
+      naturalLanguage?: string;
+      /** Context summary (NEW - UX improvement) */
+      contextSummary?: any; // ContextSummary from presentation types
+      /** Session identifier */
+      sessionId: string;
+      /** When processed */
+      timestamp: Date;
+      /** Performance metrics */
+      performance: {
+        totalExecutionTimeMs: number;
+        agentTimings: Record<string, number>;
+      };
+      /** Full execution trace */
+      executionTrace: {
+        listener: ListenerOutput;
+        memory: MemoryOutput;
+        dialogueManager?: any; // DialogueManagerOutput
+        dialoguePresenter?: any; // DialoguePresenterOutput
+        relationship?: RelationshipOutput;
+        constraints?: ConstraintsOutput;
+        meaning?: MeaningOutput;
+        explorer?: ExplorerOutput;
+        validator?: ValidatorOutput;
+        storyteller?: StorytellerOutput;
+        presenter?: PresenterOutput;
+      };
+      /** Backward compatibility */
+      finalRecommendations?: PresenterOutput;
+      orchestratedAt?: Date;
+    }
+  | {
+      /** Mode: Showing recommendations with refinement questions */
+      mode: 'recommendations_with_refinement';
+      /** Final recommendations */
+      recommendations: PresenterOutput;
+      /** Refinement questions for better results */
+      refinementQuestions?: any[]; // ClarifyingQuestion[]
+      /** Conversational intro */
+      intro?: string;
+      /** Natural language transition (NEW - UX improvement) */
+      naturalLanguage?: string;
+      /** Context summary (NEW - UX improvement) */
+      contextSummary?: any; // ContextSummary from presentation types
+      /** Session identifier */
+      sessionId: string;
+      /** When processed */
+      timestamp: Date;
+      /** Performance metrics */
+      performance: {
+        totalExecutionTimeMs: number;
+        agentTimings: Record<string, number>;
+      };
+      /** Full execution trace */
+      executionTrace: {
+        listener: ListenerOutput;
+        memory: MemoryOutput;
+        dialogueManager?: any; // DialogueManagerOutput
+        relationship?: RelationshipOutput;
+        constraints?: ConstraintsOutput;
+        meaning?: MeaningOutput;
+        explorer?: ExplorerOutput;
+        validator?: ValidatorOutput;
+        storyteller?: StorytellerOutput;
+        presenter?: PresenterOutput;
+      };
+      /** Backward compatibility */
+      finalRecommendations?: PresenterOutput;
+      orchestratedAt?: Date;
+    };
 
 // ============================================================================
 // Agent Interface (Base)

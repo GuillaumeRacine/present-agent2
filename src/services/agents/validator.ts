@@ -3,7 +3,7 @@
  *
  * Multi-dimensional validation system that ensures only high-quality,
  * relevant recommendations pass through. Implements:
- * - Relevance thresholds (hybrid: 0.50, interest: 0.40, archetype: 0.30)
+ * - Relevance thresholds (hybrid: 0.40, interest: 0.35, archetype: 0.25)
  * - Archetype alignment validation
  * - Personalization quality checks
  * - Diversity enforcement
@@ -24,10 +24,10 @@ interface QualityThresholds {
 }
 
 const STRICT_THRESHOLDS: QualityThresholds = {
-  hybridScore: 0.50,      // Minimum hybrid score (was: no minimum)
-  interestMatch: 0.40,    // Minimum interest match (was: 0.20)
-  archetypeMatch: 0.30,   // Minimum archetype alignment for archetype queries
-  personalizationScore: 0.50, // Minimum personalization quality (5/10 scale)
+  hybridScore: 0.40,      // Lowered from 0.50 to reduce false negatives (Issue #6)
+  interestMatch: 0.35,    // Lowered from 0.40 to allow more valid matches
+  archetypeMatch: 0.25,   // Lowered from 0.30 for better recall
+  personalizationScore: 0.40, // Lowered from 0.50 to balance quality with availability
 };
 
 const RELAXED_THRESHOLDS: QualityThresholds = {
@@ -69,16 +69,30 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
       let thresholdsUsed = STRICT_THRESHOLDS;
       let thresholdsLowered = false;
 
+      // Log threshold tier used
+      this.log('Validation completed with STRICT thresholds', {
+        thresholdTier: 'STRICT',
+        thresholds: STRICT_THRESHOLDS,
+        validatedCount: result.validatedCandidates.length,
+        rejectedCount: result.rejectedCandidates.length,
+      });
+
       // If we don't have minimum products, progressively lower thresholds
       if (result.validatedCandidates.length < MIN_PRODUCTS_GUARANTEE && candidates.length >= MIN_PRODUCTS_GUARANTEE) {
-        this.log(`Only ${result.validatedCandidates.length} passed strict gates, lowering to relaxed thresholds`);
+        this.log(`Only ${result.validatedCandidates.length} passed strict gates, lowering to relaxed thresholds`, {
+          thresholdTier: 'RELAXED',
+          thresholds: RELAXED_THRESHOLDS,
+        });
         result = await this.validateWithThresholds(input, RELAXED_THRESHOLDS);
         thresholdsUsed = RELAXED_THRESHOLDS;
         thresholdsLowered = true;
 
         // Still not enough? Try minimum thresholds
         if (result.validatedCandidates.length < MIN_PRODUCTS_GUARANTEE && candidates.length >= MIN_PRODUCTS_GUARANTEE) {
-          this.log(`Only ${result.validatedCandidates.length} passed relaxed gates, lowering to minimum thresholds`);
+          this.log(`Only ${result.validatedCandidates.length} passed relaxed gates, lowering to minimum thresholds`, {
+            thresholdTier: 'MINIMUM',
+            thresholds: MINIMUM_THRESHOLDS,
+          });
           result = await this.validateWithThresholds(input, MINIMUM_THRESHOLDS);
           thresholdsUsed = MINIMUM_THRESHOLDS;
         }

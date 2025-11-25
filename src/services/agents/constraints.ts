@@ -67,19 +67,26 @@ export class ConstraintsAgent extends BaseAgent<ConstraintsInput, ConstraintsOut
   }
 
   private extractHardConstraints(context: any) {
-    const constraints = context.memoryContext.listenerContext.constraints || [];
+    // Use enhancedConstraints (new format) which is an object, not array
+    const enhancedConstraints = context.memoryContext.listenerContext.enhancedConstraints || {};
     const occasion = context.memoryContext.listenerContext.occasion;
 
     return {
-      required: constraints.filter((c: string) => c.startsWith('must')),
-      excluded: constraints.filter((c: string) => c.startsWith('no ')),
+      required: enhancedConstraints.required || [],
+      excluded: enhancedConstraints.excluded || [],
       deliveryBy: occasion?.date ? new Date(occasion.date) : undefined,
     };
   }
 
   private extractSoftPreferences(context: any) {
-    const values = context.memoryContext.listenerContext.values || [];
+    const valuesRaw = context.memoryContext.listenerContext.values || {};
     const userPrefs = context.memoryContext.userPreferences;
+
+    // Convert values object to array format (extract keys where value is true)
+    // Listener now outputs values as object: {"eco-friendly": false, "local": false}
+    const values = typeof valuesRaw === 'object' && !Array.isArray(valuesRaw)
+      ? Object.entries(valuesRaw).filter(([_, v]) => v === true).map(([k]) => k)
+      : Array.isArray(valuesRaw) ? valuesRaw : [];
 
     return {
       vendors: userPrefs?.preferredVendors || [],

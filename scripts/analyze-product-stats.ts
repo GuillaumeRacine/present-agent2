@@ -431,9 +431,9 @@ async function main() {
     console.log(chalk.bold.cyan('\n🚀 Starting Product Statistics Analysis...\n'));
 
     await initNeo4j({
-      uri: process.env.NEO4J_URI!,
-      username: process.env.NEO4J_USER!,
-      password: process.env.NEO4J_PASSWORD!,
+      uri: process.env.NEO4J_URL || process.env.NEO4J_URI || '',
+      username: process.env.NEO4J_USERNAME || process.env.NEO4J_USER || 'neo4j',
+      password: process.env.NEO4J_PASSWORD || '',
       database: process.env.NEO4J_DATABASE || 'neo4j',
     });
 

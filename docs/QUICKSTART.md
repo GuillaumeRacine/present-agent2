@@ -15,6 +15,28 @@ Then open your browser to: **http://localhost:3001**
 
 ---
 
+## 🔧 Environment Setup
+
+Most setups need two env files:
+
+- Backend (repo root): `.env.local` — copy from `.env.local.example` and fill values
+  - Required: `NEO4J_URL`, `NEO4J_PASSWORD` (and optionally `NEO4J_DATABASE`)
+  - Username: use `NEO4J_USERNAME` (or `NEO4J_USER`, both supported)
+  - LLM keys (recommended): `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY`
+  - `BACKEND_PORT=3000`, `FRONTEND_URL=http://localhost:3001`
+
+- Frontend: `frontend/.env.local`
+  - `BACKEND_URL=http://localhost:3000`
+
+Verify configuration:
+
+```bash
+npm run env:check
+```
+This checks required variables, verifies Neo4j connectivity, and validates LLM keys when set.
+
+---
+
 ## 📱 What You'll See
 
 ### Modern Chat Interface

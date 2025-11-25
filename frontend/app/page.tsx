@@ -18,7 +18,7 @@ interface ClarifyingQuestion {
   field: string;
   question: string;
   suggestedAnswers: Array<{
-    value: any;
+    value: string | number | Record<string, any>;
     label: string;
     description?: string;
   }>;
@@ -78,6 +78,7 @@ export default function ChatPage() {
   const [showComparison, setShowComparison] = useState(false);
   const [questionAnswers, setQuestionAnswers] = useState<Record<string, any>>({});
   const [isAnsweringQuestions, setIsAnsweringQuestions] = useState(false);
+  const [feedbackBusyId, setFeedbackBusyId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Check authentication on mount
@@ -233,6 +234,8 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -244,7 +247,10 @@ export default function ChatPage() {
           sessionId: sessionId,
           clarifications: questionAnswers,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to get recommendations');
@@ -285,6 +291,8 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -296,7 +304,10 @@ export default function ChatPage() {
           sessionId: sessionId,
           skipQuestions: true,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to get recommendations');
@@ -356,7 +367,7 @@ export default function ChatPage() {
   };
 
   const getComparisonItems = () => {
-    const items: any[] = [];
+    const items: Recommendation[] = [];
     messages.forEach(msg => {
       if (msg.recommendations) {
         msg.recommendations.forEach(rec => {
@@ -367,6 +378,30 @@ export default function ChatPage() {
       }
     });
     return items;
+  };
+
+  const sendFeedback = async (
+    productId: string,
+    event: 'like' | 'dislike' | 'purchase',
+    rank: number
+  ) => {
+    if (!userId || !sessionId) return;
+    setFeedbackBusyId(productId);
+    try {
+      const resp = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, sessionId, productId, event, rank }),
+      });
+      // Ignore response body for now; future: optimistic UI or toast
+      if (!resp.ok) {
+        console.error('Feedback error', await resp.text());
+      }
+    } catch (e) {
+      console.error('Feedback error', e);
+    } finally {
+      setFeedbackBusyId(null);
+    }
   };
 
   // Show loading state while authenticating
@@ -484,6 +519,8 @@ export default function ChatPage() {
                               tags={rec.tags}
                               onSelect={() => toggleProductSelection(rec.product.id)}
                               isSelected={selectedProducts.has(rec.product.id)}
+                              onFeedback={(type) => sendFeedback(rec.product.id, type, rec.rank)}
+                              feedbackBusy={feedbackBusyId === rec.product.id}
                             />
                           </div>
                         ))}
@@ -503,11 +540,13 @@ export default function ChatPage() {
         {/* Input */}
         <div className="p-4 border-t border-border">
           <form onSubmit={handleSubmit} className="flex gap-2">
+            <label htmlFor="chat-input" className="sr-only">Message</label>
             <input
               type="text"
+              id="chat-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Describe who you're shopping for..."
+              placeholder="Who are you shopping for?"
               className="flex-1 px-3 py-2 bg-background border border-input text-sm placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
               disabled={isLoading}
             />

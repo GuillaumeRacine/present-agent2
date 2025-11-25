@@ -102,8 +102,12 @@ class CacheManager {
   }
 
   private async _initialize(): Promise<void> {
+    const suppressWarnings = process.env.SUPPRESS_REDIS_WARNINGS === 'true';
+
     if (!this.config.enabled) {
-      logger.info('Cache disabled via configuration');
+      if (!suppressWarnings) {
+        logger.info('Cache disabled via configuration');
+      }
       this.stats.inMemoryFallback = true;
       this.isInitialized = true;
       return;
@@ -116,7 +120,9 @@ class CacheManager {
           maxRetriesPerRequest: 3,
           retryStrategy: (times) => {
             if (times > 3) {
-              logger.warn('Redis connection failed after 3 retries, falling back to in-memory cache');
+              if (!suppressWarnings) {
+                logger.warn('Redis connection failed after 3 retries, falling back to in-memory cache');
+              }
               return null; // Stop retrying
             }
             return Math.min(times * 100, 2000);
@@ -131,7 +137,9 @@ class CacheManager {
           maxRetriesPerRequest: 3,
           retryStrategy: (times) => {
             if (times > 3) {
-              logger.warn('Redis connection failed after 3 retries, falling back to in-memory cache');
+              if (!suppressWarnings) {
+                logger.warn('Redis connection failed after 3 retries, falling back to in-memory cache');
+              }
               return null;
             }
             return Math.min(times * 100, 2000);
@@ -142,25 +150,33 @@ class CacheManager {
 
       // Set up error handlers
       this.redis.on('error', (err) => {
-        logger.warn('Redis connection error, falling back to in-memory cache', { error: err.message });
+        if (!suppressWarnings) {
+          logger.warn('Redis connection error, falling back to in-memory cache', { error: err.message });
+        }
         this.stats.redisAvailable = false;
         this.stats.inMemoryFallback = true;
         this.stats.errors++;
       });
 
       this.redis.on('connect', () => {
-        logger.info('Redis connected successfully');
+        if (!suppressWarnings) {
+          logger.info('Redis connected successfully');
+        }
         this.stats.redisAvailable = true;
         this.stats.inMemoryFallback = false;
       });
 
       this.redis.on('ready', () => {
-        logger.info('Redis ready for operations');
+        if (!suppressWarnings) {
+          logger.info('Redis ready for operations');
+        }
         this.stats.redisAvailable = true;
       });
 
       this.redis.on('close', () => {
-        logger.warn('Redis connection closed, using in-memory cache');
+        if (!suppressWarnings) {
+          logger.warn('Redis connection closed, using in-memory cache');
+        }
         this.stats.redisAvailable = false;
         this.stats.inMemoryFallback = true;
       });
@@ -172,12 +188,16 @@ class CacheManager {
       await this.redis.ping();
 
       this.stats.redisAvailable = true;
-      logger.info('Redis cache initialized successfully', {
-        host: this.config.redisHost,
-        port: this.config.redisPort,
-      });
+      if (!suppressWarnings) {
+        logger.info('Redis cache initialized successfully', {
+          host: this.config.redisHost,
+          port: this.config.redisPort,
+        });
+      }
     } catch (error) {
-      logger.warn('Failed to initialize Redis, using in-memory cache', { error });
+      if (!suppressWarnings) {
+        logger.warn('Failed to initialize Redis, using in-memory cache', { error });
+      }
       this.stats.redisAvailable = false;
       this.stats.inMemoryFallback = true;
       this.redis = null;
@@ -514,7 +534,9 @@ export async function withSearchCache<T>(
  * Initialize cache on module load
  */
 cache.initialize().catch((error) => {
-  logger.warn('Cache initialization failed, using in-memory fallback', { error });
+  if (process.env.SUPPRESS_REDIS_WARNINGS !== 'true') {
+    logger.warn('Cache initialization failed, using in-memory fallback', { error });
+  }
 });
 
 // Cleanup expired entries periodically (every 5 minutes)

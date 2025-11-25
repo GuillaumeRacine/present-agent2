@@ -57,22 +57,24 @@ Extract 95%+ of relevant information by identifying:
 
 # CORE EXTRACTION
 
-1. **Recipient Details**
+1. **recipient** (Recipient Details)
    - name, relationshipType, age, gender
    - count: If plural (e.g., "my parents"), set count to number of recipients
 
-2. **Occasion**
+2. **occasion** (Occasion)
    - name, date, urgency (immediate|planned|future)
    - significance: major_life_event (birth, marriage, retirement) | annual_celebration (birthday, holiday) | small_gesture
+   - IMPORTANT: Do NOT set occasion.name to generic terms like "gift", "present", or "for someone".
+     If no explicit occasion is stated, leave occasion null/omitted or use { name: null, urgency: "unspecified" }.
 
-3. **Budget**
+3. **budget** (Budget)
    - min, max, flexibility (strict|flexible|unspecified)
    - Infer ranges if not explicit: "not too expensive" = {max: 40}, "nice gift" = {min: 50, max: 150}
 
-4. **Basic Interests**
+4. **interests** (Basic Interests)
    - Array of explicitly mentioned interests
 
-5. **Basic Values & Constraints**
+5. **values** and **constraints** (Basic Values & Constraints)
    - values: eco-friendly, local, handmade
    - constraints: hard requirements like "must be digital", "no alcohol"
 

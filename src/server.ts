@@ -31,6 +31,28 @@ const PORT = process.env.BACKEND_PORT || process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Optional auth middleware (env-gated)
+function requireAuthIfEnabled(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authRequired = process.env.AUTH_REQUIRED === 'true';
+  if (!authRequired) return next();
+
+  try {
+    const header = req.headers['authorization'];
+    if (!header || !header.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const token = header.slice('Bearer '.length);
+    const payload = verifyToken(token);
+    if (!payload || payload.type !== 'session') {
+      return res.status(401).json({ error: 'Invalid or expired session' });
+    }
+    (req as any).auth = { userId: payload.userId, email: payload.email };
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+}
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -155,9 +177,9 @@ app.post('/api/auth/verify-session', async (req, res) => {
 // ==================== RECOMMENDATION ENDPOINTS ====================
 
 // Main recommendation endpoint
-app.post('/api/recommend', async (req, res) => {
+app.post('/api/recommend', requireAuthIfEnabled, async (req, res) => {
   try {
-    const { userQuery, userId, sessionId } = req.body;
+    const { userQuery, userId, sessionId, clarifications, skipQuestions, originalQuery } = req.body;
 
     if (!userQuery) {
       return res.status(400).json({ error: 'userQuery is required' });
@@ -169,8 +191,8 @@ app.post('/api/recommend', async (req, res) => {
       queryLength: userQuery.length,
     });
 
-    // Create orchestrator and execute
-    const orchestrator = await createOrchestrator();
+    // Create orchestrator and execute (with DialogueManager enabled)
+    const orchestrator = await createOrchestrator(true);  // Enable conversational UX
     const finalUserId = userId || 'anonymous';
     const finalSessionId = sessionId || `session-${Date.now()}`;
 
@@ -178,6 +200,9 @@ app.post('/api/recommend', async (req, res) => {
       userQuery,
       userId: finalUserId,
       sessionId: finalSessionId,
+      clarifications,
+      skipQuestions,
+      originalQuery,
     });
 
     // Persist conversation to Neo4j (async, don't block response)
@@ -189,12 +214,23 @@ app.post('/api/recommend', async (req, res) => {
       }
     );
 
-    logger.info('API: Recommendation completed', {
-      userId: finalUserId,
-      sessionId: finalSessionId,
-      recommendations: result.finalRecommendations.recommendations.length,
-      executionTime: result.performance.totalExecutionTimeMs,
-    });
+    // Log differently based on mode
+    if ('mode' in result) {
+      logger.info('API: Dialogue-enabled response', {
+        userId: finalUserId,
+        sessionId: finalSessionId,
+        mode: result.mode,
+        executionTime: result.performance.totalExecutionTimeMs,
+      });
+    } else {
+      // Old format (backward compatibility)
+      logger.info('API: Recommendation completed', {
+        userId: finalUserId,
+        sessionId: finalSessionId,
+        recommendations: (result as any).finalRecommendations?.recommendations?.length || 0,
+        executionTime: result.performance.totalExecutionTimeMs,
+      });
+    }
 
     res.json(result);
   } catch (error) {
@@ -208,7 +244,7 @@ app.post('/api/recommend', async (req, res) => {
 });
 
 // Get product statistics
-app.get('/api/products/stats', async (req, res) => {
+app.get('/api/products/stats', requireAuthIfEnabled, async (req, res) => {
   try {
     const driver = getDriver();
     const session = driver.session();
@@ -248,7 +284,7 @@ app.get('/api/products/stats', async (req, res) => {
 });
 
 // Get conversation history
-app.get('/api/conversations', async (req, res) => {
+app.get('/api/conversations', requireAuthIfEnabled, async (req, res) => {
   try {
     const { userId, sessionId, success, startDate, endDate, limit, offset } =
       req.query;
@@ -273,7 +309,7 @@ app.get('/api/conversations', async (req, res) => {
 });
 
 // Get conversation details
-app.get('/api/conversations/:sessionId', async (req, res) => {
+app.get('/api/conversations/:sessionId', requireAuthIfEnabled, async (req, res) => {
   try {
     const { sessionId } = req.params;
 
@@ -293,7 +329,7 @@ app.get('/api/conversations/:sessionId', async (req, res) => {
 });
 
 // Get conversation statistics (global)
-app.get('/api/conversations/stats', async (req, res) => {
+app.get('/api/conversations/stats', requireAuthIfEnabled, async (req, res) => {
   try {
     const { userId } = req.query;
 
@@ -309,7 +345,7 @@ app.get('/api/conversations/stats', async (req, res) => {
 });
 
 // Search products
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', requireAuthIfEnabled, async (req, res) => {
   try {
     const {
       search = '',
@@ -388,13 +424,84 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
+// ==================== FEEDBACK ENDPOINTS ====================
+
+// Capture explicit or implicit feedback
+// Body: { userId, sessionId, productId, event: 'like'|'dislike'|'purchase'|'click', rank?, rating?, comment? }
+app.post('/api/feedback', requireAuthIfEnabled, async (req, res) => {
+  try {
+    const { userId, sessionId, productId, event, rank, rating, comment } = req.body || {};
+
+    if (!userId || !sessionId || !productId || !event) {
+      return res.status(400).json({ error: 'userId, sessionId, productId and event are required' });
+    }
+
+    const driver = getDriver();
+    const session = driver.session();
+    const feedbackId = crypto.randomUUID();
+    const timestamp = new Date().toISOString();
+
+    try {
+      await session.run(
+        `
+        // Ensure User
+        MERGE (u:User {userId: $userId})
+        ON CREATE SET u.createdAt = datetime()
+
+        // Ensure Conversation
+        MERGE (c:Conversation {sessionId: $sessionId})
+        ON CREATE SET c.createdAt = datetime()
+
+        // Product node
+        MATCH (p:Product {product_id: $productId})
+
+        // Create Feedback
+        CREATE (f:Feedback {
+          id: $feedbackId,
+          type: $event,
+          rating: $rating,
+          comment: $comment,
+          rank: $rank,
+          timestamp: datetime($timestamp)
+        })
+
+        // Link entities
+        MERGE (u)-[:GAVE_FEEDBACK]->(f)
+        MERGE (f)-[:ABOUT]->(p)
+        MERGE (f)-[:IN_CONVERSATION]->(c)
+
+        // Optionally link to Recommendation if exists
+        WITH f, p, c
+        OPTIONAL MATCH (c)-[:INCLUDES_RECOMMENDATION]->(r:Recommendation {productId: $productId})
+        FOREACH (_ IN CASE WHEN r IS NULL THEN [] ELSE [1] END |
+          MERGE (f)-[:ON_RECOMMENDATION]->(r)
+        )
+
+        RETURN f.id as id
+        `,
+        { userId, sessionId, productId, feedbackId, event, rating: rating ?? null, comment: comment ?? null, rank: rank ?? null, timestamp }
+      );
+
+      logger.info('Feedback captured', { userId, sessionId, productId, event, rank });
+      res.json({ success: true });
+    } finally {
+      await session.close();
+    }
+  } catch (error) {
+    logger.error('API: Failed to capture feedback', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(500).json({ error: 'Failed to capture feedback' });
+  }
+});
+
 // Start server
 async function startServer() {
   try {
     // Initialize Neo4j
     await initNeo4j({
       uri: process.env.NEO4J_URL || '',
-      username: process.env.NEO4J_USERNAME || 'neo4j',
+      username: process.env.NEO4J_USERNAME || process.env.NEO4J_USER || 'neo4j',
       password: process.env.NEO4J_PASSWORD || '',
       database: process.env.NEO4J_DATABASE || 'neo4j',
     });

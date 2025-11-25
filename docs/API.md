@@ -258,6 +258,34 @@ GET /api/products?search=coffee&minPrice=20&maxPrice=100&limit=10
 
 ---
 
+### Feedback Endpoint
+
+#### POST `/api/feedback`
+
+Capture explicit or implicit user feedback on recommendations.
+
+**Request Body**:
+```json
+{
+  "userId": "user-123",
+  "sessionId": "session-abc-456",
+  "productId": "p-12345",
+  "event": "like", // one of: like | dislike | purchase | click
+  "rank": 1,
+  "rating": 5,
+  "comment": "Perfect for my mom"
+}
+```
+
+**Response** (200 OK):
+```json
+{ "success": true }
+```
+
+Creates a `Feedback` node in Neo4j and links it to `User`, `Conversation` (by `sessionId`), `Product`, and the corresponding `Recommendation` if present.
+
+---
+
 ### Health Check
 
 #### GET `/health`
@@ -368,7 +396,9 @@ Currently no rate limiting implemented. Recommended for production deployment.
 
 ## Authentication
 
-Currently no authentication required. All endpoints are public. Recommended to add authentication for production deployment with user-specific data.
+- Development: endpoints are open by default.
+- Production: set `AUTH_REQUIRED=true` to require a valid session token (`Authorization: Bearer <token>`) on protected endpoints (recommendation, products, conversations, feedback).
+- Use magic link endpoints to obtain a `sessionToken`.
 
 ---
 

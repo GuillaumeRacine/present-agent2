@@ -82,63 +82,121 @@ export function getSession(database?: string): Session {
 }
 
 /**
- * Execute a read query with automatic session management
+ * Execute a read query with automatic session management and retry logic
  */
 export async function executeRead<T>(
   query: string,
-  params: Record<string, any> = {}
+  params: Record<string, any> = {},
+  maxRetries: number = 3
 ): Promise<T[]> {
-  const session = getSession();
+  let lastError: Error | null = null;
 
-  try {
-    logger.debug('Executing read query', { query, params });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const session = getSession();
 
-    const result = await session.executeRead(tx =>
-      tx.run(query, params)
-    );
+    try {
+      logger.debug('Executing read query', { query, params, attempt });
 
-    logger.debug('Query executed successfully', {
-      records: result.records.length
-    });
+      const result = await session.executeRead(tx =>
+        tx.run(query, params)
+      );
 
-    return result.records as T[];
+      logger.debug('Query executed successfully', {
+        records: result.records.length,
+        attempt
+      });
 
-  } catch (error) {
-    logger.error('Read query failed', { query, params, error });
-    throw error;
-  } finally {
-    await session.close();
+      return result.records as T[];
+
+    } catch (error: any) {
+      lastError = error as Error;
+      logger.warn('Read query failed', {
+        query,
+        params,
+        error: error.message,
+        attempt,
+        maxRetries
+      });
+
+      // Don't retry on final attempt
+      if (attempt < maxRetries) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delayMs = Math.pow(2, attempt - 1) * 1000;
+        logger.debug('Retrying after delay', { delayMs, attempt });
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    } finally {
+      await session.close();
+    }
   }
+
+  // All retries exhausted
+  logger.error('Read query failed after all retries', {
+    query,
+    params,
+    maxRetries,
+    error: lastError
+  });
+  throw lastError;
 }
 
 /**
- * Execute a write query with automatic session management
+ * Execute a write query with automatic session management and retry logic
  */
 export async function executeWrite<T>(
   query: string,
-  params: Record<string, any> = {}
+  params: Record<string, any> = {},
+  maxRetries: number = 3
 ): Promise<T[]> {
-  const session = getSession();
+  let lastError: Error | null = null;
 
-  try {
-    logger.debug('Executing write query', { query, params });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const session = getSession();
 
-    const result = await session.executeWrite(tx =>
-      tx.run(query, params)
-    );
+    try {
+      logger.debug('Executing write query', { query, params, attempt });
 
-    logger.debug('Query executed successfully', {
-      records: result.records.length
-    });
+      const result = await session.executeWrite(tx =>
+        tx.run(query, params)
+      );
 
-    return result.records as T[];
+      logger.debug('Query executed successfully', {
+        records: result.records.length,
+        attempt
+      });
 
-  } catch (error) {
-    logger.error('Write query failed', { query, params, error });
-    throw error;
-  } finally {
-    await session.close();
+      return result.records as T[];
+
+    } catch (error: any) {
+      lastError = error as Error;
+      logger.warn('Write query failed', {
+        query,
+        params,
+        error: error.message,
+        attempt,
+        maxRetries
+      });
+
+      // Don't retry on final attempt
+      if (attempt < maxRetries) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delayMs = Math.pow(2, attempt - 1) * 1000;
+        logger.debug('Retrying after delay', { delayMs, attempt });
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    } finally {
+      await session.close();
+    }
   }
+
+  // All retries exhausted
+  logger.error('Write query failed after all retries', {
+    query,
+    params,
+    maxRetries,
+    error: lastError
+  });
+  throw lastError;
 }
 
 /**

@@ -46,7 +46,11 @@ export class StorytellerAgent extends BaseAgent<StorytellerInput, StorytellerOut
     const meaningFramework = context.explorerContext.meaningContext.meaningFramework;
     const relationship =
       context.explorerContext.meaningContext.constraintsContext.relationshipContext.relationshipAnalysis;
-    const values = memoryContext.listenerContext.values || [];
+    // Values is now an object with boolean flags, convert to array of truthy keys
+    const valuesObj = memoryContext.listenerContext.values || {};
+    const values = typeof valuesObj === 'object' && !Array.isArray(valuesObj)
+      ? Object.keys(valuesObj).filter(k => valuesObj[k] === true)
+      : [];
     const occasion = memoryContext.listenerContext.occasion;
 
     // NEW: Extract giver profile

@@ -14,20 +14,32 @@ export async function POST(request: NextRequest) {
 
     // Call the backend orchestrator
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
-    const response = await fetch(`${backendUrl}/api/recommend`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userQuery: query,
-        userId: userId || 'anonymous',
-        sessionId: sessionId || `session-${Date.now()}`,
-        clarifications: clarifications || undefined,
-        skipQuestions: skipQuestions || false,
-        originalQuery: originalQuery || undefined,
-      }),
-    });
+    // Add timeout and a simple retry on transient failures
+    const doFetch = async () => {
+      return fetch(`${backendUrl}/api/recommend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userQuery: query,
+          userId: userId || 'anonymous',
+          sessionId: sessionId || `session-${Date.now()}`,
+          clarifications: clarifications || undefined,
+          skipQuestions: skipQuestions || false,
+          originalQuery: originalQuery || undefined,
+        }),
+        // Node 18+: built-in timeout support
+        signal: (AbortSignal as any).timeout ? (AbortSignal as any).timeout(30000) : undefined,
+      });
+    };
+
+    let response = await doFetch();
+    // Retry once on 5xx or network errors
+    if (!response.ok && response.status >= 500) {
+      await new Promise((r) => setTimeout(r, 500));
+      response = await doFetch();
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

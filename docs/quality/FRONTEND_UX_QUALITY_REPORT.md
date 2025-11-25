@@ -1,4 +1,4 @@
-# Frontend UX Quality Report - Dialogue Manager System
+# Frontend UX Quality Report
 
 **Test Date:** November 20, 2025
 **Tester:** Code Quality Guardian (Claude)

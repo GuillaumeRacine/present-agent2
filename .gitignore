@@ -17,11 +17,26 @@ test-results/
 .DS_Store
 ._*
 *.pem
-.env*.local
+
+# Environment variables (NEVER COMMIT THESE!)
 .env.local
+.env*.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env
+!.env.example
+
+# Credentials and secrets (NEVER COMMIT THESE!)
+*credentials*
+*secrets*
+*secret*
+*.key
+*.cert
+id_rsa
+id_ed25519
+*.p12
+*.pfx
 
 # Debug
 npm-debug.log*
