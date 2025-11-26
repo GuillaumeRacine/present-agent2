@@ -5,6 +5,7 @@
  * raw DialogueManager outputs into warm, human-like interactions.
  */
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DialoguePresenterAgent } from '../dialogue-presenter';
 import {
   DialoguePresenterInput,

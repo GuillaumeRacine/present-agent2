@@ -42,8 +42,8 @@ export class ConstraintsAgent extends BaseAgent<ConstraintsInput, ConstraintsOut
   }
 
   private normalizeBudget(context: any): { min: number; max: number; isStrict: boolean } {
-    const listenerBudget = context.memoryContext.listenerContext.budget;
-    const relationshipBudget = context.calibration.adjustedBudget;
+    const listenerBudget = context.memoryContext?.listenerContext?.budget;
+    const relationshipBudget = context.calibration?.adjustedBudget;
 
     // Use relationship-calibrated budget if available, otherwise listener budget
     const budget = relationshipBudget || listenerBudget;
@@ -68,8 +68,8 @@ export class ConstraintsAgent extends BaseAgent<ConstraintsInput, ConstraintsOut
 
   private extractHardConstraints(context: any) {
     // Use enhancedConstraints (new format) which is an object, not array
-    const enhancedConstraints = context.memoryContext.listenerContext.enhancedConstraints || {};
-    const occasion = context.memoryContext.listenerContext.occasion;
+    const enhancedConstraints = context.memoryContext?.listenerContext?.enhancedConstraints || {};
+    const occasion = context.memoryContext?.listenerContext?.occasion;
 
     return {
       required: enhancedConstraints.required || [],
@@ -79,8 +79,8 @@ export class ConstraintsAgent extends BaseAgent<ConstraintsInput, ConstraintsOut
   }
 
   private extractSoftPreferences(context: any) {
-    const valuesRaw = context.memoryContext.listenerContext.values || {};
-    const userPrefs = context.memoryContext.userPreferences;
+    const valuesRaw = context.memoryContext?.listenerContext?.values || {};
+    const userPrefs = context.memoryContext?.userPreferences;
 
     // Convert values object to array format (extract keys where value is true)
     // Listener now outputs values as object: {"eco-friendly": false, "local": false}

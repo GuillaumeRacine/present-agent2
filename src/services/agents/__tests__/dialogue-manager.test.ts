@@ -82,7 +82,7 @@ describe('DialogueManager - Decision Logic', () => {
       expect(output.confidenceAssessment.criticalFieldCount).toBeGreaterThanOrEqual(3);
     });
 
-    it('should recommend with very high confidence (0.9) even with 2 critical fields', async () => {
+    it('should force ask mode with high confidence (0.9) but only 2 critical fields (vague query)', async () => {
       const input = createMockInput({
         confidence: 0.9,
         interests: ['gaming'],
@@ -91,9 +91,11 @@ describe('DialogueManager - Decision Logic', () => {
 
       const output = await agent.process(input);
 
-      // High confidence but only 2 critical fields should trigger hybrid mode
-      expect(output.mode).toBe('hybrid');
-      expect(output.proceedWithRecommendations).toBe(true);
+      // Vague query logic: high confidence but <3 critical fields
+      // Even with 0.9 confidence, we need at least 3 critical fields to recommend
+      // This prevents poor recommendations for queries like "gaming gift"
+      expect(output.mode).toBe('ask');
+      expect(output.proceedWithRecommendations).toBe(false);
     });
 
     it('should recommend with confidence 0.8 and all 4 critical fields', async () => {
@@ -132,7 +134,7 @@ describe('DialogueManager - Decision Logic', () => {
       }
     });
 
-    it('should use hybrid mode at boundary (confidence 0.5, 2 critical fields)', async () => {
+    it('should use ask mode at boundary (confidence 0.5, 2 critical fields) - vague query', async () => {
       const input = createMockInput({
         confidence: 0.5,
         interests: ['cooking'],
@@ -141,8 +143,9 @@ describe('DialogueManager - Decision Logic', () => {
 
       const output = await agent.process(input);
 
-      expect(output.mode).toBe('hybrid');
-      expect(output.proceedWithRecommendations).toBe(true);
+      // Vague query logic: 0.5 confidence with <3 critical fields triggers ask mode
+      expect(output.mode).toBe('ask');
+      expect(output.proceedWithRecommendations).toBe(false);
     });
 
     it('should use hybrid mode at upper boundary (confidence 0.69)', async () => {
@@ -272,9 +275,9 @@ describe('DialogueManager - Decision Logic', () => {
   describe('Max Turns Enforcement', () => {
     it('should force recommend mode after 3 turns', async () => {
       const conversationHistory = [
-        { askedQuestions: ['budget'] },
-        { askedQuestions: ['interests'] },
-        { askedQuestions: ['relationship'] },
+        { askedQuestions: ['budget'], id: '1', sessionId: 'test', turnNumber: 1, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
+        { askedQuestions: ['interests'], id: '2', sessionId: 'test', turnNumber: 2, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
+        { askedQuestions: ['relationship'], id: '3', sessionId: 'test', turnNumber: 3, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
       ];
 
       const input = createMockInput(
@@ -286,17 +289,17 @@ describe('DialogueManager - Decision Logic', () => {
 
       expect(output.mode).toBe('recommend');
       expect(output.proceedWithRecommendations).toBe(true);
-      expect(output.reasoning).toContain('Maximum conversation turns');
+      expect(output.reasoning).toContain('Maximum conversation turns (3) reached');
     });
 
     it('should allow asking at turn 2', async () => {
       const conversationHistory = [
-        { askedQuestions: ['budget'] },
-        { askedQuestions: ['interests'] },
+        { askedQuestions: ['budget'], id: '1', sessionId: 'test', turnNumber: 1, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
+        { askedQuestions: ['interests'], id: '2', sessionId: 'test', turnNumber: 2, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
       ];
 
       const input = createMockInput(
-        { confidence: 0.3 },
+        { confidence: 0.3, interests: ['test'] },
         { conversationHistory }
       );
 
@@ -308,9 +311,9 @@ describe('DialogueManager - Decision Logic', () => {
 
     it('should force recommend exactly at turn 3', async () => {
       const conversationHistory = [
-        { askedQuestions: ['budget'] },
-        { askedQuestions: ['interests'] },
-        { askedQuestions: ['relationship'] },
+        { askedQuestions: ['budget'], id: '1', sessionId: 'test', turnNumber: 1, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
+        { askedQuestions: ['interests'], id: '2', sessionId: 'test', turnNumber: 2, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
+        { askedQuestions: ['relationship'], id: '3', sessionId: 'test', turnNumber: 3, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
       ];
 
       const input = createMockInput(
@@ -321,14 +324,14 @@ describe('DialogueManager - Decision Logic', () => {
       const output = await agent.process(input);
 
       expect(output.mode).toBe('recommend');
-      expect(output.reasoning).toMatch(/maximum.*turns/i);
+      expect(output.reasoning).toContain('Maximum conversation turns (3) reached');
     });
   });
 
   describe('Question Deduplication', () => {
     it('should not ask same question twice', async () => {
       const conversationHistory = [
-        { askedQuestions: ['budget', 'interests'] },
+        { askedQuestions: ['budget', 'interests'], id: '1', sessionId: 'test', turnNumber: 1, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
       ];
 
       const input = createMockInput(
@@ -351,7 +354,7 @@ describe('DialogueManager - Decision Logic', () => {
 
     it('should ask only new questions', async () => {
       const conversationHistory = [
-        { askedQuestions: ['budget'] },
+        { askedQuestions: ['budget'], id: '1', sessionId: 'test', turnNumber: 1, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
       ];
 
       const input = createMockInput(
@@ -374,8 +377,8 @@ describe('DialogueManager - Decision Logic', () => {
 
     it('should deduplicate across multiple turns', async () => {
       const conversationHistory = [
-        { askedQuestions: ['budget'] },
-        { askedQuestions: ['interests', 'relationship'] },
+        { askedQuestions: ['budget'], id: '1', sessionId: 'test', turnNumber: 1, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
+        { askedQuestions: ['interests', 'relationship'], id: '2', sessionId: 'test', turnNumber: 2, timestamp: new Date(), userInput: 'test', listenerOutput: createMockListenerOutput(), dialogueDecision: {} as any },
       ];
 
       const input = createMockInput(
@@ -665,7 +668,11 @@ describe('DialogueManager - Input Validation', () => {
       memoryOutput: createMockMemoryOutput(),
     } as any;
 
-    await expect(agent.process(input)).rejects.toThrow(ValidationError);
+    const output = await agent.process(input);
+
+    // Should gracefully degrade to recommend mode with fallback reason
+    expect(output.mode).toBe('recommend');
+    expect(output.fallbackReason).toBeDefined();
   });
 
   it('should throw ValidationError for missing memoryOutput', async () => {
@@ -673,27 +680,37 @@ describe('DialogueManager - Input Validation', () => {
       listenerOutput: createMockListenerOutput(),
     } as any;
 
-    await expect(agent.process(input)).rejects.toThrow(ValidationError);
+    const output = await agent.process(input);
+
+    // Should gracefully degrade to recommend mode with fallback reason
+    expect(output.mode).toBe('recommend');
+    expect(output.fallbackReason).toBeDefined();
   });
 
-  it('should throw ValidationError for invalid confidence (<0)', async () => {
+  it('should gracefully handle invalid confidence (<0)', async () => {
     const input = createMockInput({
       confidence: -0.1,
       interests: ['tech'],
     });
 
-    // Validation happens early, should throw
-    await expect(agent.process(input)).rejects.toThrow(ValidationError);
+    const output = await agent.process(input);
+
+    // Should gracefully degrade to recommend mode with fallback reason
+    expect(output.mode).toBe('recommend');
+    expect(output.fallbackReason).toBeDefined();
   });
 
-  it('should throw ValidationError for invalid confidence (>1)', async () => {
+  it('should gracefully handle invalid confidence (>1)', async () => {
     const input = createMockInput({
       confidence: 1.5,
       interests: ['gaming'],
     });
 
-    // Validation happens early, should throw
-    await expect(agent.process(input)).rejects.toThrow(ValidationError);
+    const output = await agent.process(input);
+
+    // Should gracefully degrade to recommend mode with fallback reason
+    expect(output.mode).toBe('recommend');
+    expect(output.fallbackReason).toBeDefined();
   });
 
   it('should gracefully degrade for invalid budget (min < 0)', async () => {
@@ -895,7 +912,7 @@ describe('DialogueManager - Vague Query Handling (Issue #7)', () => {
     // NEW BEHAVIOR: Should ask questions for vague queries
     expect(output.mode).toBe('ask');
     expect(output.proceedWithRecommendations).toBe(false);
-    expect(output.reasoning).toMatch(/vague query/i);
+    expect(output.reasoning).toContain('Vague query detected');
   });
 
   it('should ask questions with 2 critical fields and 0.59 confidence (boundary)', async () => {

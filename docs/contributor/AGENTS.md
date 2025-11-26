@@ -1,23 +1,178 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-Present-Agent2 couples a Node/TypeScript backend with a Next.js frontend. Core orchestration and all 10 agents live in `src/services` (e.g., `src/services/agents/listener-agent.ts`), shared utilities in `src/lib`, and typed contracts in `src/types`. Operational scripts such as `scripts/setup-schema.ts` and `scripts/test-personas.ts` sit under `scripts/`, while long-form design docs live in `docs/`. The frontend UI resides in `frontend/app` with subroutes like `logs/` and `products/`. Persist persona outputs in `test-results/` and large datasets in `data/` so `src/` stays production-ready.
+**Version**: 2.2.0 | **Last Updated**: November 26, 2025
 
-## Build, Test, and Development Commands
-- `npm run dev` — concurrently watches the Express API and Next.js UI for day-to-day development.
-- `npm run server:dev` / `npm run frontend` — launch stacks in separate terminals when isolating regressions.
-- `npm run setup:schema` — provisions Neo4j indexes/vector indexes; rerun after model changes.
-- `npm run ingest` or `npm run ingest:sample` — populate the graph from data exports; sample mode keeps runtime short.
-- `npm test` runs Vitest unit suites; `npm run test:personas:quick` hits the 3-core persona loop; `npm run test:personas:list` is exhaustive; `npm run test:real-users:*` exercises scenario difficulty tiers.
+---
 
-## Coding Style & Naming Conventions
-TypeScript runs in strict mode; fail builds if `tsc --noEmit` surfaces drift. Use ES modules, explicit async return types, PascalCase classes (e.g., `RecommendationOrchestrator`), camelCase functions, and kebab-case filenames (`relationship-agent.ts`). Keep imports relative within module boundaries and favor single-responsibility agents that expose a `process` method returning typed contexts. Default to 2-space indentation and reserve comments for orchestration logic that is not self-evident.
+## Project Structure
+
+```
+Present-Agent2/
+├── src/
+│   ├── services/
+│   │   ├── agents/           # 10 specialized recommendation agents
+│   │   ├── conversation/     # Conversation state management
+│   │   └── orchestrator.ts   # Agent coordination
+│   ├── lib/                  # Shared utilities
+│   ├── types/                # TypeScript type definitions
+│   └── server.ts             # Express API server
+├── frontend/                 # Next.js React UI
+├── scripts/                  # Operational scripts
+├── docs/                     # Documentation
+├── data/                     # Product data and exports
+├── test-results/             # Persona test outputs
+└── .claude/                  # Claude Code configuration
+    └── agents/               # 19 agent definitions
+```
+
+---
+
+## Development Commands
+
+### Daily Development
+```bash
+npm run dev              # Full stack (backend + frontend)
+npm run chat             # Interactive CLI chat
+npm run server:dev       # Backend with watch mode
+cd frontend && npm run dev  # Frontend only
+```
+
+### Database Operations
+```bash
+npm run setup:schema     # Initialize Neo4j schema
+npm run ingest:products  # Load product data
+npm run attributes:status  # Check attribute coverage
+```
+
+### Testing
+```bash
+npm test                     # Vitest unit tests (190 tests)
+npm run test:personas:quick  # Quick persona validation
+npm run test:personas:list   # Full persona suite
+npm run test:real-users:easy # Real scenario tests
+```
+
+---
+
+## Coding Standards
+
+### TypeScript
+- **Strict mode** enabled - fix all `tsc --noEmit` errors
+- ES modules with explicit async return types
+- Single-responsibility agents with `process` method
+
+### Naming Conventions
+| Type | Convention | Example |
+|------|------------|---------|
+| Classes | PascalCase | `RecommendationOrchestrator` |
+| Functions | camelCase | `extractContext` |
+| Files | kebab-case | `relationship-agent.ts` |
+| Types | PascalCase | `ListenerOutput` |
+
+### Code Style
+- 2-space indentation
+- Relative imports within modules
+- Comments only for non-obvious orchestration logic
+
+---
+
+## Agent Architecture
+
+### 10-Agent Recommendation System
+Located in `src/services/agents/`:
+
+| # | Agent | File | Purpose |
+|---|-------|------|---------|
+| 1 | Listener | `listener.ts` | Context extraction |
+| 2 | Memory | `memory.ts` | History + profiles |
+| 3 | Relationship | `relationship.ts` | Dynamics analysis |
+| 4 | Constraints | `constraints.ts` | Validation |
+| 5 | Meaning | `meaning.ts` | Interest identification |
+| 6 | Explorer | `explorer.ts` | Product discovery |
+| 7 | Validator | `validator.ts` | Quality check |
+| 8 | Storyteller | `storyteller.ts` | Reasoning |
+| 9 | Presenter | `dialogue-presenter.ts` | Formatting |
+| 10 | Learner | `recipient-learner.ts` | Profile enrichment |
+
+### Supporting Components
+- `base.ts` - Abstract base agent class
+- `dialogue-manager.ts` - Conversation flow
+- `orchestrator.ts` - Agent coordination
+
+---
 
 ## Testing Guidelines
-Unit files should live beside their subjects using the `*.test.ts` suffix and run through Vitest. Persona and scenario harnesses live in `scripts/test-personas.ts` and `scripts/test-real-user-scenarios.ts`; add personas in `data/personas/*.json` and invoke them via CLI arguments. Maintain ≥80% coverage on agent logic and ensure the persona quick suite passes before pushing. Capture flaky-agent traces in `logs/` or `test-results/` instead of scattering debug prints across source files.
 
-## Commit & Pull Request Guidelines
-Recent history uses short, imperative summaries with optional qualifiers (e.g., “Fix critical bugs and reorganize documentation - MVP ready”). Scope commits per concern, reference the agents or scripts touched, and document data migrations whenever Neo4j schemas shift. PRs should describe impacted agents, enumerate verification commands (Vitest, persona quick, dev server), link related docs under `docs/`, and include screenshots for frontend changes. Tag reviewers responsible for the affected agents and leave follow-up items as unchecked task list bullets.
+### Unit Tests
+- Place tests beside source: `*.test.ts`
+- Run with Vitest: `npm test`
+- Maintain ≥80% coverage on agent logic
 
-## Security & Configuration Tips
-Secrets belong in `.env.local` at the repo root; never commit keys—share templates via `.env.example`. Neo4j and LLM keys are mandatory for ingestion and persona tests, so validate them with `npm run setup:schema` before long runs. Place any experimental API adapters in `src/lib`, gate them with feature flags in `src/services/orchestrator.ts`, and avoid logging credentials when persisting traces.
+### Persona Testing
+- Add personas in `data/personas/*.json`
+- Quick suite: `npm run test:personas:quick`
+- Full suite: `npm run test:personas:list`
+
+### Pre-Push Checklist
+1. `npm test` - All 190 tests pass
+2. `npm run test:personas:quick` - Core personas work
+3. `tsc --noEmit` - No type errors
+
+---
+
+## Commit Guidelines
+
+### Format
+```
+Short imperative summary (50 chars)
+
+- Detail 1
+- Detail 2
+
+Agents touched: Listener, Validator
+```
+
+### Examples
+- `Fix vague query handling in DialogueManager`
+- `Add occasion tagging to product ingestion`
+- `Improve Storyteller reasoning quality`
+
+---
+
+## Pull Request Process
+
+1. **Description**: What changes and why
+2. **Agents Affected**: List modified agents
+3. **Testing**: Verification commands run
+4. **Screenshots**: For frontend changes
+5. **Follow-ups**: Unchecked task bullets
+
+---
+
+## Security
+
+- **Secrets**: `.env.local` only, never commit
+- **Templates**: Use `.env.example` for structure
+- **Logging**: Never log credentials
+- **Validation**: `npm run setup:schema` to verify keys
+
+---
+
+## Key Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [README.md](../../README.md) | Project overview |
+| [docs/ARCHITECTURE.md](../ARCHITECTURE.md) | System design |
+| [docs/API.md](../API.md) | API reference |
+| [.claude/PROJECT_STATUS.md](../../.claude/PROJECT_STATUS.md) | Current status |
+| [.claude/agents/](../../.claude/agents/) | Agent definitions |
+
+---
+
+## Current Status
+
+- **Version**: 2.2.0 (Production Ready)
+- **Products**: 41,704
+- **Attribute Coverage**: 99.7%
+- **Tests**: 190/190 passing

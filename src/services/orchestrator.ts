@@ -296,26 +296,49 @@ export class RecommendationOrchestrator {
         // Mode is 'recommend' - continue normally
       }
 
-      // Step 3: Analyze relationship dynamics
-      const relationshipStart = Date.now();
-      const relationshipOutput = await this.relationshipAgent.process({
-        memoryContext: memoryOutput,
-      });
-      agentTimings['relationship'] = Date.now() - relationshipStart;
+      // Steps 3-5: Run Relationship, Constraints, and Meaning agents in PARALLEL
+      // These agents don't depend on each other's output, only on memoryOutput
+      const parallelStart = Date.now();
 
-      // Step 4: Validate and normalize constraints
-      const constraintsStart = Date.now();
-      const constraintsOutput = await this.constraintsAgent.process({
-        relationshipContext: relationshipOutput,
-      });
-      agentTimings['constraints'] = Date.now() - constraintsStart;
+      const [relationshipOutput, constraintsOutput, meaningOutput] = await Promise.all([
+        // Step 3: Analyze relationship dynamics
+        (async () => {
+          const start = Date.now();
+          const result = await this.relationshipAgent.process({
+            memoryContext: memoryOutput,
+          });
+          agentTimings['relationship'] = Date.now() - start;
+          return result;
+        })(),
 
-      // Step 5: Identify what would be meaningful
-      const meaningStart = Date.now();
-      const meaningOutput = await this.meaningAgent.process({
-        constraintsContext: constraintsOutput,
+        // Step 4: Validate and normalize constraints
+        (async () => {
+          const start = Date.now();
+          const result = await this.constraintsAgent.process({
+            relationshipContext: { memoryContext: memoryOutput } as any,
+          });
+          agentTimings['constraints'] = Date.now() - start;
+          return result;
+        })(),
+
+        // Step 5: Identify what would be meaningful
+        (async () => {
+          const start = Date.now();
+          const result = await this.meaningAgent.process({
+            constraintsContext: { relationshipContext: { memoryContext: memoryOutput } } as any,
+          });
+          agentTimings['meaning'] = Date.now() - start;
+          return result;
+        })(),
+      ]);
+
+      agentTimings['parallel_total'] = Date.now() - parallelStart;
+      logger.info('Orchestrator: Parallel agents completed', {
+        relationshipTime: agentTimings['relationship'],
+        constraintsTime: agentTimings['constraints'],
+        meaningTime: agentTimings['meaning'],
+        parallelTotal: agentTimings['parallel_total'],
       });
-      agentTimings['meaning'] = Date.now() - meaningStart;
 
       // Step 6: Discover product candidates (CRITICAL - graph + embeddings)
       const explorerStart = Date.now();
@@ -328,6 +351,7 @@ export class RecommendationOrchestrator {
       const validatorStart = Date.now();
       const validatorOutput = await this.validatorAgent.process({
         explorerContext: explorerOutput,
+        constraintsContext: constraintsOutput,
       });
       agentTimings['validator'] = Date.now() - validatorStart;
 
@@ -387,26 +411,37 @@ export class RecommendationOrchestrator {
     memoryOutput: MemoryOutput,
     agentTimings: Record<string, number>
   ): Promise<{ executionTrace: any } & PresenterOutput> {
-    // Step 3: Analyze relationship dynamics
-    const relationshipStart = Date.now();
-    const relationshipOutput = await this.relationshipAgent.process({
-      memoryContext: memoryOutput,
-    });
-    agentTimings['relationship'] = Date.now() - relationshipStart;
+    // Steps 3-5: Run Relationship, Constraints, and Meaning agents in PARALLEL
+    const parallelStart = Date.now();
 
-    // Step 4: Validate and normalize constraints
-    const constraintsStart = Date.now();
-    const constraintsOutput = await this.constraintsAgent.process({
-      relationshipContext: relationshipOutput,
-    });
-    agentTimings['constraints'] = Date.now() - constraintsStart;
+    const [relationshipOutput, constraintsOutput, meaningOutput] = await Promise.all([
+      (async () => {
+        const start = Date.now();
+        const result = await this.relationshipAgent.process({
+          memoryContext: memoryOutput,
+        });
+        agentTimings['relationship'] = Date.now() - start;
+        return result;
+      })(),
+      (async () => {
+        const start = Date.now();
+        const result = await this.constraintsAgent.process({
+          relationshipContext: { memoryContext: memoryOutput } as any,
+        });
+        agentTimings['constraints'] = Date.now() - start;
+        return result;
+      })(),
+      (async () => {
+        const start = Date.now();
+        const result = await this.meaningAgent.process({
+          constraintsContext: { relationshipContext: { memoryContext: memoryOutput } } as any,
+        });
+        agentTimings['meaning'] = Date.now() - start;
+        return result;
+      })(),
+    ]);
 
-    // Step 5: Identify what would be meaningful
-    const meaningStart = Date.now();
-    const meaningOutput = await this.meaningAgent.process({
-      constraintsContext: constraintsOutput,
-    });
-    agentTimings['meaning'] = Date.now() - meaningStart;
+    agentTimings['parallel_total'] = Date.now() - parallelStart;
 
     // Step 6: Discover product candidates
     const explorerStart = Date.now();
@@ -419,6 +454,7 @@ export class RecommendationOrchestrator {
     const validatorStart = Date.now();
     const validatorOutput = await this.validatorAgent.process({
       explorerContext: explorerOutput,
+      constraintsContext: constraintsOutput,
     });
     agentTimings['validator'] = Date.now() - validatorStart;
 

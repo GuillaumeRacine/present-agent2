@@ -38,10 +38,10 @@ const RELAXED_THRESHOLDS: QualityThresholds = {
 };
 
 const MINIMUM_THRESHOLDS: QualityThresholds = {
-  hybridScore: 0.25,
-  interestMatch: 0.15,
-  archetypeMatch: 0.10,
-  personalizationScore: 0.20,
+  hybridScore: 0.30,      // Raised from 0.25 to prevent low-quality recommendations
+  interestMatch: 0.25,    // Raised from 0.15 to ensure better interest alignment
+  archetypeMatch: 0.10,   // Keep at 0.10 as requested
+  personalizationScore: 0.25, // Raised from 0.20 for better personalization
 };
 
 // Minimum products to return (will lower thresholds if needed)
@@ -181,15 +181,16 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
     thresholds: QualityThresholds,
     acceptedProducts: ProductCandidate[]
   ): Promise<ValidationResult> {
-    const context = input.explorerContext.meaningContext.constraintsContext;
+    // Use direct constraintsContext if provided, otherwise fall back to nested path
+    const constraintsContext = input.constraintsContext || input.explorerContext.meaningContext.constraintsContext;
 
     // Run all validation checks
     const checks = {
-      budgetCheck: this.checkBudget(candidate, context),
-      constraintsCheck: this.checkConstraints(candidate, context),
+      budgetCheck: this.checkBudget(candidate, constraintsContext),
+      constraintsCheck: this.checkConstraints(candidate, constraintsContext),
       relevanceCheck: await this.checkRelevance(candidate, input, thresholds),
       qualityCheck: this.checkQuality(candidate),
-      appropriatenessCheck: await this.checkAppropriateness(candidate, context),
+      appropriatenessCheck: await this.checkAppropriateness(candidate, constraintsContext),
       archetypeCheck: this.checkArchetypeAlignment(candidate, input, thresholds),
       personalizationCheck: await this.checkPersonalizationQuality(candidate, input, thresholds),
       diversityCheck: this.checkDiversity(candidate, acceptedProducts),
@@ -263,8 +264,17 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
   }
 
   private checkBudget(candidate: ProductCandidate, context: any) {
-    const budget = context.hardConstraints.budget;
+    const budget = context.hardConstraints?.budget;
     const price = candidate.product.price;
+
+    // If no budget specified, pass by default
+    if (!budget) {
+      return {
+        passed: true,
+        score: 1.0,
+      };
+    }
+
     const inBudget = price >= budget.min && price <= budget.max;
 
     return {
@@ -274,8 +284,8 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
   }
 
   private checkConstraints(candidate: ProductCandidate, context: any) {
-    const required = context.hardConstraints.requiredAttributes || [];
-    const excluded = context.hardConstraints.excludedAttributes || [];
+    const required = context.hardConstraints?.requiredAttributes || [];
+    const excluded = context.hardConstraints?.excludedAttributes || [];
 
     const violations: string[] = [];
     // TODO: Check product attributes against required/excluded
@@ -296,7 +306,7 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
     const vectorScore = candidate.scores.vectorScore;
 
     // Interest match score (how many interests matched)
-    const interests = input.explorerContext.meaningContext.constraintsContext.relationshipContext.memoryContext.listenerContext.interests || [];
+    const interests = input.explorerContext?.meaningContext?.constraintsContext?.relationshipContext?.memoryContext?.listenerContext?.interests || [];
     const matchedInterests = candidate.matchReasons?.matchedInterests || [];
     const interestMatchScore = interests.length > 0 ? matchedInterests.length / interests.length : 0;
 
@@ -334,8 +344,17 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
 
   private async checkAppropriateness(candidate: ProductCandidate, context: any) {
     // Use relationship context to check appropriateness
-    const relationship = context.relationshipContext.relationshipAnalysis;
+    const relationship = context.relationshipContext?.relationshipAnalysis;
     const concerns: string[] = [];
+
+    // Skip check if relationship data not available
+    if (!relationship) {
+      return {
+        passed: true,
+        score: 1.0,
+        concerns: [],
+      };
+    }
 
     // Basic heuristics for appropriateness
     const price = candidate.product.price;
@@ -424,9 +443,9 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
     input: ValidatorInput,
     thresholds: QualityThresholds
   ) {
-    const memoryContext = input.explorerContext.meaningContext.constraintsContext.relationshipContext.memoryContext;
-    const giverProfile = memoryContext.giverProfile;
-    const enrichedRecipient = memoryContext.enrichedRecipient;
+    const memoryContext = input.explorerContext?.meaningContext?.constraintsContext?.relationshipContext?.memoryContext;
+    const giverProfile = memoryContext?.giverProfile;
+    const enrichedRecipient = memoryContext?.enrichedRecipient;
 
     let personalizationScore = 0.5; // Default neutral score
     let passed = true;

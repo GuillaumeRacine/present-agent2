@@ -395,6 +395,7 @@ export interface ExplorerOutput {
 
 export interface ValidatorInput {
   explorerContext: ExplorerOutput;
+  constraintsContext?: ConstraintsOutput; // Optional for backward compatibility
 }
 
 export interface ValidationResult {

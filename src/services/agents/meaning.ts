@@ -34,14 +34,14 @@ export class MeaningAgent extends BaseAgent<MeaningInput, MeaningOutput> {
   }
 
   private async identifyMeaningFramework(context: any) {
-    // Extract relevant context
-    const recipient = context.relationshipContext.memoryContext.listenerContext.recipient;
-    const interests = context.relationshipContext.memoryContext.listenerContext.interests;
-    const values = context.relationshipContext.memoryContext.listenerContext.values;
-    const occasion = context.relationshipContext.memoryContext.listenerContext.occasion;
-    const relationship = context.relationshipContext.relationshipAnalysis;
-    const userQuery = context.relationshipContext.memoryContext.listenerContext.userQuery || '';
-    const constraints = context.relationshipContext.memoryContext.listenerContext.constraints || [];
+    // Extract relevant context with optional chaining for parallel execution safety
+    const recipient = context.relationshipContext?.memoryContext?.listenerContext?.recipient;
+    const interests = context.relationshipContext?.memoryContext?.listenerContext?.interests || [];
+    const values = context.relationshipContext?.memoryContext?.listenerContext?.values || {};
+    const occasion = context.relationshipContext?.memoryContext?.listenerContext?.occasion;
+    const relationship = context.relationshipContext?.relationshipAnalysis;
+    const userQuery = context.relationshipContext?.memoryContext?.listenerContext?.userQuery || '';
+    const constraints = context.relationshipContext?.memoryContext?.listenerContext?.constraints || [];
 
     const systemPrompt = `You are an expert at understanding what makes gifts meaningful and identifying gift archetypes from user intent.
 

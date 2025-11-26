@@ -131,9 +131,9 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
     isFallback: boolean = false
   ): Promise<{ intro: string; outro: string }> {
     const recipient =
-      context.validatorContext.explorerContext.meaningContext.constraintsContext.relationshipContext.memoryContext.listenerContext.recipient;
+      context.validatorContext?.explorerContext?.meaningContext?.constraintsContext?.relationshipContext?.memoryContext?.listenerContext?.recipient;
     const occasion =
-      context.validatorContext.explorerContext.meaningContext.constraintsContext.relationshipContext.memoryContext.listenerContext.occasion;
+      context.validatorContext?.explorerContext?.meaningContext?.constraintsContext?.relationshipContext?.memoryContext?.listenerContext?.occasion;
 
     const fallbackNote = isFallback
       ? `\n\nIMPORTANT: These are fallback recommendations because no products passed all validation criteria.

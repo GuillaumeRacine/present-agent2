@@ -39,23 +39,23 @@ export class StorytellerAgent extends BaseAgent<StorytellerInput, StorytellerOut
   }
 
   private async craftStory(candidate: any, context: any): Promise<ProductStory> {
-    // Extract relevant context
-    const memoryContext = context.explorerContext.meaningContext.constraintsContext.relationshipContext.memoryContext;
-    const recipient = memoryContext.listenerContext.recipient;
-    const interests = memoryContext.listenerContext.interests;
-    const meaningFramework = context.explorerContext.meaningContext.meaningFramework;
+    // Extract relevant context with optional chaining for safety
+    const memoryContext = context.explorerContext?.meaningContext?.constraintsContext?.relationshipContext?.memoryContext;
+    const recipient = memoryContext?.listenerContext?.recipient;
+    const interests = memoryContext?.listenerContext?.interests || [];
+    const meaningFramework = context.explorerContext?.meaningContext?.meaningFramework;
     const relationship =
-      context.explorerContext.meaningContext.constraintsContext.relationshipContext.relationshipAnalysis;
+      context.explorerContext?.meaningContext?.constraintsContext?.relationshipContext?.relationshipAnalysis;
     // Values is now an object with boolean flags, convert to array of truthy keys
-    const valuesObj = memoryContext.listenerContext.values || {};
+    const valuesObj = memoryContext?.listenerContext?.values || {};
     const values = typeof valuesObj === 'object' && !Array.isArray(valuesObj)
       ? Object.keys(valuesObj).filter(k => valuesObj[k] === true)
       : [];
-    const occasion = memoryContext.listenerContext.occasion;
+    const occasion = memoryContext?.listenerContext?.occasion;
 
     // NEW: Extract giver profile
-    const giverProfile = memoryContext.giverProfile;
-    const enrichedRecipient = memoryContext.enrichedRecipient;
+    const giverProfile = memoryContext?.giverProfile;
+    const enrichedRecipient = memoryContext?.enrichedRecipient;
 
     // Build rich recipient context for personalization
     const recipientContext = {

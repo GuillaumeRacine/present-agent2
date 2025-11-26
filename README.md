@@ -254,22 +254,20 @@ See [docs/API.md](docs/API.md) for complete API documentation.
 ## Documentation
 
 ### Core Documentation
-- **[Attribute System Validation](docs/reports/ATTRIBUTE_SYSTEM_VALIDATION_REPORT.md)** ⭐ System status & quality metrics
-- **[Agent Performance Analysis](docs/reports/AGENT_PERFORMANCE_ANALYSIS.md)** ⭐ Agent scoring & optimization roadmap
+- **[Attribute System Validation](docs/reports/ATTRIBUTE_SYSTEM_VALIDATION_REPORT.md)** - System status & quality metrics
+- **[Agent Performance Analysis](docs/reports/AGENT_PERFORMANCE_ANALYSIS.md)** - Agent scoring & optimization roadmap
 - **[User Testing Guide](docs/guides/USER_TESTING_GUIDE.md)** - How to test recommendations
 - **[Complete Attribute Guide](docs/guides/COMPLETE_ATTRIBUTE_POPULATION_GUIDE.md)** - Attribute population setup
 - **[Architecture](docs/ARCHITECTURE.md)** - Complete system architecture
 - **[API Documentation](docs/API.md)** - API endpoints and usage
-- **[Documentation Index](docs/DOCUMENTATION_INDEX.md)** - All documentation
+- **[Documentation Hub](docs/README.md)** - All documentation
 
 ### Guides & References
 - **[Repository Guidelines](docs/contributor/AGENTS.md)** - Contributor workflow and standards
 - **[Frontend Guide](docs/FRONTEND_GUIDE.md)** - Complete frontend documentation
-- **[Persona Testing](docs/PERSONA_TESTING_FRAMEWORK.md)** - Testing framework guide
-- **[Graph Schema](docs/GRAPH_SCHEMA_V2.md)** - Neo4j database schema
-- **[Agents](docs/AGENTS.md)** - Agent architecture and workflows
+- **[Persona Testing](docs/guides/PERSONA_TESTING_FRAMEWORK.md)** - Testing framework guide
 - **[Testing Guide](docs/guides/TESTING_GUIDE.md)** - Recommendation testing
-- **[Authentication](docs/AUTHENTICATION_IMPLEMENTATION.md)** - Auth implementation
+- **[Dialogue Manager](docs/guides/DIALOGUE_MANAGER_QUICKSTART.md)** - Conversation system guide
 
 ### Archives
 - **[Phase A & B Reports](docs/archive/phase-ab/)** - Historical test reports
@@ -382,5 +380,5 @@ For questions or issues, please open a GitHub issue.
 ---
 
 **Version**: 2.2.0
-**Last Updated**: November 14, 2025
-**Status**: ✅ Production Ready - 99.7% Attribute Coverage, Multi-Agent System Operational
+**Last Updated**: November 26, 2025
+**Status**: Production Ready - 99.7% Attribute Coverage, 190/190 Tests Passing

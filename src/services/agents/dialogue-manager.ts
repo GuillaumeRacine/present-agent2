@@ -586,7 +586,20 @@ export class DialogueManagerAgent extends BaseAgent<
     this.log(`ERROR in ${context}: ${errorMessage}`, { error });
 
     // Graceful degradation: proceed to recommendations
-    const assessment = this.assessContext(input.listenerOutput);
+    // Use safe assessment if listener output is missing
+    let assessment: ConfidenceAssessment;
+    try {
+      assessment = this.assessContext(input.listenerOutput);
+    } catch {
+      // If even assessment fails, use minimal fallback assessment
+      assessment = {
+        overallConfidence: 0,
+        criticalFieldsCovered: [],
+        criticalFieldsMissing: ['budget', 'interests', 'relationshipType', 'occasion'],
+        highImpactAmbiguities: [],
+        criticalFieldCount: 0,
+      };
+    }
 
     return this.buildRecommendMode(
       startTime,
