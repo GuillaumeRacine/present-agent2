@@ -524,15 +524,168 @@ import { generateComprehensiveAttributePrompt } from './gift-attributes-prompt.j
 /**
  * Semantic Validation Rules
  * Ensures LLM output is logically consistent
+ *
+ * EXTENDED: Phase 3 - More comprehensive exclusivity rules
+ * Only using attributes that actually exist in GiftAttributes interface
  */
 const MUTUALLY_EXCLUSIVE_PAIRS: [keyof GiftAttributes, keyof GiftAttributes][] = [
+  // Price-based exclusions
   ['isBudgetFriendly', 'isLuxury'],
   ['isBudgetFriendly', 'isSplurgeWorthy'],
+
+  // Physical attributes
   ['isCompact', 'isBulky'],
+  ['isLightweight', 'isBulky'],
+
+  // Durability and longevity
   ['isOneTimeUse', 'isLastingValue'],
+  ['isConsumable', 'isLastingValue'],
+  ['isConsumable', 'isDurable'],
+
+  // Aesthetic style
   ['isMinimalist', 'isBold'],
   ['isSubtle', 'isVisuallyStriking'],
+  ['isSubtle', 'isBold'],
+  ['isTraditional', 'isModern'],
+  ['isTimeless', 'isTrendy'],
+
+  // User experience level
+  ['isBeginner', 'isExpert'],
+
+  // Activity level
+  ['isPassive', 'isActive'],
+  ['isPassive', 'isEnergetic'],
+  ['isCalming', 'isEnergetic'],
 ];
+
+/**
+ * Attribute Exclusivity Rules
+ * Maps each attribute to its mutually exclusive attributes
+ *
+ * EXTENDED: Phase 3 - Comprehensive exclusivity mapping
+ * Using only valid GiftAttributes keys
+ */
+export const ATTRIBUTE_EXCLUSIVITY_RULES: Record<string, string[]> = {
+  // Aesthetic and design
+  'isMinimalist': ['isBold', 'isVisuallyStriking', 'isColorful'],
+  'isBold': ['isMinimalist', 'isSubtle'],
+  'isSubtle': ['isBold', 'isVisuallyStriking'],
+
+  // User skill level
+  'isBeginner': ['isExpert'],
+  'isExpert': ['isBeginner'],
+
+  // Activity level
+  'isPassive': ['isActive', 'isEnergetic'],
+  'isActive': ['isPassive'],
+  'isEnergetic': ['isPassive', 'isCalming'],
+  'isCalming': ['isEnergetic'],
+
+  // Physical size
+  'isCompact': ['isBulky'],
+  'isBulky': ['isCompact', 'isSpaceSaving', 'isLightweight'],
+  'isSpaceSaving': ['isBulky'],
+
+  // Price positioning
+  'isBudgetFriendly': ['isLuxury', 'isSplurgeWorthy'],
+  'isLuxury': ['isBudgetFriendly'],
+  'isSplurgeWorthy': ['isBudgetFriendly'],
+
+  // Style and trend
+  'isTimeless': ['isTrendy'],
+  'isTrendy': ['isTimeless'],
+  'isModern': ['isTraditional', 'isVintageStyle'],
+  'isTraditional': ['isModern'],
+
+  // Durability
+  'isConsumable': ['isLastingValue', 'isDurable', 'isLongTermInvestment'],
+  'isOneTimeUse': ['isLastingValue', 'isDurable'],
+  'isLastingValue': ['isConsumable', 'isOneTimeUse'],
+};
+
+/**
+ * Conditional Attribute Rules
+ * Rules that apply based on other attribute values
+ *
+ * NEW: Phase 3 - Context-aware attribute validation
+ */
+export const CONDITIONAL_ATTRIBUTE_RULES: Record<string, {
+  excludes?: string[];
+  suggests?: string[];
+  requires?: string[];
+}> = {
+  // Consumable items cannot have lasting value
+  'isConsumable': {
+    excludes: ['isLastingValue', 'isDurable', 'isLongTermInvestment'],
+    suggests: ['isImmediateGratification']
+  },
+
+  // Experiential gifts should align with certain attributes
+  'isExperiential': {
+    suggests: ['isMemoryMaking', 'isShared', 'isImmediateGratification'],
+    excludes: ['isLastingValue', 'isCollectible']
+  },
+
+  // Personalized items are often sentimental
+  'isPersonalized': {
+    suggests: ['isSentimental', 'isHeartfelt', 'isUnique']
+  },
+
+  // Luxury items should not be budget-friendly
+  'isLuxury': {
+    excludes: ['isBudgetFriendly'],
+    suggests: ['isElegant', 'isLastingValue']
+  },
+
+  // Collectible items should have lasting value
+  'isCollectible': {
+    requires: ['isLastingValue'],
+    suggests: ['isUnique', 'isConversationStarter']
+  },
+
+  // Educational items often skill-building
+  'isEducational': {
+    suggests: ['isSkillBuilding', 'isMindExpanding']
+  },
+
+  // Handcrafted often implies unique and artistic
+  'isHandcrafted': {
+    suggests: ['isUnique', 'isArtistic', 'isEthicallySourced']
+  },
+
+  // Tech-enabled items are usually modern
+  'isTechEnabled': {
+    suggests: ['isModern'],
+    excludes: ['isTraditional', 'isVintageStyle']
+  },
+
+  // Eco-friendly alignment
+  'isEcoFriendly': {
+    suggests: ['isEthicallySourced', 'isZeroWaste']
+  },
+
+  // Family-friendly implications
+  'isFamilyFriendly': {
+    suggests: ['isAllAges', 'isGenderNeutral']
+  },
+
+  // Artistic items
+  'isArtistic': {
+    suggests: ['isVisual', 'isConversationStarter']
+  },
+
+  // Wellness focus
+  'isWellness': {
+    suggests: ['isCalming', 'isComforting'],
+    excludes: ['isEnergetic']
+  },
+
+  // Subscription-based
+  'isSubscriptionBased': {
+    suggests: ['isExperiential'],
+    excludes: ['isOneTimeUse']
+  },
+};
 
 /**
  * Apply semantic validation to ensure logical consistency

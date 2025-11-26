@@ -158,6 +158,9 @@ export interface ClarifyingQuestion {
 
   /** Optional: Why we're asking this */
   rationale?: string;
+
+  /** Optional: Contextual hint for attribute-aware framing (Phase 4) */
+  contextHint?: string;
 }
 
 // ============================================================================

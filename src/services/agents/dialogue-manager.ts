@@ -351,6 +351,7 @@ export class DialogueManagerAgent extends BaseAgent<
 
   /**
    * Generate clarifying questions based on missing/vague context
+   * NEW: Use desiredAttributes/valuePreferences to prioritize questions
    */
   private generateQuestions(
     listener: ListenerOutput,
@@ -359,9 +360,37 @@ export class DialogueManagerAgent extends BaseAgent<
     const questions: ClarifyingQuestion[] = [];
 
     try {
-      // Essential: Budget (highest priority)
+      // NEW: Extract meaning hints if available (from previous turns)
+      const meaningHints = (listener as any).meaningHints; // Optional context from previous flow
+      const desiredAttributes = meaningHints?.desiredAttributes || [];
+      const valuePreferences = meaningHints?.valuePreferences || [];
+
+      // Smart prioritization based on attributes/values
+      const hasExperientialPreference = this.hasAttributePreference(desiredAttributes, 'isExperiential', 0.7) ||
+        this.hasValuePreference(valuePreferences, 'experiential', 0.7);
+      const hasPracticalPreference = this.hasAttributePreference(desiredAttributes, 'isPractical', 0.7) ||
+        this.hasValuePreference(valuePreferences, 'practical', 0.7);
+      const hasSentimentalPreference = this.hasAttributePreference(desiredAttributes, 'isSentimental', 0.7) ||
+        this.hasValuePreference(valuePreferences, 'sentimental', 0.7);
+
+      // Essential: Budget (highest priority, with attribute-aware framing)
       if (!listener.budget || listener.budget.max === 0) {
-        questions.push(budgetQuestion());
+        // Frame budget question based on detected preferences
+        if (hasExperientialPreference) {
+          questions.push({
+            ...budgetQuestion(),
+            question: "For an experience gift, what's your budget range?",
+            contextHint: "Experiential gifts can vary widely in price",
+          });
+        } else if (hasPracticalPreference) {
+          questions.push({
+            ...budgetQuestion(),
+            question: "For something practical, what budget works for you?",
+            contextHint: "Quality practical items are available at various price points",
+          });
+        } else {
+          questions.push(budgetQuestion());
+        }
       }
 
       // Essential: Interests (high priority)
@@ -606,6 +635,40 @@ export class DialogueManagerAgent extends BaseAgent<
       'Error occurred - proceeding to recommendations as fallback',
       assessment,
       `DialogueManager error: ${errorMessage}`
+    );
+  }
+
+  // ==========================================================================
+  // Smart Question Selection Helpers (Phase 4)
+  // ==========================================================================
+
+  /**
+   * Check if desired attributes include a specific attribute with minimum desirability
+   */
+  private hasAttributePreference(
+    desiredAttributes: any[],
+    attributeName: string,
+    minDesirability: number
+  ): boolean {
+    if (!desiredAttributes || desiredAttributes.length === 0) return false;
+
+    return desiredAttributes.some(
+      (attr: any) => attr.attribute === attributeName && attr.desirability >= minDesirability
+    );
+  }
+
+  /**
+   * Check if value preferences include a specific dimension with minimum strength
+   */
+  private hasValuePreference(
+    valuePreferences: any[],
+    dimension: string,
+    minStrength: number
+  ): boolean {
+    if (!valuePreferences || valuePreferences.length === 0) return false;
+
+    return valuePreferences.some(
+      (pref: any) => pref.dimension === dimension && pref.strength >= minStrength
     );
   }
 }

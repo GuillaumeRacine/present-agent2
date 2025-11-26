@@ -206,7 +206,9 @@ app.post('/api/recommend', requireAuthIfEnabled, async (req, res) => {
     });
 
     // Persist conversation to Neo4j (async, don't block response)
-    persistConversation(result, userQuery, finalUserId, finalSessionId).catch(
+    // Use originalQuery if available (for clarification rounds), otherwise userQuery
+    const queryToPersist = originalQuery || userQuery;
+    persistConversation(result, queryToPersist, finalUserId, finalSessionId).catch(
       (err) => {
         logger.error('Failed to persist conversation (non-blocking)', {
           error: err instanceof Error ? err.message : String(err),

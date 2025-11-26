@@ -27,6 +27,7 @@ export async function createConstraints(): Promise<void> {
       { name: 'interest_id', cypher: 'CREATE CONSTRAINT interest_id IF NOT EXISTS FOR (i:Interest) REQUIRE i.id IS UNIQUE' },
       { name: 'value_id', cypher: 'CREATE CONSTRAINT value_id IF NOT EXISTS FOR (v:Value) REQUIRE v.id IS UNIQUE' },
       { name: 'occasion_id', cypher: 'CREATE CONSTRAINT occasion_id IF NOT EXISTS FOR (o:Occasion) REQUIRE o.id IS UNIQUE' },
+      { name: 'category_name', cypher: 'CREATE CONSTRAINT category_name IF NOT EXISTS FOR (c:Category) REQUIRE c.name IS UNIQUE' },
       { name: 'conversation_turn_id', cypher: 'CREATE CONSTRAINT conversation_turn_id IF NOT EXISTS FOR (ct:ConversationTurn) REQUIRE ct.id IS UNIQUE' },
       { name: 'recommendation_id', cypher: 'CREATE CONSTRAINT recommendation_id IF NOT EXISTS FOR (rec:Recommendation) REQUIRE rec.id IS UNIQUE' },
       { name: 'gift_archetype_id', cypher: 'CREATE CONSTRAINT gift_archetype_id IF NOT EXISTS FOR (ga:GiftArchetype) REQUIRE ga.id IS UNIQUE' },
@@ -58,6 +59,58 @@ export async function createConstraints(): Promise<void> {
 
   } catch (error) {
     logger.error('Failed to create constraints', { error });
+    throw error;
+  } finally {
+    await session.close();
+  }
+}
+
+/**
+ * Create fulltext indexes for text search
+ */
+export async function createFulltextIndexes(): Promise<void> {
+  const session = getSession();
+
+  try {
+    logger.info('Creating Neo4j fulltext indexes...');
+
+    const fulltextIndexes = [
+      {
+        name: 'product_fulltext',
+        cypher: `CALL db.index.fulltext.createNodeIndex(
+          'product_fulltext',
+          ['Product'],
+          ['title', 'description']
+        )`
+      },
+    ];
+
+    for (const index of fulltextIndexes) {
+      try {
+        await session.run(index.cypher);
+        logSchemaSetup({
+          operation: 'fulltext_index',
+          name: index.name,
+          status: 'success'
+        });
+      } catch (error: any) {
+        if (error.code === 'Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists' ||
+            error.code === 'Neo.ClientError.Schema.IndexWithNameAlreadyExists') {
+          logSchemaSetup({
+            operation: 'fulltext_index',
+            name: index.name,
+            status: 'exists'
+          });
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    logger.info('Fulltext indexes created successfully');
+
+  } catch (error) {
+    logger.error('Failed to create fulltext indexes', { error });
     throw error;
   } finally {
     await session.close();
@@ -568,7 +621,7 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
 }
 
 /**
- * Setup complete schema (constraints + indexes + vector indexes)
+ * Setup complete schema (constraints + indexes + vector indexes + fulltext indexes)
  */
 export async function setupSchema(options?: { skipTestData?: boolean; verbose?: boolean }): Promise<void> {
   logger.info('Setting up Neo4j schema...');
@@ -576,6 +629,7 @@ export async function setupSchema(options?: { skipTestData?: boolean; verbose?: 
   try {
     await createConstraints();
     await createIndexes();
+    await createFulltextIndexes();
     await createVectorIndexes();
 
     if (!options?.skipTestData) {
@@ -595,6 +649,7 @@ export async function setupSchema(options?: { skipTestData?: boolean; verbose?: 
 export async function verifySchema(): Promise<{
   constraints: string[];
   indexes: string[];
+  fulltextIndexes: string[];
   vectorIndexes: string[];
 }> {
   const session = getSession();
@@ -616,7 +671,11 @@ export async function verifySchema(): Promise<{
     }));
 
     const regularIndexes = allIndexes
-      .filter(i => i.type !== 'VECTOR')
+      .filter(i => i.type !== 'VECTOR' && i.type !== 'FULLTEXT')
+      .map(i => i.name);
+
+    const fulltextIndexes = allIndexes
+      .filter(i => i.type === 'FULLTEXT')
       .map(i => i.name);
 
     const vectorIndexes = allIndexes
@@ -626,12 +685,14 @@ export async function verifySchema(): Promise<{
     logger.info('Schema verification complete', {
       constraints: constraints.length,
       indexes: regularIndexes.length,
+      fulltextIndexes: fulltextIndexes.length,
       vectorIndexes: vectorIndexes.length
     });
 
     return {
       constraints,
       indexes: regularIndexes,
+      fulltextIndexes,
       vectorIndexes
     };
 

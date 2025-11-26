@@ -650,6 +650,7 @@ export interface StorytellerInput {
 export interface ProductStory {
   productId: string;
   reasoning: string; // 2-3 sentence personal explanation
+  whyCopy?: string; // NEW: Concise 1-line "why this gift" reasoning
 
   // Story structure
   storyElements: {

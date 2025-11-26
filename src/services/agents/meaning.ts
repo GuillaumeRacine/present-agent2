@@ -18,6 +18,7 @@ import {
   AttributeAlignment
 } from '../../types/agents';
 import { ARCHETYPE_ATTRIBUTES, GiftArchetype } from '../../types/gift-attributes';
+import { expandInterests, getRelatedInterests } from '../../lib/interest-synonyms';
 import OpenAI from 'openai';
 
 export class MeaningAgent extends BaseAgent<MeaningInput, MeaningOutput> {
@@ -80,13 +81,25 @@ export class MeaningAgent extends BaseAgent<MeaningInput, MeaningOutput> {
     );
 
     // 3. Score interests with strength and confidence
+    // Use interest expansion to normalize and expand interests
+    const expandedExplicitInterests = expandInterests(interests);
+    const expandedDiscoveryInterests = expandInterests(framework.discoveryHints.interestPathways || []);
+
     const scoredInterests = this.scoreInterests(
-      interests,
-      framework.discoveryHints.interestPathways || [],
+      expandedExplicitInterests,
+      expandedDiscoveryInterests,
       relationship,
       occasion,
       userQuery
     );
+
+    // 3b. Add related interests based on scored interests
+    const relatedInterests = scoredInterests
+      .filter(si => si.confidence >= 0.7) // Only get related for high-confidence interests
+      .flatMap(si => getRelatedInterests(si.interest))
+      .filter((interest, index, self) => self.indexOf(interest) === index); // Deduplicate
+
+    this.log(`Interest expansion: ${interests.length} → ${expandedExplicitInterests.length} canonical, +${relatedInterests.length} related`);
 
     // 4. Identify desired gift attributes
     const desiredAttributes = this.identifyDesiredAttributes(
@@ -112,6 +125,12 @@ export class MeaningAgent extends BaseAgent<MeaningInput, MeaningOutput> {
       resonanceCriteria: framework.resonanceCriteria,
       discoveryHints: {
         ...framework.discoveryHints,
+        // Replace interestPathways with expanded interests
+        interestPathways: [
+          ...expandedExplicitInterests,
+          ...expandedDiscoveryInterests,
+          ...relatedInterests,
+        ].filter((interest, index, self) => self.indexOf(interest) === index), // Deduplicate
         scoredInterests,
         desiredAttributes,
       },

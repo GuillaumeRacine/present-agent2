@@ -48,6 +48,8 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       const budget = input.meaningContext?.constraintsContext?.hardConstraints?.budget || { min: 0, max: 1000 };
       const meaningFramework = input.meaningContext?.meaningFramework || {
         giftArchetype: 'thoughtful',
+        archetypeConfidence: 0.5,
+        archetypeReasons: ['default fallback'],
         emotionalMessage: 'appreciation',
         coreValues: [],
         personalRelevance: { connectsToInterests: [], addressesNeeds: [] }
@@ -73,7 +75,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       this.log(`Found ${candidates.length} candidates from hybrid search`);
 
       // Ensure diversity
-      const diverseCandidates = this.ensureDiversity(candidates);
+      const diverseCandidates = await this.ensureDiversity(candidates);
 
       this.log(`Narrowed to ${diverseCandidates.length} diverse candidates`);
 
@@ -364,7 +366,11 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         return [];
       }
 
-      const candidates = result.records.map((record) => this.recordToCandidate(record));
+      // Log the archetype that will be used for all candidates
+      const primaryArchetype = this.getPrimaryArchetype(params.meaningFramework);
+      this.log(`Using archetype for candidates: ${primaryArchetype}`);
+
+      const candidates = result.records.map((record) => this.recordToCandidate(record, params.meaningFramework));
 
       // Log interest matching statistics
       const graphMatches = result.records.filter(r => {
@@ -395,11 +401,26 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         });
       }
 
-      // Cache the results (15-minute TTL)
-      await cache.set(cacheKey, candidates, CacheTTL.HYBRID_SEARCH);
-      this.log(`Cached hybrid search results (${candidates.length} candidates) for 15 minutes`);
+      // PHASE 1.1: Check if results are sparse and augment with fulltext fallback
+      let finalCandidates = candidates;
+      if (candidates.length < 5 || this.hasLowScores(candidates)) {
+        this.log('Sparse or low-scoring results detected, applying fulltext fallback...');
+        const fulltextCandidates = await this.fulltextFallback(params, candidates);
 
-      return candidates;
+        if (fulltextCandidates.length > 0) {
+          // Merge with existing candidates, avoiding duplicates
+          const existingIds = new Set(candidates.map(c => c.product.id));
+          const newCandidates = fulltextCandidates.filter(c => !existingIds.has(c.product.id));
+          finalCandidates = [...candidates, ...newCandidates];
+          this.log(`Fulltext fallback added ${newCandidates.length} new candidates (total: ${finalCandidates.length})`);
+        }
+      }
+
+      // Cache the results (15-minute TTL)
+      await cache.set(cacheKey, finalCandidates, CacheTTL.HYBRID_SEARCH);
+      this.log(`Cached hybrid search results (${finalCandidates.length} candidates) for 15 minutes`);
+
+      return finalCandidates;
     } catch (error) {
       logger.error('Hybrid search failed', { error });
       throw error;
@@ -450,6 +471,28 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
   }
 
   /**
+   * Get primary archetype from MeaningFramework
+   * Uses archetypeWeights if available, falls back to giftArchetype
+   */
+  private getPrimaryArchetype(meaningFramework: MeaningOutput['meaningFramework']): string {
+    let primaryArchetype = 'thoughtful'; // Default fallback
+
+    if (meaningFramework?.archetypeWeights) {
+      // Find archetype with highest weight
+      const entries = Object.entries(meaningFramework.archetypeWeights);
+      if (entries.length > 0) {
+        const [archetype] = entries.sort((a, b) => b[1] - a[1])[0];
+        primaryArchetype = archetype;
+      }
+    } else if (meaningFramework?.giftArchetype) {
+      // Fallback to giftArchetype if archetypeWeights not available
+      primaryArchetype = meaningFramework.giftArchetype;
+    }
+
+    return primaryArchetype;
+  }
+
+  /**
    * Get archetype attributes for matching
    * Maps gift archetype to expected product attributes
    */
@@ -477,7 +520,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
    * Convert Neo4j record to ProductCandidate
    * ENHANCED: Now includes 5-dimensional scoring breakdown
    */
-  private recordToCandidate(record: any): ProductCandidate {
+  private recordToCandidate(record: any, meaningFramework?: MeaningOutput['meaningFramework']): ProductCandidate {
     const product = record.get('product').properties;
     const vectorScore = record.get('vectorScore');
     const hybridScore = record.get('hybridScore');
@@ -500,6 +543,9 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
     // Calculate graphScore from dimensions for backward compatibility
     const graphScore = (emotionalMatchScore + interestMatchScore + occasionRelevanceScore) / 3;
 
+    // PHASE 1.2: Populate matchedArchetype from Meaning Agent output
+    const primaryArchetype = meaningFramework ? this.getPrimaryArchetype(meaningFramework) : 'thoughtful';
+
     return {
       product: {
         id: product.id,
@@ -519,7 +565,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       matchReasons: {
         matchedInterests: matchedInterests.map((m: any) => m.name),
         matchedValues: matchedValues.map((m: any) => m.name),
-        matchedArchetype: '', // TODO: Get from product
+        matchedArchetype: primaryArchetype,
         socialProofCount,
       },
       graphContext: {
@@ -533,92 +579,120 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
    * Ensure diversity in results
    * - Different price points (budget-friendly, mid-range, stretch)
    * - Different vendors (max 2 per vendor)
-   * - Different categories (max 3 per category)
+   * - Different categories (max 2 per category) - NOW USING REAL CATEGORIES
    * - Different interests (max 4 per primary interest)
    * - Different product types
    */
-  private ensureDiversity(candidates: ProductCandidate[]): ProductCandidate[] {
+  private async ensureDiversity(candidates: ProductCandidate[]): Promise<ProductCandidate[]> {
     if (candidates.length <= 15) return candidates;
 
-    const diverse: ProductCandidate[] = [];
-    const vendorCount = new Map<string, number>();  // Track count per vendor
-    const categoryCount = new Map<string, number>(); // Track count per category
-    const interestCount = new Map<string, number>(); // Track count per interest
-    const priceRanges = { low: 0, mid: 0, high: 0 };
+    const session = this.neo4j.session();
 
-    // Sort by hybrid score
-    const sorted = [...candidates].sort((a, b) => b.scores.hybridScore - a.scores.hybridScore);
+    try {
+      // Fetch categories for all candidate products in one query
+      const productIds = candidates.map(c => c.product.id);
+      const categoryResult = await session.run(
+        `
+        UNWIND $productIds AS productId
+        MATCH (p:Product {id: productId})
+        OPTIONAL MATCH (p)-[:BELONGS_TO]->(c:Category)
+        RETURN p.id AS productId, collect(c.name) AS categories
+        `,
+        { productIds }
+      );
 
-    for (const candidate of sorted) {
-      if (diverse.length >= 15) break;
-
-      // Extract diversity dimensions
-      const vendor = candidate.product.vendor;
-      const category = 'uncategorized'; // Category not in product type, using placeholder
-      const primaryInterest = candidate.matchReasons.matchedInterests[0] || 'general';
-      const price = candidate.product.price;
-      const range = price < 40 ? 'low' : price < 80 ? 'mid' : 'high';
-
-      // Get current counts
-      const vendorUsage = vendorCount.get(vendor) || 0;
-      const categoryUsage = categoryCount.get(category) || 0;
-      const interestUsage = interestCount.get(primaryInterest) || 0;
-      const priceUsage = priceRanges[range];
-
-      // Define diversity limits
-      const maxPerVendor = 2;      // Max 2 per vendor
-      const maxPerCategory = 3;    // Max 3 per category
-      const maxPerInterest = 4;    // Max 4 per primary interest
-      const maxPerPriceRange = 5;  // Max 5 per price range
-
-      // ENHANCED DIVERSITY LOGIC:
-      // Check all diversity dimensions
-      const vendorOk = vendorUsage < maxPerVendor;
-      const categoryOk = categoryUsage < maxPerCategory;
-      const interestOk = interestUsage < maxPerInterest;
-      const priceOk = priceUsage < maxPerPriceRange;
-
-      const respectsDiversity = vendorOk && categoryOk && interestOk && priceOk;
-      const exceptionalScore = candidate.scores.hybridScore > 0.95;
-
-      if (respectsDiversity || exceptionalScore) {
-        diverse.push(candidate);
-        vendorCount.set(vendor, vendorUsage + 1);
-        categoryCount.set(category, categoryUsage + 1);
-        interestCount.set(primaryInterest, interestUsage + 1);
-        priceRanges[range]++;
+      // Build product -> categories map
+      const productCategories = new Map<string, string[]>();
+      for (const record of categoryResult.records) {
+        const productId = record.get('productId');
+        const categories = record.get('categories') || [];
+        productCategories.set(productId, categories);
       }
-    }
 
-    // If we don't have enough, fill with top scoring (still respecting limits)
-    if (diverse.length < 10) {  // Aim for at least 10 recommendations
+      const diverse: ProductCandidate[] = [];
+      const vendorCount = new Map<string, number>();  // Track count per vendor
+      const categoryCount = new Map<string, number>(); // Track count per category
+      const interestCount = new Map<string, number>(); // Track count per interest
+      const priceRanges = { low: 0, mid: 0, high: 0 };
+
+      // Sort by hybrid score
+      const sorted = [...candidates].sort((a, b) => b.scores.hybridScore - a.scores.hybridScore);
+
       for (const candidate of sorted) {
         if (diverse.length >= 15) break;
-        if (!diverse.includes(candidate)) {
-          const vendor = candidate.product.vendor;
-          const category = 'uncategorized'; // Category not in product type, using placeholder
-          const vendorUsage = vendorCount.get(vendor) || 0;
-          const categoryUsage = categoryCount.get(category) || 0;
 
-          // Respect vendor and category limits even when filling
-          if (vendorUsage < 2 && categoryUsage < 3) {
-            diverse.push(candidate);
-            vendorCount.set(vendor, vendorUsage + 1);
-            categoryCount.set(category, categoryUsage + 1);
+        // Extract diversity dimensions
+        const vendor = candidate.product.vendor;
+        const categories = productCategories.get(candidate.product.id) || [];
+        const primaryCategory = categories[0] || 'uncategorized';
+        const primaryInterest = candidate.matchReasons.matchedInterests[0] || 'general';
+        const price = candidate.product.price;
+        const range = price < 40 ? 'low' : price < 80 ? 'mid' : 'high';
+
+        // Get current counts
+        const vendorUsage = vendorCount.get(vendor) || 0;
+        const categoryUsage = categoryCount.get(primaryCategory) || 0;
+        const interestUsage = interestCount.get(primaryInterest) || 0;
+        const priceUsage = priceRanges[range];
+
+        // Define diversity limits
+        const maxPerVendor = 2;      // Max 2 per vendor
+        const maxPerCategory = 2;    // Max 2 per category (REDUCED from 3 for better diversity)
+        const maxPerInterest = 4;    // Max 4 per primary interest
+        const maxPerPriceRange = 5;  // Max 5 per price range
+
+        // ENHANCED DIVERSITY LOGIC:
+        // Check all diversity dimensions
+        const vendorOk = vendorUsage < maxPerVendor;
+        const categoryOk = categoryUsage < maxPerCategory;
+        const interestOk = interestUsage < maxPerInterest;
+        const priceOk = priceUsage < maxPerPriceRange;
+
+        const respectsDiversity = vendorOk && categoryOk && interestOk && priceOk;
+        const exceptionalScore = candidate.scores.hybridScore > 0.95;
+
+        if (respectsDiversity || exceptionalScore) {
+          diverse.push(candidate);
+          vendorCount.set(vendor, vendorUsage + 1);
+          categoryCount.set(primaryCategory, categoryUsage + 1);
+          interestCount.set(primaryInterest, interestUsage + 1);
+          priceRanges[range]++;
+        }
+      }
+
+      // If we don't have enough, fill with top scoring (still respecting limits)
+      if (diverse.length < 10) {  // Aim for at least 10 recommendations
+        for (const candidate of sorted) {
+          if (diverse.length >= 15) break;
+          if (!diverse.includes(candidate)) {
+            const vendor = candidate.product.vendor;
+            const categories = productCategories.get(candidate.product.id) || [];
+            const primaryCategory = categories[0] || 'uncategorized';
+            const vendorUsage = vendorCount.get(vendor) || 0;
+            const categoryUsage = categoryCount.get(primaryCategory) || 0;
+
+            // Respect vendor and category limits even when filling
+            if (vendorUsage < 2 && categoryUsage < 2) {
+              diverse.push(candidate);
+              vendorCount.set(vendor, vendorUsage + 1);
+              categoryCount.set(primaryCategory, categoryUsage + 1);
+            }
           }
         }
       }
+
+      const uniqueVendors = vendorCount.size;
+      const uniqueCategories = categoryCount.size;
+      const uniqueInterests = interestCount.size;
+      this.log(
+        `Diversity ensured: ${diverse.length} products - ` +
+        `${uniqueVendors} vendors, ${uniqueCategories} categories, ${uniqueInterests} interests`
+      );
+
+      return diverse;
+    } finally {
+      await session.close();
     }
-
-    const uniqueVendors = vendorCount.size;
-    const uniqueCategories = categoryCount.size;
-    const uniqueInterests = interestCount.size;
-    this.log(
-      `Diversity ensured: ${diverse.length} products - ` +
-      `${uniqueVendors} vendors, ${uniqueCategories} categories, ${uniqueInterests} interests`
-    );
-
-    return diverse;
   }
 
   /**
@@ -733,6 +807,9 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         budgetMax: params.budget.max,
       });
 
+      // PHASE 1.2: Get primary archetype for broad search candidates
+      const primaryArchetype = this.getPrimaryArchetype(params.meaningFramework);
+
       // Convert to candidates with minimal scoring
       return result.records.map((record) => {
         const product = record.get('product').properties;
@@ -757,7 +834,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
           matchReasons: {
             matchedInterests: [],
             matchedValues: [],
-            matchedArchetype: '',
+            matchedArchetype: primaryArchetype,
             socialProofCount: 0,
           },
           graphContext: {
@@ -871,6 +948,144 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         expandedInterests: [],
         limit: 20,
       };
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
+   * PHASE 1.1: Check if results are sparse or low-scoring
+   * Sparse: < 5 candidates
+   * Low-scoring: average hybrid score < 0.5
+   */
+  private hasLowScores(candidates: ProductCandidate[]): boolean {
+    if (candidates.length === 0) return true;
+    const avgHybridScore = candidates.reduce((sum, c) => sum + c.scores.hybridScore, 0) / candidates.length;
+    return avgHybridScore < 0.5;
+  }
+
+  /**
+   * PHASE 1.1: Fulltext fallback for vague queries
+   * When graph+vector search returns sparse or low-scoring results,
+   * fall back to fulltext search on product title/description
+   */
+  private async fulltextFallback(
+    params: HybridSearchParams,
+    existingCandidates: ProductCandidate[]
+  ): Promise<ProductCandidate[]> {
+    const session = this.neo4j.session();
+
+    try {
+      // Build fulltext query from interests and semantic queries
+      const queryTerms: string[] = [
+        ...(params.discoveryHints.interestPathways || []),
+        ...(params.discoveryHints.semanticQueries || []),
+        ...params.meaningFramework.coreValues,
+      ];
+
+      if (queryTerms.length === 0) {
+        this.log('No query terms available for fulltext fallback');
+        return [];
+      }
+
+      // Create fulltext query string (combine terms with OR)
+      const fulltextQuery = queryTerms.join(' OR ');
+      this.log(`Fulltext query: "${fulltextQuery}"`);
+
+      // Execute fulltext search
+      const cypher = `
+        CALL db.index.fulltext.queryNodes('product_fulltext', $query)
+        YIELD node AS product, score AS fulltextScore
+        WHERE product.available = true
+          AND product.price >= $budgetMin
+          AND product.price <= $budgetMax
+          AND fulltextScore > 0.5
+
+        // Extract matched terms from product text
+        WITH product, fulltextScore,
+          [term IN $terms WHERE
+            toLower(product.title) CONTAINS toLower(term) OR
+            toLower(product.description) CONTAINS toLower(term)
+          ] AS matchedTerms
+
+        // Normalize fulltext score to 0.6-0.8 range for interestScore
+        WITH product, fulltextScore, matchedTerms,
+          0.6 + (fulltextScore * 0.2) AS normalizedScore
+
+        ORDER BY fulltextScore DESC
+        LIMIT 10
+
+        RETURN product, fulltextScore, normalizedScore, matchedTerms
+      `;
+
+      const result = await session.run(cypher, {
+        query: fulltextQuery,
+        terms: queryTerms,
+        budgetMin: params.budget.min,
+        budgetMax: params.budget.max,
+      });
+
+      this.log(`Fulltext search returned ${result.records.length} products`);
+
+      // Convert to candidates with normalized scores
+      const candidates = result.records.map((record) => {
+        const product = record.get('product').properties;
+        const fulltextScore = record.get('fulltextScore');
+        const normalizedScore = record.get('normalizedScore');
+        const matchedTerms = record.get('matchedTerms') || [];
+
+        // Create pseudo-interests from matched terms
+        const pseudoInterests = matchedTerms.map((term: string) => ({
+          name: term,
+          strength: normalizedScore,
+        }));
+
+        // PHASE 1.2: Get primary archetype for fulltext fallback candidates
+        const primaryArchetype = this.getPrimaryArchetype(params.meaningFramework);
+
+        return {
+          product: {
+            id: product.id,
+            title: product.title,
+            description: product.description,
+            price: product.price,
+            vendor: product.vendor,
+            imageUrl: product.imageUrl,
+            url: product.url,
+          },
+          scores: {
+            graphScore: 0,
+            vectorScore: normalizedScore,
+            hybridScore: normalizedScore,
+            confidenceScore: normalizedScore,
+          },
+          matchReasons: {
+            matchedInterests: matchedTerms,
+            matchedValues: [],
+            matchedArchetype: primaryArchetype,
+            socialProofCount: 0,
+          },
+          graphContext: {
+            pathLength: 1,
+            relationshipStrengths: {},
+          },
+        };
+      });
+
+      if (candidates.length > 0) {
+        this.log(`Fulltext fallback found ${candidates.length} candidates:`);
+        candidates.slice(0, 3).forEach((c, i) => {
+          this.log(
+            `  ${i + 1}. ${c.product.title} - Score: ${c.scores.hybridScore.toFixed(3)}, ` +
+            `Terms: [${c.matchReasons.matchedInterests.join(', ')}]`
+          );
+        });
+      }
+
+      return candidates;
+    } catch (error) {
+      logger.warn('Fulltext fallback failed', { error });
+      return [];
     } finally {
       await session.close();
     }

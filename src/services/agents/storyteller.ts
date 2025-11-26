@@ -120,6 +120,7 @@ RECIPIENT CONTEXT (THE PERSON RECEIVING THE GIFT):
 
 GIFT MEANING FRAMEWORK:
 - Archetype: ${meaningFramework.giftArchetype}
+- Matched Archetype: ${candidate.matchReasons?.matchedArchetype || meaningFramework.giftArchetype}
 - Emotional message: ${meaningFramework.emotionalMessage}
 - Core values: ${meaningFramework.coreValues.join(', ')}
 
@@ -134,17 +135,19 @@ WRITING GUIDELINES:
 ✓ DO: Reference the giver's past patterns if available
 ✓ DO: Connect to recipient's current life stage or recent events
 ✓ DO: Use conversational, warm language
+✓ DO: Reference the matched archetype naturally (e.g., "this practical gift", "this experiential choice", "this thoughtful gesture")
 ✗ DON'T: Use generic phrases like "perfect gift" or "they'll love this"
 ✗ DON'T: Sound like marketing copy
 ✗ DON'T: List features without emotional connection
 ✗ DON'T: Forget to mention both giver AND recipient
+✗ DON'T: Force archetype mentions if they don't flow naturally
 
 DUAL-CONTEXT EXAMPLES (STUDY THESE):
 
-Example 1 - High personalization with full giver history:
+Example 1 - High personalization with full giver history (experiential archetype):
 "Since you typically give experiential gifts and Sarah just started her coffee roasting hobby, this hands-on coffee cupping class lets her deepen her skills while creating memories. Your preference for meaningful experiences over objects makes this perfect, and at $85 it fits your usual budget for close friends."
 
-Example 2 - Moderate personalization:
+Example 2 - Moderate personalization (practical archetype):
 "As a planned shopper who values quality, this hand-thrown ceramic mug aligns with your appreciation for handmade items. Given Marcus's new apartment and love of morning rituals, it's both practical and personal - exactly the thoughtful-but-useful balance you tend to favor."
 
 Example 3 - Low giver history, focus on recipient:
@@ -198,13 +201,77 @@ Return JSON format:
 
     const story = JSON.parse(content);
 
+    // Generate concise "why this gift" copy
+    const whyCopy = this.generateWhyCopy(
+      candidate.product,
+      candidate.matchReasons?.matchedArchetype || meaningFramework.giftArchetype,
+      {
+        interests: recipientContext.interests || [],
+        values: recipientContext.values || []
+      }
+    );
+
     return {
       productId: candidate.product.id,
       reasoning: story.reasoning,
+      whyCopy, // NEW: Concise 1-line reasoning
       storyElements: story.storyElements,
       tone: story.tone,
       personalizationLevel: this.assessPersonalization(story.reasoning, interests, giverContext),
     };
+  }
+
+  /**
+   * Generate concise "why this gift" one-liner
+   * Format: "This [archetype] gift matches [recipient]'s love of [interest] and aligns with your [value] preferences."
+   */
+  private generateWhyCopy(
+    product: any,
+    archetype: string,
+    matches: { interests: string[], values: string[] }
+  ): string {
+    const archetypeLabels: Record<string, string> = {
+      'practical': 'practical',
+      'practical_luxury': 'practical yet refined',
+      'experience': 'experiential',
+      'sentimental': 'sentimental',
+      'aspirational': 'aspirational',
+      'social': 'social',
+      'collectible': 'collectible',
+      'indulgent': 'indulgent',
+      'thoughtful': 'thoughtful',
+    };
+
+    const archetypeLabel = archetypeLabels[archetype] || 'thoughtful';
+
+    // Start with archetype
+    let why = `This ${archetypeLabel} gift`;
+
+    // Add interest match if available (top 1-2)
+    if (matches.interests && matches.interests.length > 0) {
+      const topInterests = matches.interests.slice(0, 2);
+      if (topInterests.length === 1) {
+        why += ` matches their love of ${topInterests[0]}`;
+      } else {
+        why += ` matches their interests in ${topInterests.join(' and ')}`;
+      }
+    }
+
+    // Add value alignment if available (top 1)
+    if (matches.values && matches.values.length > 0) {
+      const topValue = matches.values[0];
+      if (matches.interests && matches.interests.length > 0) {
+        why += ` and aligns with your ${topValue} preferences`;
+      } else {
+        why += ` aligns with your ${topValue} preferences`;
+      }
+    }
+
+    why += '.';
+
+    this.log(`Generated why copy for product ${product.id}: "${why}"`);
+
+    return why;
   }
 
   private assessPersonalization(reasoning: string, interests: string[], giverContext: any): 'high' | 'medium' | 'low' {

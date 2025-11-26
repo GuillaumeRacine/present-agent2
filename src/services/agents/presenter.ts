@@ -104,13 +104,43 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
   private generateFallbackReasoning(candidate: any): string {
     // Generate simple reasoning when storyteller hasn't created one
     const interests = candidate.matchReasons?.matchedInterests || [];
+    const archetype = candidate.matchReasons?.matchedArchetype;
     const vectorScore = (candidate.scores.vectorScore * 100).toFixed(0);
 
-    if (interests.length > 0) {
-      return `This product matches your interests (${interests.join(', ')}) with ${vectorScore}% semantic similarity.`;
+    // Build reasoning with archetype context
+    let reasoning = '';
+
+    if (archetype && archetype !== 'thoughtful') {
+      // Reference the archetype in a natural way
+      const archetypeDescriptor = this.getArchetypeDescriptor(archetype);
+      reasoning = `This ${archetypeDescriptor} `;
+    } else {
+      reasoning = 'This ';
     }
 
-    return `This product has a ${vectorScore}% match based on your requirements.`;
+    if (interests.length > 0) {
+      reasoning += `gift matches your interests (${interests.join(', ')}) with ${vectorScore}% semantic similarity.`;
+    } else {
+      reasoning += `gift has a ${vectorScore}% match based on your requirements.`;
+    }
+
+    return reasoning;
+  }
+
+  private getArchetypeDescriptor(archetype: string): string {
+    const descriptors: Record<string, string> = {
+      practical: 'practical',
+      practical_luxury: 'practical yet refined',
+      experience: 'experiential',
+      sentimental: 'sentimental',
+      aspirational: 'aspirational',
+      social: 'social',
+      collectible: 'collectible',
+      indulgent: 'indulgent',
+      thoughtful: 'thoughtful',
+    };
+
+    return descriptors[archetype] || 'thoughtful';
   }
 
   private generateTags(candidate: any, rank: number): string[] {
@@ -122,7 +152,62 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
     if (candidate.matchReasons.socialProofCount > 10) tags.push('Popular Choice');
     if (candidate.story?.personalizationLevel === 'high') tags.push('Personalized');
 
+    // Add attribute badges (top 3-5)
+    const attributeBadges = this.getAttributeBadges(candidate.product);
+    tags.push(...attributeBadges);
+
     return tags;
+  }
+
+  /**
+   * Extract top 3-5 gift attributes as human-readable badges
+   */
+  private getAttributeBadges(product: any): string[] {
+    const attributeLabels: Record<string, string> = {
+      'isExperiential': 'Experiential',
+      'isPersonalized': 'Personalized',
+      'isSentimental': 'Sentimental',
+      'isPractical': 'Practical',
+      'isMemoryMaking': 'Memory-Making',
+      'isShared': 'Shared Experience',
+      'isLuxury': 'Luxury',
+      'isHandcrafted': 'Handcrafted',
+      'isEcoFriendly': 'Eco-Friendly',
+      'isLocal': 'Local',
+      'isEducational': 'Educational',
+      'isCreative': 'Creative',
+      'isWellness': 'Wellness',
+      'isArtistic': 'Artistic',
+      'isUnique': 'Unique',
+      'isTimeless': 'Timeless',
+      'isAspirational': 'Aspirational',
+      'isCollectible': 'Collectible',
+      'isComforting': 'Comforting',
+      'isNostalgic': 'Nostalgic',
+      'isRomantic': 'Romantic',
+      'isTechEnabled': 'Tech-Enabled',
+      'isConsumable': 'Consumable',
+      'isPortable': 'Portable',
+      'isMinimalist': 'Minimalist',
+      'isBold': 'Bold',
+      'isElegant': 'Elegant',
+      'isQuirky': 'Quirky',
+      'isSpaceSaving': 'Space-Saving',
+      'isSubscriptionBased': 'Subscription',
+    };
+
+    // Extract attributes from product
+    const attributes = product.attributes || product.giftAttributes || {};
+
+    // Filter to true attributes and map to labels
+    const badges = Object.entries(attributes)
+      .filter(([key, value]) => value === true && attributeLabels[key])
+      .map(([key]) => attributeLabels[key])
+      .slice(0, 5); // Top 5 max
+
+    this.log(`Generated ${badges.length} attribute badges for product ${product.id}`, { badges });
+
+    return badges;
   }
 
   private async generateFraming(

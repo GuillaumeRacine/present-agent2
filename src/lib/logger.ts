@@ -210,7 +210,7 @@ export function logIngestionProgress(context: {
  * Log schema setup
  */
 export function logSchemaSetup(context: {
-  operation: 'constraint' | 'index' | 'vector_index';
+  operation: 'constraint' | 'index' | 'vector_index' | 'fulltext_index';
   name: string;
   status: 'success' | 'failed' | 'exists';
   error?: string;

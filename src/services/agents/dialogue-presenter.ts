@@ -222,6 +222,7 @@ export class DialoguePresenterAgent extends BaseAgent<
 
   /**
    * Format questions with natural language and context
+   * NEW: Attribute-aware framing (Phase 4)
    */
   private formatQuestions(
     questions: ClarifyingQuestion[],
@@ -233,10 +234,30 @@ export class DialoguePresenterAgent extends BaseAgent<
         return this.formatBudgetQuestion(q, index + 1);
       }
 
+      // NEW: Use attribute-aware framing if contextHint is present
+      if (q.contextHint) {
+        return this.formatAttributeAwareQuestion(q, index + 1, context);
+      }
+
       return this.formatQuestion(q, index + 1, context);
     });
 
     return formatted.join('\n\n');
+  }
+
+  /**
+   * Format question with attribute-aware framing (Phase 4)
+   */
+  private formatAttributeAwareQuestion(
+    question: ClarifyingQuestion,
+    number: number,
+    context: UserContext
+  ): string {
+    const questionText = `${number}. ${question.question}`;
+    const contextHint = `   ${question.contextHint}`;
+    const answers = this.formatAnswers(question.suggestedAnswers, question.field);
+
+    return `${questionText}\n${contextHint}\n   ${answers}`;
   }
 
   /**
@@ -318,8 +339,14 @@ export class DialoguePresenterAgent extends BaseAgent<
 
   /**
    * Get hint/explanation for why we're asking this question
+   * NEW: Enhanced with attribute-aware phrasings (Phase 4)
    */
   private getQuestionHint(question: ClarifyingQuestion, context: UserContext): string {
+    // Use contextHint from question if available (attribute-aware)
+    if (question.contextHint) {
+      return question.contextHint;
+    }
+
     // Only add hints for essential questions to reduce clutter
     if (question.type !== 'essential') {
       return '';

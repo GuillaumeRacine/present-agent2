@@ -7,7 +7,7 @@
 import neo4j from 'neo4j-driver';
 import { getDriver } from '../lib/neo4j';
 import { logger } from '../lib/logger';
-import type { OrchestratorResult } from '../types/agents';
+import type { OrchestratorOutput } from '../types/agents';
 
 export interface ConversationRecord {
   sessionId: string;
@@ -44,7 +44,7 @@ export interface ConversationQuery {
  * Persist a conversation to Neo4j
  */
 export async function persistConversation(
-  result: OrchestratorResult,
+  result: OrchestratorOutput,
   userQuery: string,
   userId: string,
   sessionId: string
@@ -54,16 +54,51 @@ export async function persistConversation(
 
   try {
     const timestamp = new Date();
-    const success = !result.error;
     const executionTimeMs = result.performance.totalExecutionTimeMs;
-    const recommendationCount =
-      result.finalRecommendations?.recommendations?.length || 0;
+
+    // Extract mode-specific data with type guards
+    let success = true;
+    let recommendationCount = 0;
+    let conversationalIntro: string | null = null;
+    let conversationalOutro: string | null = null;
+    let contextExtraction: any = null;
+    let errorMessage: string | null = null;
+
+    if (result.mode === 'recommendations' || result.mode === 'recommendations_with_refinement') {
+      recommendationCount = result.recommendations?.recommendations?.length || 0;
+      conversationalIntro = result.intro || result.recommendations?.conversationalIntro || null;
+      conversationalOutro = result.recommendations?.conversationalOutro || null;
+      contextExtraction = result.executionTrace?.listener || null;
+    } else if (result.mode === 'clarifying') {
+      // Clarifying mode - no recommendations yet
+      recommendationCount = 0;
+      contextExtraction = result.partialContext || null;
+    }
+
+    // Ensure we always have a valid query string
+    // Try multiple sources with fallbacks
+    const queryToStore =
+      userQuery ||
+      contextExtraction?.userQuery ||
+      conversationalIntro?.slice(0, 100) ||
+      'Query not captured';
+
+    // Log warning if query is missing or invalid
+    if (!userQuery || userQuery.trim() === '') {
+      logger.warn('Conversation persisted with missing or empty userQuery', {
+        sessionId,
+        userId,
+        hadResult: !!result,
+        fallbackUsed: queryToStore !== userQuery,
+        storedQuery: queryToStore,
+      });
+    }
 
     // Extract agent timings
     const agentTimings: Record<string, number> = {};
     if (result.performance.agentTimings) {
       if (Array.isArray(result.performance.agentTimings)) {
-        result.performance.agentTimings.forEach((timing) => {
+        result.performance.agentTimings.forEach((timing: any) => {
           agentTimings[timing.agent] = timing.durationMs;
         });
       } else {
@@ -82,8 +117,9 @@ export async function persistConversation(
       // Create Conversation node
       CREATE (c:Conversation {
         sessionId: $sessionId,
+        userId: $userId,
         timestamp: datetime($timestamp),
-        query: $query,
+        userQuery: $userQuery,
         success: $success,
         executionTimeMs: $executionTimeMs,
         recommendationCount: $recommendationCount,
@@ -111,25 +147,26 @@ export async function persistConversation(
         userId,
         sessionId,
         timestamp: timestamp.toISOString(),
-        query: userQuery,
+        userQuery: queryToStore,
         success,
         executionTimeMs,
         recommendationCount,
-        conversationalIntro:
-          result.finalRecommendations?.conversationalIntro || null,
-        conversationalOutro:
-          result.finalRecommendations?.conversationalOutro || null,
+        conversationalIntro,
+        conversationalOutro,
         agentTimings: JSON.stringify(agentTimings),
-        error: result.error || null,
-        contextJson: result.contextExtraction
-          ? JSON.stringify(result.contextExtraction)
-          : null,
+        error: errorMessage,
+        contextJson: contextExtraction ? JSON.stringify(contextExtraction) : null,
       }
     );
 
     // Store each recommendation and link to products
-    if (result.finalRecommendations?.recommendations) {
-      for (const rec of result.finalRecommendations.recommendations) {
+    const recommendations =
+      result.mode === 'recommendations' || result.mode === 'recommendations_with_refinement'
+        ? result.recommendations?.recommendations
+        : undefined;
+
+    if (recommendations) {
+      for (const rec of recommendations) {
         await session.run(
           `
           MATCH (c:Conversation {sessionId: $sessionId})
@@ -155,7 +192,7 @@ export async function persistConversation(
             productId: rec.product.id,
             rank: rec.rank,
             reasoning: rec.reasoning || '',
-            confidenceScore: rec.confidenceScore || 0,
+            confidenceScore: rec.confidence || 0,
             tags: rec.tags || [],
             timestamp: timestamp.toISOString(),
           }
@@ -167,6 +204,8 @@ export async function persistConversation(
       sessionId,
       userId,
       recommendationCount,
+      queryStored: queryToStore.substring(0, 50) + (queryToStore.length > 50 ? '...' : ''),
+      hadOriginalQuery: !!userQuery,
     });
   } catch (error) {
     logger.error('Failed to persist conversation', {
@@ -202,7 +241,7 @@ export async function getConversationHistory(
       RETURN c.sessionId as sessionId,
              u.userId as userId,
              c.timestamp as timestamp,
-             c.query as query,
+             c.userQuery as query,
              c.success as success,
              c.executionTimeMs as executionTimeMs,
              c.recommendationCount as recommendationCount,
@@ -269,7 +308,7 @@ export async function getConversationDetails(
       RETURN c.sessionId as sessionId,
              u.userId as userId,
              c.timestamp as timestamp,
-             c.query as query,
+             c.userQuery as query,
              c.success as success,
              c.executionTimeMs as executionTimeMs,
              c.recommendationCount as recommendationCount,
