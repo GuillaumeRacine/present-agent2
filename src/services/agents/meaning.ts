@@ -1,11 +1,23 @@
 /**
- * Meaning Agent
+ * Meaning Agent (Enhanced)
  *
- * Identifies what would be emotionally meaningful for this gift
+ * Identifies what would be emotionally meaningful for this gift with:
+ * - Value-based matching (practical, sentimental, experiential, etc.)
+ * - Multi-archetype support with weighted scoring
+ * - Interest strength scoring with confidence levels
+ * - Gift attribute utilization for better matching
  */
 
 import { BaseAgent } from './base';
-import { MeaningInput, MeaningOutput } from '../../types/agents';
+import {
+  MeaningInput,
+  MeaningOutput,
+  GiftValueDimension,
+  ScoredInterest,
+  ArchetypeWeights,
+  AttributeAlignment
+} from '../../types/agents';
+import { ARCHETYPE_ATTRIBUTES, GiftArchetype } from '../../types/gift-attributes';
 import OpenAI from 'openai';
 
 export class MeaningAgent extends BaseAgent<MeaningInput, MeaningOutput> {
@@ -16,21 +28,535 @@ export class MeaningAgent extends BaseAgent<MeaningInput, MeaningOutput> {
   }
 
   async process(input: MeaningInput): Promise<MeaningOutput> {
-    this.log('Identifying meaningful gift criteria');
+    this.log('Identifying meaningful gift criteria (enhanced)');
 
     try {
       const framework = await this.identifyMeaningFramework(input.constraintsContext);
 
+      // Post-process to add enhanced features
+      const enhanced = this.enhanceMeaningFramework(framework, input.constraintsContext);
+
       return {
         constraintsContext: input.constraintsContext,
-        meaningFramework: framework.meaningFramework,
-        resonanceCriteria: framework.resonanceCriteria,
-        discoveryHints: framework.discoveryHints,
+        meaningFramework: enhanced.meaningFramework,
+        resonanceCriteria: enhanced.resonanceCriteria,
+        discoveryHints: enhanced.discoveryHints,
         identifiedAt: new Date(),
       };
     } catch (error) {
       return this.handleError(error, 'process');
     }
+  }
+
+  /**
+   * Enhance meaning framework with value-based matching, multi-archetype support,
+   * interest strength scoring, and gift attribute utilization
+   */
+  private enhanceMeaningFramework(framework: any, context: any): any {
+    this.log('Enhancing meaning framework with advanced features');
+
+    // Extract context
+    const relationship = context.relationshipContext?.relationshipAnalysis;
+    const occasion = context.relationshipContext?.memoryContext?.listenerContext?.occasion;
+    const userQuery = context.relationshipContext?.memoryContext?.listenerContext?.userQuery || '';
+    const interests = context.relationshipContext?.memoryContext?.listenerContext?.interests || [];
+
+    // 1. Infer value preferences
+    const valuePreferences = this.inferValuePreferences(
+      framework.meaningFramework.giftArchetype,
+      framework.meaningFramework.secondaryArchetype,
+      relationship,
+      occasion,
+      userQuery
+    );
+
+    // 2. Calculate multi-archetype weights
+    const archetypeWeights = this.calculateArchetypeWeights(
+      framework.meaningFramework.giftArchetype,
+      framework.meaningFramework.archetypeConfidence,
+      framework.meaningFramework.secondaryArchetype,
+      framework.meaningFramework.secondaryConfidence,
+      valuePreferences
+    );
+
+    // 3. Score interests with strength and confidence
+    const scoredInterests = this.scoreInterests(
+      interests,
+      framework.discoveryHints.interestPathways || [],
+      relationship,
+      occasion,
+      userQuery
+    );
+
+    // 4. Identify desired gift attributes
+    const desiredAttributes = this.identifyDesiredAttributes(
+      framework.meaningFramework.giftArchetype,
+      archetypeWeights,
+      valuePreferences,
+      framework.constraints
+    );
+
+    // Log enhancements
+    this.log(`Value preferences: ${valuePreferences.length} dimensions identified`);
+    this.log(`Archetype weights: ${Object.keys(archetypeWeights).length} archetypes weighted`);
+    this.log(`Scored interests: ${scoredInterests.length} interests with confidence`);
+    this.log(`Desired attributes: ${desiredAttributes.length} gift attributes identified`);
+
+    // Return enhanced framework
+    return {
+      meaningFramework: {
+        ...framework.meaningFramework,
+        archetypeWeights,
+        valuePreferences,
+      },
+      resonanceCriteria: framework.resonanceCriteria,
+      discoveryHints: {
+        ...framework.discoveryHints,
+        scoredInterests,
+        desiredAttributes,
+      },
+    };
+  }
+
+  /**
+   * Infer value preferences from relationship, occasion, and explicit mentions
+   */
+  private inferValuePreferences(
+    primaryArchetype: string,
+    secondaryArchetype: string | undefined,
+    relationship: any,
+    occasion: any,
+    userQuery: string
+  ): Array<{ dimension: GiftValueDimension; strength: number; inferredFrom: string }> {
+    const preferences: Array<{ dimension: GiftValueDimension; strength: number; inferredFrom: string }> = [];
+
+    // Explicit mentions in query (highest priority)
+    const queryLower = userQuery.toLowerCase();
+
+    if (/\b(useful|practical|functional|needs?)\b/i.test(queryLower)) {
+      preferences.push({
+        dimension: 'practical',
+        strength: 1.0,
+        inferredFrom: 'Explicitly mentioned "practical/useful" in query',
+      });
+    }
+
+    if (/\b(meaningful|sentimental|special|memory|heart)\b/i.test(queryLower)) {
+      preferences.push({
+        dimension: 'sentimental',
+        strength: 1.0,
+        inferredFrom: 'Explicitly mentioned "meaningful/sentimental" in query',
+      });
+    }
+
+    if (/\b(experience|class|lesson|activity|adventure|do together)\b/i.test(queryLower)) {
+      preferences.push({
+        dimension: 'experiential',
+        strength: 1.0,
+        inferredFrom: 'Explicitly mentioned "experience/activity" in query',
+      });
+    }
+
+    if (/\b(luxury|luxurious|premium|indulgent|pamper|treat|splurge)\b/i.test(queryLower)) {
+      preferences.push({
+        dimension: 'luxurious',
+        strength: 1.0,
+        inferredFrom: 'Explicitly mentioned "luxury/indulgent" in query',
+      });
+    }
+
+    if (/\b(creative|artistic|unique|one-of-a-kind|handmade)\b/i.test(queryLower)) {
+      preferences.push({
+        dimension: 'creative',
+        strength: 1.0,
+        inferredFrom: 'Explicitly mentioned "creative/artistic" in query',
+      });
+    }
+
+    if (/\b(learn|educational|skill|course|book|study)\b/i.test(queryLower)) {
+      preferences.push({
+        dimension: 'educational',
+        strength: 1.0,
+        inferredFrom: 'Explicitly mentioned "learning/educational" in query',
+      });
+    }
+
+    // Infer from relationship type (medium priority)
+    if (relationship?.type) {
+      const relType = relationship.type.toLowerCase();
+
+      if (['parent', 'mother', 'father', 'mom', 'dad'].some(t => relType.includes(t))) {
+        preferences.push({
+          dimension: 'sentimental',
+          strength: 0.7,
+          inferredFrom: 'Parent relationship typically values sentimental gifts',
+        });
+      }
+
+      if (['colleague', 'coworker', 'boss', 'client'].some(t => relType.includes(t))) {
+        preferences.push({
+          dimension: 'practical',
+          strength: 0.7,
+          inferredFrom: 'Professional relationship typically values practical gifts',
+        });
+      }
+
+      if (['partner', 'spouse', 'boyfriend', 'girlfriend', 'romantic'].some(t => relType.includes(t))) {
+        preferences.push({
+          dimension: 'luxurious',
+          strength: 0.6,
+          inferredFrom: 'Romantic relationship often appreciates luxurious gifts',
+        });
+        preferences.push({
+          dimension: 'experiential',
+          strength: 0.6,
+          inferredFrom: 'Romantic relationship values shared experiences',
+        });
+      }
+    }
+
+    // Infer from occasion (lower priority)
+    if (occasion?.name) {
+      const occName = occasion.name.toLowerCase();
+
+      if (['retirement', 'milestone', 'graduation'].some(o => occName.includes(o))) {
+        preferences.push({
+          dimension: 'sentimental',
+          strength: 0.5,
+          inferredFrom: `Milestone occasion (${occasion.name}) suits sentimental gifts`,
+        });
+      }
+
+      if (['birthday'].some(o => occName.includes(o))) {
+        preferences.push({
+          dimension: 'experiential',
+          strength: 0.5,
+          inferredFrom: 'Birthdays often suit experiential gifts',
+        });
+      }
+
+      if (['christmas', 'holiday'].some(o => occName.includes(o))) {
+        preferences.push({
+          dimension: 'practical',
+          strength: 0.4,
+          inferredFrom: 'Holiday gifts often have practical focus',
+        });
+      }
+    }
+
+    // Deduplicate and merge strengths
+    const merged = new Map<GiftValueDimension, { strength: number; reasons: string[] }>();
+
+    for (const pref of preferences) {
+      if (merged.has(pref.dimension)) {
+        const existing = merged.get(pref.dimension)!;
+        // Take max strength and combine reasons
+        existing.strength = Math.max(existing.strength, pref.strength);
+        existing.reasons.push(pref.inferredFrom);
+      } else {
+        merged.set(pref.dimension, {
+          strength: pref.strength,
+          reasons: [pref.inferredFrom],
+        });
+      }
+    }
+
+    // Convert back to array
+    return Array.from(merged.entries())
+      .map(([dimension, data]) => ({
+        dimension,
+        strength: data.strength,
+        inferredFrom: data.reasons.join('; '),
+      }))
+      .sort((a, b) => b.strength - a.strength); // Sort by strength descending
+  }
+
+  /**
+   * Calculate multi-archetype weights combining primary, secondary, and value preferences
+   */
+  private calculateArchetypeWeights(
+    primaryArchetype: string,
+    primaryConfidence: number,
+    secondaryArchetype: string | undefined,
+    secondaryConfidence: number | undefined,
+    valuePreferences: Array<{ dimension: GiftValueDimension; strength: number; inferredFrom: string }>
+  ): ArchetypeWeights {
+    const weights: ArchetypeWeights = {};
+
+    // Primary archetype gets highest weight
+    weights[primaryArchetype] = primaryConfidence;
+
+    // Secondary archetype if present
+    if (secondaryArchetype && secondaryConfidence) {
+      weights[secondaryArchetype] = secondaryConfidence * 0.8; // Slightly lower than primary
+    }
+
+    // Add weights from value preferences
+    // Map value dimensions to archetypes
+    const valueToArchetype: Record<GiftValueDimension, GiftArchetype[]> = {
+      practical: ['practical', 'practical_luxury'],
+      sentimental: ['sentimental', 'thoughtful'],
+      experiential: ['experience'],
+      luxurious: ['indulgent', 'practical_luxury'],
+      creative: ['collectible', 'thoughtful'],
+      educational: ['aspirational'],
+    };
+
+    for (const pref of valuePreferences) {
+      const archetypes = valueToArchetype[pref.dimension] || [];
+      for (const archetype of archetypes) {
+        // Boost weight if archetype aligns with value preference
+        if (weights[archetype]) {
+          weights[archetype] = Math.min(1.0, weights[archetype] + pref.strength * 0.2);
+        } else {
+          weights[archetype] = pref.strength * 0.5; // Add new archetype with moderate weight
+        }
+      }
+    }
+
+    // Normalize weights to sum to 1.0
+    const total = Object.values(weights).reduce((sum, w) => sum + w, 0);
+    if (total > 0) {
+      for (const key in weights) {
+        weights[key] = weights[key] / total;
+      }
+    }
+
+    return weights;
+  }
+
+  /**
+   * Score interests with strength and confidence based on source
+   */
+  private scoreInterests(
+    explicitInterests: string[],
+    discoveryInterests: string[],
+    relationship: any,
+    occasion: any,
+    userQuery: string
+  ): ScoredInterest[] {
+    const scored: ScoredInterest[] = [];
+    const seen = new Set<string>();
+
+    // Explicitly mentioned interests (highest confidence)
+    for (const interest of explicitInterests) {
+      if (!interest || seen.has(interest.toLowerCase())) continue;
+      seen.add(interest.toLowerCase());
+
+      scored.push({
+        interest,
+        strength: 1.0,
+        source: 'explicit',
+        confidence: 1.0,
+      });
+    }
+
+    // Discovery pathway interests (from LLM extraction)
+    for (const interest of discoveryInterests) {
+      if (!interest || seen.has(interest.toLowerCase())) continue;
+      seen.add(interest.toLowerCase());
+
+      // Determine if this was explicit or inferred
+      const isInQuery = new RegExp(`\\b${interest}\\b`, 'i').test(userQuery);
+
+      if (isInQuery) {
+        scored.push({
+          interest,
+          strength: 1.0,
+          source: 'explicit',
+          confidence: 0.95,
+        });
+      } else {
+        scored.push({
+          interest,
+          strength: 0.8,
+          source: 'inferred',
+          confidence: 0.7,
+        });
+      }
+    }
+
+    // Infer interests from relationship
+    if (relationship?.type) {
+      const relType = relationship.type.toLowerCase();
+
+      // Life stage interests
+      if (['parent', 'mother', 'father'].some(t => relType.includes(t))) {
+        const lifeStageInterests = ['family', 'home', 'memories', 'quality-time'];
+        for (const interest of lifeStageInterests) {
+          if (seen.has(interest)) continue;
+          seen.add(interest);
+
+          scored.push({
+            interest,
+            strength: 0.6,
+            source: 'relationship',
+            confidence: 0.7,
+          });
+        }
+      }
+
+      if (['colleague', 'coworker', 'boss'].some(t => relType.includes(t))) {
+        const professionalInterests = ['professional-development', 'office', 'productivity'];
+        for (const interest of professionalInterests) {
+          if (seen.has(interest)) continue;
+          seen.add(interest);
+
+          scored.push({
+            interest,
+            strength: 0.5,
+            source: 'relationship',
+            confidence: 0.6,
+          });
+        }
+      }
+    }
+
+    // Infer interests from occasion
+    if (occasion?.name) {
+      const occName = occasion.name.toLowerCase();
+
+      if (['retirement'].some(o => occName.includes(o))) {
+        const retirementInterests = ['leisure', 'relaxation', 'hobbies', 'travel'];
+        for (const interest of retirementInterests) {
+          if (seen.has(interest)) continue;
+          seen.add(interest);
+
+          scored.push({
+            interest,
+            strength: 0.5,
+            source: 'occasion',
+            confidence: 0.5,
+          });
+        }
+      }
+
+      if (['anniversary'].some(o => occName.includes(o))) {
+        const anniversaryInterests = ['romance', 'celebration', 'memories'];
+        for (const interest of anniversaryInterests) {
+          if (seen.has(interest)) continue;
+          seen.add(interest);
+
+          scored.push({
+            interest,
+            strength: 0.5,
+            source: 'occasion',
+            confidence: 0.5,
+          });
+        }
+      }
+    }
+
+    return scored.sort((a, b) => b.strength - a.strength); // Sort by strength descending
+  }
+
+  /**
+   * Identify desired gift attributes based on archetypes and value preferences
+   */
+  private identifyDesiredAttributes(
+    primaryArchetype: string,
+    archetypeWeights: ArchetypeWeights,
+    valuePreferences: Array<{ dimension: GiftValueDimension; strength: number; inferredFrom: string }>,
+    constraints: any
+  ): AttributeAlignment[] {
+    const attributes: AttributeAlignment[] = [];
+    const seen = new Set<string>();
+
+    // Get attributes for each weighted archetype
+    for (const [archetype, weight] of Object.entries(archetypeWeights)) {
+      const archetypeAttrs = ARCHETYPE_ATTRIBUTES[archetype as GiftArchetype];
+
+      if (archetypeAttrs) {
+        for (const attr of archetypeAttrs) {
+          if (seen.has(attr)) continue;
+          seen.add(attr);
+
+          attributes.push({
+            attribute: attr,
+            desirability: weight,
+            reason: `Aligns with ${archetype} archetype (weight: ${weight.toFixed(2)})`,
+          });
+        }
+      }
+    }
+
+    // Add attributes from value preferences
+    const valueDimensionToAttributes: Record<GiftValueDimension, string[]> = {
+      practical: ['isPractical', 'isLastingValue', 'isMultiFunctional', 'isDurable'],
+      sentimental: ['isSentimental', 'isPersonalized', 'isMemoryMaking', 'isHeartfelt'],
+      experiential: ['isExperiential', 'isMemoryMaking', 'isShared', 'isActive'],
+      luxurious: ['isLuxury', 'isElegant', 'isSplurgeWorthy', 'isComforting'],
+      creative: ['isArtistic', 'isCreative', 'isUnique', 'isHandcrafted'],
+      educational: ['isEducational', 'isSkillBuilding', 'isAspirational', 'isInspirational'],
+    };
+
+    for (const pref of valuePreferences) {
+      const attrs = valueDimensionToAttributes[pref.dimension] || [];
+      for (const attr of attrs) {
+        if (seen.has(attr)) {
+          // Boost existing attribute
+          const existing = attributes.find(a => a.attribute === attr);
+          if (existing) {
+            existing.desirability = Math.min(1.0, existing.desirability + pref.strength * 0.2);
+            existing.reason += `; Boosted by ${pref.dimension} value preference`;
+          }
+        } else {
+          seen.add(attr);
+          attributes.push({
+            attribute: attr,
+            desirability: pref.strength * 0.7,
+            reason: `Aligns with ${pref.dimension} value preference`,
+          });
+        }
+      }
+    }
+
+    // Handle constraints (boost/penalize certain attributes)
+    if (constraints?.spaceConsiderations === 'minimalist' || constraints?.spaceConsiderations === 'compact') {
+      // Boost compact, penalize bulky
+      const compact = attributes.find(a => a.attribute === 'isCompact');
+      if (compact) {
+        compact.desirability = Math.min(1.0, compact.desirability + 0.3);
+        compact.reason += '; User prefers space-saving gifts';
+      } else {
+        attributes.push({
+          attribute: 'isCompact',
+          desirability: 0.8,
+          reason: 'User has space constraints (minimalist/compact preference)',
+        });
+      }
+
+      // Mark bulky as undesirable
+      attributes.push({
+        attribute: 'isBulky',
+        desirability: 0.0,
+        reason: 'User explicitly wants compact/minimalist gifts',
+      });
+    }
+
+    if (constraints?.sustainabilityLevel === 'required' || constraints?.sustainabilityLevel === 'preferred') {
+      const strength = constraints.sustainabilityLevel === 'required' ? 1.0 : 0.7;
+
+      const sustainableAttrs = ['isEcoFriendly', 'isHandcrafted', 'isLocal', 'isEthicallySourced'];
+      for (const attr of sustainableAttrs) {
+        if (seen.has(attr)) {
+          const existing = attributes.find(a => a.attribute === attr);
+          if (existing) {
+            existing.desirability = Math.min(1.0, existing.desirability + strength * 0.3);
+            existing.reason += '; Sustainability is important to user';
+          }
+        } else {
+          attributes.push({
+            attribute: attr,
+            desirability: strength * 0.8,
+            reason: `User ${constraints.sustainabilityLevel === 'required' ? 'requires' : 'prefers'} sustainable gifts`,
+          });
+        }
+      }
+    }
+
+    // Sort by desirability descending
+    return attributes.sort((a, b) => b.desirability - a.desirability);
   }
 
   private async identifyMeaningFramework(context: any) {

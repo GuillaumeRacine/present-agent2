@@ -125,9 +125,63 @@ export interface ListenerOutput {
   confidenceLevel?: 'certain' | 'exploring' | 'confused';
   giftSignificance?: 'major' | 'moderate' | 'small_gesture';
 
+  // NEW: Enhanced emotional intelligence
+  emotionalContext?: EmotionalContext;
+
   // Meta
   extractedAt: Date;
   confidence: number; // 0-1
+}
+
+/**
+ * Enhanced emotional intelligence extraction for Listener Agent
+ * Captures sentiment, urgency, relationship warmth, and life context
+ */
+export interface EmotionalContext {
+  // Overall emotional sentiment
+  sentiment: 'excited' | 'nostalgic' | 'stressed' | 'grateful' | 'neutral' | 'anxious' | 'joyful';
+  sentimentStrength: number; // 0-1, confidence in sentiment detection
+
+  // Urgency level and deadline information
+  urgency: 'critical' | 'high' | 'medium' | 'low';
+  deadline?: {
+    type: 'explicit' | 'implicit'; // "need by Friday" vs "last minute"
+    date?: string; // ISO date if explicit deadline mentioned
+    timeframe?: string; // "this week", "by tomorrow", "no rush"
+  };
+
+  // Relationship warmth and quality
+  relationshipWarmth: number; // 0-1 scale (0.2-0.4: distant, 0.5-0.7: neutral, 0.8-1.0: warm)
+  relationshipQuality?: {
+    indicators: string[]; // "my amazing mom", "difficult boss", "dear friend"
+    sharedHistory?: string[]; // "we used to garden together", "college roommates"
+    giftGivingPatterns?: string[]; // "I always get her jewelry", "first time gift"
+  };
+
+  // Gift importance and significance
+  giftImportance: 'critical' | 'important' | 'nice-to-have';
+  importanceReasons?: string[]; // Why this gift matters
+
+  // Life milestones and transitions
+  milestones?: Array<{
+    type: 'birthday' | 'anniversary' | 'retirement' | 'graduation' | 'promotion' | 'achievement' | 'other';
+    description: string; // "turning 50", "first Christmas together"
+    significance: 'major' | 'moderate' | 'minor';
+  }>;
+
+  lifeTransitions?: Array<{
+    type: 'retirement' | 'new_parent' | 'new_job' | 'relocation' | 'empty_nest' | 'health_change' | 'other';
+    description: string; // "just retired", "expecting a baby"
+    stage: 'recent' | 'current' | 'upcoming'; // Temporal context
+    impact: 'major' | 'moderate' | 'minor'; // Life impact level
+  }>;
+
+  // Temporal and contextual signals
+  temporalSignals?: {
+    recentChanges?: string[]; // "recently started", "just moved"
+    anticipatedEvents?: string[]; // "about to retire", "expecting"
+    seasonalContext?: string; // "first winter", "holiday season"
+  };
 }
 
 // ============================================================================
@@ -138,6 +192,61 @@ export interface MemoryInput {
   userId: string;
   sessionId: string;
   listenerOutput: ListenerOutput;
+}
+
+/**
+ * Gift pattern for cold start recommendations
+ */
+export interface GiftPattern {
+  productIds: string[];
+  relationshipType?: string;
+  occasion?: string;
+  avgRating?: number;
+  popularity?: number;
+  archetypes?: string[];
+}
+
+/**
+ * Session-based profile for cold start users
+ */
+export interface SessionProfile {
+  sessionId: string;
+  interests: string[];
+  values: string[];
+  recipientContext?: {
+    name?: string;
+    relationshipType?: string;
+    age?: number;
+    gender?: string;
+  };
+  budget?: {
+    min: number;
+    max: number;
+  };
+  occasion?: string;
+  confidence: number;
+  timestamp: Date;
+}
+
+/**
+ * Catalog-wide trend data
+ */
+export interface CatalogTrends {
+  popularByRelationship: Record<string, string[]>; // relationship -> productIds
+  trendingByOccasion: Record<string, string[]>; // occasion -> productIds
+  highRatedPatterns: GiftPattern[];
+  recentSuccesses: GiftPattern[]; // Last 30 days
+}
+
+/**
+ * Cold start context and data source
+ */
+export interface ColdStartContext {
+  source: 'collaborative' | 'trends' | 'defaults' | 'session';
+  confidence: number;
+  patterns: GiftPattern[];
+  sessionProfile?: SessionProfile;
+  explanation: string; // Why this cold start method was used
 }
 
 export interface MemoryOutput {
@@ -177,7 +286,7 @@ export interface MemoryOutput {
   recognizedPatterns?: Array<{
     pattern: string;
     confidence: number;
-    source: 'past_purchases' | 'past_likes' | 'user_profile';
+    source: 'past_purchases' | 'past_likes' | 'user_profile' | 'collaborative' | 'catalog_trends' | 'defaults';
   }>;
 
   // Enhanced recipient profile from RecipientLearner sub-agent
@@ -189,6 +298,9 @@ export interface MemoryOutput {
   giverProfile?: any; // GiverProfile from giver.ts
   giverInsights?: any[]; // GiverInsight[] from giver.ts
   giverConfidence?: number;
+
+  // NEW: Cold start context (populated when user has no/limited history)
+  coldStartContext?: ColdStartContext;
 
   // Meta
   recalledAt: Date;
@@ -278,6 +390,43 @@ export interface MeaningInput {
   constraintsContext: ConstraintsOutput;
 }
 
+/**
+ * Gift value dimensions for value-based matching
+ */
+export type GiftValueDimension =
+  | 'practical'      // Useful, functional gifts
+  | 'sentimental'    // Emotional, meaningful gifts
+  | 'experiential'   // Experience-focused gifts
+  | 'luxurious'      // Premium, indulgent gifts
+  | 'creative'       // Artistic, unique gifts
+  | 'educational';   // Learning-focused gifts
+
+/**
+ * Interest with strength/confidence scoring
+ */
+export interface ScoredInterest {
+  interest: string;
+  strength: number; // 0-1, how strongly this interest is associated
+  source: 'explicit' | 'relationship' | 'occasion' | 'inferred'; // Where the interest came from
+  confidence: number; // 0-1, confidence in this interest
+}
+
+/**
+ * Multi-archetype weights for nuanced matching
+ */
+export interface ArchetypeWeights {
+  [archetype: string]: number; // archetype name -> weight (0-1)
+}
+
+/**
+ * Gift attribute alignment scoring
+ */
+export interface AttributeAlignment {
+  attribute: string; // Attribute name from gift-attributes.ts
+  desirability: number; // 0-1, how desirable this attribute is
+  reason: string; // Why this attribute matters
+}
+
 export interface MeaningOutput {
   // Pass through previous context
   constraintsContext: ConstraintsOutput;
@@ -296,6 +445,16 @@ export interface MeaningOutput {
       addressesNeeds?: string[];
       celebratesPersonality?: string;
     };
+
+    // NEW: Multi-archetype weights
+    archetypeWeights?: ArchetypeWeights;
+
+    // NEW: Value-based preferences
+    valuePreferences?: {
+      dimension: GiftValueDimension;
+      strength: number; // 0-1
+      inferredFrom: string; // Why we think this value matters
+    }[];
   };
 
   // What would resonate
@@ -320,6 +479,12 @@ export interface MeaningOutput {
     semanticQueries: string[]; // Natural language queries for vector search
     interestPathways: string[]; // Interests to traverse in graph (enhanced with compound interests)
     archetypeFilters: string[]; // Which archetypes to prioritize
+
+    // NEW: Scored interests with confidence
+    scoredInterests?: ScoredInterest[];
+
+    // NEW: Attribute alignment hints
+    desiredAttributes?: AttributeAlignment[];
   };
 
   // Meta

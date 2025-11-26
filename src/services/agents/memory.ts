@@ -39,6 +39,24 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
 
       this.log(`Found ${pastConversations.length} past conversations, ${pastRecipients.length} recipients`);
 
+      // Check for cold start scenario
+      const inColdStart = this.isColdStart(pastConversations, pastRecipients);
+      let coldStartContext;
+      let coldStartPatterns: Array<{ pattern: string; confidence: number; source: 'past_purchases' | 'past_likes' | 'user_profile' | 'collaborative' | 'catalog_trends' | 'defaults' }> = [];
+
+      if (inColdStart) {
+        // Handle cold start with fallback chain
+        const coldStartResult = await this.handleColdStart(input);
+        coldStartContext = coldStartResult.coldStartContext;
+        coldStartPatterns = coldStartResult.patterns;
+
+        this.log(
+          `🆕 Cold start handled via ${coldStartContext.source} ` +
+          `(confidence: ${coldStartContext.confidence.toFixed(2)}, ` +
+          `${coldStartPatterns.length} patterns)`
+        );
+      }
+
       // Build deep recipient profile using sub-agent
       const recipientLearning = await this.recipientLearner.process({
         userId: input.userId,
@@ -71,7 +89,7 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
         `data quality: ${giverProfiling.confidence_level.toFixed(2)}`
       );
 
-      // Recognize patterns from history
+      // Recognize patterns from history (include cold start patterns)
       const recognizedPatterns = this.recognizePatterns(
         input.listenerOutput,
         pastConversations,
@@ -79,20 +97,24 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
         userPreferences
       );
 
-      this.log(`Recognized ${recognizedPatterns.length} patterns`);
+      // Merge with cold start patterns
+      const allPatterns = [...recognizedPatterns, ...coldStartPatterns];
+
+      this.log(`Recognized ${allPatterns.length} patterns (${coldStartPatterns.length} from cold start)`);
 
       return {
         listenerContext: input.listenerOutput,
         pastConversations,
         pastRecipients,
         userPreferences,
-        recognizedPatterns,
+        recognizedPatterns: allPatterns,
         enrichedRecipient: recipientLearning.enriched_recipient,
         recipientKnowledgeDepth: recipientLearning.confidence_level,
         recipientKnowledgeGaps: recipientLearning.knowledge_gaps,
         giverProfile: giverProfiling.giver_profile,
         giverInsights: giverProfiling.insights,
         giverConfidence: giverProfiling.confidence_level,
+        coldStartContext, // Include cold start context
         recalledAt: new Date(),
       };
     } catch (error) {
@@ -315,8 +337,8 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
     pastConversations: any[],
     pastRecipients: any[],
     userPreferences: any
-  ): Array<{ pattern: string; confidence: number; source: string }> {
-    const patterns: Array<{ pattern: string; confidence: number; source: string }> = [];
+  ): Array<{ pattern: string; confidence: number; source: 'past_purchases' | 'past_likes' | 'user_profile' | 'collaborative' | 'catalog_trends' | 'defaults' }> {
+    const patterns: Array<{ pattern: string; confidence: number; source: 'past_purchases' | 'past_likes' | 'user_profile' | 'collaborative' | 'catalog_trends' | 'defaults' }> = [];
 
     // 1. Established interests (mentioned 3+ times)
     const interestMentions = new Map<string, number>();
@@ -458,5 +480,369 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
   private daysBetween(date1: Date, date2: Date): number {
     const diffTime = Math.abs(date2.getTime() - date1.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  // ============================================================================
+  // Cold Start Methods
+  // ============================================================================
+
+  /**
+   * Handle cold start scenario with fallback chain:
+   * 1. Collaborative filtering (similar users)
+   * 2. Catalog-wide trends
+   * 3. Default persona patterns
+   * 4. Session-based profile
+   */
+  private async handleColdStart(
+    input: MemoryInput
+  ): Promise<{ coldStartContext: any; patterns: Array<{ pattern: string; confidence: number; source: 'past_purchases' | 'past_likes' | 'user_profile' | 'collaborative' | 'catalog_trends' | 'defaults' }> }> {
+    this.log('⚠️  Cold start detected - using fallback strategies');
+
+    const listenerOutput = input.listenerOutput;
+
+    // Try collaborative filtering first
+    const collaborativeResult = await this.tryCollaborativeFiltering(input);
+    if (collaborativeResult.success) {
+      this.log(`✓ Cold start resolved via collaborative filtering (${collaborativeResult.patterns.length} patterns)`);
+      return {
+        coldStartContext: {
+          source: 'collaborative',
+          confidence: collaborativeResult.confidence,
+          patterns: collaborativeResult.patterns,
+          explanation: 'Found similar users with matching demographics and gift scenarios',
+        },
+        patterns: collaborativeResult.patterns.map(p => ({
+          pattern: `Similar users liked: ${p.productIds.slice(0, 3).join(', ')}`,
+          confidence: collaborativeResult.confidence,
+          source: 'collaborative' as const,
+        })),
+      };
+    }
+
+    // Fallback to catalog-wide trends
+    const trendsResult = await this.getCatalogTrends(input);
+    if (trendsResult.success) {
+      this.log(`✓ Cold start resolved via catalog trends (${trendsResult.patterns.length} patterns)`);
+      return {
+        coldStartContext: {
+          source: 'trends',
+          confidence: trendsResult.confidence,
+          patterns: trendsResult.patterns,
+          explanation: 'Using popular gifts from catalog-wide trends for this scenario',
+        },
+        patterns: trendsResult.patterns.map(p => ({
+          pattern: `Trending for ${p.relationshipType || p.occasion}: ${p.popularity} users`,
+          confidence: trendsResult.confidence,
+          source: 'catalog_trends' as const,
+        })),
+      };
+    }
+
+    // Fallback to default personas
+    const defaultsResult = await this.getDefaultPersonaPatterns(input);
+    this.log(`✓ Cold start resolved via default personas (${defaultsResult.patterns.length} patterns)`);
+
+    // Build session profile for progressive learning
+    const sessionProfile = this.buildSessionProfile(input);
+
+    return {
+      coldStartContext: {
+        source: 'defaults',
+        confidence: defaultsResult.confidence,
+        patterns: defaultsResult.patterns,
+        sessionProfile,
+        explanation: 'Using default patterns for this gift scenario, building profile from session',
+      },
+      patterns: defaultsResult.patterns.map(p => ({
+        pattern: `Default pattern: ${p.archetypes?.join(', ') || 'general gifts'} for ${p.relationshipType || 'recipients'}`,
+        confidence: defaultsResult.confidence,
+        source: 'defaults' as const,
+      })),
+    };
+  }
+
+  /**
+   * Try collaborative filtering with similar users
+   */
+  private async tryCollaborativeFiltering(input: MemoryInput): Promise<{
+    success: boolean;
+    confidence: number;
+    patterns: any[];
+  }> {
+    const session = this.neo4j.session();
+
+    try {
+      const listenerOutput = input.listenerOutput;
+      const relationshipType = listenerOutput.recipient?.relationshipType;
+      const occasion = listenerOutput.occasion?.name;
+      const recipientAge = listenerOutput.recipient?.age;
+      const recipientGender = listenerOutput.recipient?.gender;
+
+      // Find similar givers based on demographics and gift scenarios
+      const cypher = `
+        // Find gifts from similar scenarios
+        MATCH (otherUser:User)-[:GAVE_GIFT]->(gift:Gift)-[:IS_PRODUCT]->(p:Product)
+        WHERE otherUser.id <> $userId
+        ${relationshipType ? 'AND gift.relationship_type = $relationshipType' : ''}
+        ${occasion ? 'AND gift.occasion = $occasion' : ''}
+        ${recipientAge ? 'AND gift.recipient_age >= $minAge AND gift.recipient_age <= $maxAge' : ''}
+        ${recipientGender ? 'AND gift.recipient_gender = $recipientGender' : ''}
+
+        // Only successful gifts (rating >= 4 or purchased)
+        WHERE gift.rating >= 4 OR gift.was_purchased = true
+
+        // Get product details
+        WITH p, COUNT(DISTINCT otherUser) as giver_count, AVG(gift.rating) as avg_rating
+        WHERE giver_count >= 2  // At least 2 similar users liked this
+
+        RETURN p.id as productId,
+               giver_count as popularity,
+               avg_rating as rating
+        ORDER BY giver_count DESC, avg_rating DESC
+        LIMIT 20
+      `;
+
+      const result = await session.run(cypher, {
+        userId: input.userId,
+        relationshipType: relationshipType || null,
+        occasion: occasion || null,
+        minAge: recipientAge ? recipientAge - 5 : null,
+        maxAge: recipientAge ? recipientAge + 5 : null,
+        recipientGender: recipientGender || null,
+      });
+
+      if (result.records.length === 0) {
+        return { success: false, confidence: 0, patterns: [] };
+      }
+
+      // Convert to patterns
+      const patterns = [{
+        productIds: result.records.map(r => r.get('productId')),
+        relationshipType,
+        occasion,
+        avgRating: result.records.reduce((sum, r) => sum + r.get('rating'), 0) / result.records.length,
+        popularity: result.records.reduce((sum, r) => sum + r.get('popularity'), 0),
+      }];
+
+      // Confidence based on number of matches and specificity
+      let confidence = 0.6; // Base for collaborative filtering
+      if (relationshipType) confidence += 0.1;
+      if (occasion) confidence += 0.1;
+      if (recipientAge || recipientGender) confidence += 0.1;
+      if (result.records.length >= 10) confidence += 0.05;
+
+      return {
+        success: true,
+        confidence: Math.min(0.85, confidence),
+        patterns,
+      };
+    } catch (error) {
+      logger.warn('Collaborative filtering failed', { error });
+      return { success: false, confidence: 0, patterns: [] };
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
+   * Get catalog-wide trends
+   */
+  private async getCatalogTrends(input: MemoryInput): Promise<{
+    success: boolean;
+    confidence: number;
+    patterns: any[];
+  }> {
+    const session = this.neo4j.session();
+
+    try {
+      const listenerOutput = input.listenerOutput;
+      const relationshipType = listenerOutput.recipient?.relationshipType;
+      const occasion = listenerOutput.occasion?.name;
+
+      // Get trending/popular products for this scenario
+      const cypher = `
+        MATCH (gift:Gift)-[:IS_PRODUCT]->(p:Product)
+        WHERE gift.timestamp > datetime() - duration({days: 90})
+        ${relationshipType ? 'AND gift.relationship_type = $relationshipType' : ''}
+        ${occasion ? 'AND gift.occasion = $occasion' : ''}
+
+        WITH p,
+             COUNT(*) as gift_count,
+             AVG(COALESCE(gift.rating, 3.5)) as avg_rating,
+             SUM(CASE WHEN gift.was_purchased THEN 1 ELSE 0 END) as purchase_count
+        WHERE gift_count >= 3
+
+        // Calculate trend score
+        WITH p, gift_count, avg_rating, purchase_count,
+             (gift_count * 0.4 + avg_rating * 0.3 + purchase_count * 0.3) as trend_score
+
+        ORDER BY trend_score DESC
+        LIMIT 15
+
+        RETURN p.id as productId,
+               gift_count as popularity,
+               avg_rating as rating
+      `;
+
+      const result = await session.run(cypher, {
+        relationshipType: relationshipType || null,
+        occasion: occasion || null,
+      });
+
+      if (result.records.length === 0) {
+        return { success: false, confidence: 0, patterns: [] };
+      }
+
+      const patterns = [{
+        productIds: result.records.map(r => r.get('productId')),
+        relationshipType,
+        occasion,
+        avgRating: result.records.reduce((sum, r) => sum + r.get('rating'), 0) / result.records.length,
+        popularity: result.records.reduce((sum, r) => sum + r.get('popularity'), 0),
+      }];
+
+      // Confidence based on trend specificity
+      let confidence = 0.5; // Base for trends
+      if (relationshipType && occasion) confidence += 0.15;
+      else if (relationshipType || occasion) confidence += 0.1;
+      if (result.records.length >= 10) confidence += 0.05;
+
+      return {
+        success: true,
+        confidence: Math.min(0.7, confidence),
+        patterns,
+      };
+    } catch (error) {
+      logger.warn('Catalog trends query failed', { error });
+      return { success: false, confidence: 0, patterns: [] };
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
+   * Get default persona patterns for common scenarios
+   */
+  private async getDefaultPersonaPatterns(input: MemoryInput): Promise<{
+    confidence: number;
+    patterns: any[];
+  }> {
+    const session = this.neo4j.session();
+
+    try {
+      const listenerOutput = input.listenerOutput;
+      const interests = listenerOutput.interests || [];
+      const relationshipType = listenerOutput.recipient?.relationshipType;
+
+      // Fallback to interest-based products with high ratings
+      const cypher = `
+        MATCH (p:Product)-[:MATCHES_INTEREST]->(i:Interest)
+        WHERE i.name IN $interests
+
+        // Get products with good ratings (from past gifts)
+        OPTIONAL MATCH (gift:Gift)-[:IS_PRODUCT]->(p)
+        WITH p, i, AVG(COALESCE(gift.rating, 4.0)) as avg_rating, COUNT(gift) as gift_count
+
+        // Prioritize products with some history
+        ORDER BY (gift_count > 0) DESC, avg_rating DESC, gift_count DESC
+        LIMIT 12
+
+        RETURN p.id as productId,
+               COLLECT(DISTINCT i.name) as interests,
+               avg_rating as rating
+      `;
+
+      const result = await session.run(cypher, {
+        interests: interests.length > 0 ? interests : ['general', 'gift'],
+      });
+
+      if (result.records.length === 0) {
+        // Ultimate fallback - just get highly rated products
+        const fallbackCypher = `
+          MATCH (gift:Gift)-[:IS_PRODUCT]->(p:Product)
+          WITH p, AVG(gift.rating) as avg_rating, COUNT(*) as count
+          WHERE avg_rating >= 4.0 AND count >= 5
+          ORDER BY avg_rating DESC, count DESC
+          LIMIT 10
+          RETURN p.id as productId, avg_rating as rating
+        `;
+
+        const fallbackResult = await session.run(fallbackCypher);
+
+        return {
+          confidence: 0.3,
+          patterns: [{
+            productIds: fallbackResult.records.map(r => r.get('productId')),
+            archetypes: ['general'],
+            avgRating: 4.0,
+          }],
+        };
+      }
+
+      const patterns = [{
+        productIds: result.records.map(r => r.get('productId')),
+        relationshipType,
+        archetypes: interests,
+        avgRating: result.records.reduce((sum, r) => sum + r.get('rating'), 0) / result.records.length,
+      }];
+
+      return {
+        confidence: interests.length > 0 ? 0.45 : 0.3,
+        patterns,
+      };
+    } catch (error) {
+      logger.error('Default persona patterns failed', { error });
+      // Return empty patterns rather than failing
+      return {
+        confidence: 0.2,
+        patterns: [{
+          productIds: [],
+          archetypes: ['general'],
+        }],
+      };
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
+   * Build session-based profile for progressive learning
+   */
+  private buildSessionProfile(input: MemoryInput): any {
+    const listenerOutput = input.listenerOutput;
+
+    return {
+      sessionId: input.sessionId,
+      interests: listenerOutput.interests || [],
+      values: listenerOutput.values || [],
+      recipientContext: {
+        name: listenerOutput.recipient?.name,
+        relationshipType: listenerOutput.recipient?.relationshipType,
+        age: listenerOutput.recipient?.age,
+        gender: listenerOutput.recipient?.gender,
+      },
+      budget: listenerOutput.budget ? {
+        min: listenerOutput.budget.min,
+        max: listenerOutput.budget.max,
+      } : undefined,
+      occasion: listenerOutput.occasion?.name,
+      confidence: listenerOutput.confidence || 0.6,
+      timestamp: new Date(),
+    };
+  }
+
+  /**
+   * Check if user is in cold start scenario
+   */
+  private isColdStart(pastConversations: any[], pastRecipients: any[]): boolean {
+    // Cold start if:
+    // - No past conversations, OR
+    // - No past recipients, OR
+    // - Very limited history (< 2 conversations)
+    return (
+      pastConversations.length === 0 ||
+      pastRecipients.length === 0 ||
+      pastConversations.length < 2
+    );
   }
 }

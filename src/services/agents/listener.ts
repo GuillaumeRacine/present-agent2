@@ -27,6 +27,18 @@ export class ListenerAgent extends BaseAgent<ListenerInput, ListenerOutput> {
 
       this.log(`Context extraction completed in ${timeMs}ms`);
 
+      // Log emotional context extraction for debugging
+      if (extraction.emotionalContext) {
+        this.log('Emotional intelligence extracted', {
+          sentiment: extraction.emotionalContext.sentiment,
+          urgency: extraction.emotionalContext.urgency,
+          relationshipWarmth: extraction.emotionalContext.relationshipWarmth,
+          giftImportance: extraction.emotionalContext.giftImportance,
+          milestones: extraction.emotionalContext.milestones?.length || 0,
+          lifeTransitions: extraction.emotionalContext.lifeTransitions?.length || 0,
+        });
+      }
+
       return {
         ...extraction,
         userQuery: input.userQuery, // Preserve original query for downstream agents
@@ -170,10 +182,85 @@ Extract 95%+ of relevant information by identifying:
     - Flag missing critical info
     - Identify vague descriptions: "something nice" = ambiguous
 
-# EMOTIONAL CONTEXT
+# EMOTIONAL CONTEXT (LEGACY - BASIC)
 - emotionalTone: excited|stressed|casual|formal|urgent
 - confidenceLevel: certain|exploring|confused
 - giftSignificance: major|moderate|small_gesture
+
+# EMOTIONAL INTELLIGENCE (NEW - ENHANCED)
+
+13. **Emotional Context** (emotionalContext)
+    Extract deep emotional intelligence to understand the user's intent and the gift's significance:
+
+    **Sentiment Analysis:**
+    - sentiment: excited|nostalgic|stressed|grateful|neutral|anxious|joyful
+      * "so excited to celebrate" → excited
+      * "miss the old days" → nostalgic
+      * "last minute panic" → stressed
+      * "want to show appreciation" → grateful
+      * "help me find something" → neutral
+      * "worried about getting it right" → anxious
+      * "can't wait for their reaction" → joyful
+    - sentimentStrength: 0-1 (confidence in sentiment detection)
+
+    **Urgency Detection:**
+    - urgency: critical|high|medium|low
+      * "need by tomorrow" → critical
+      * "last minute" → critical
+      * "need it by Friday" → high
+      * "birthday is next month" → medium
+      * "no rush" → low
+      * "just browsing" → low
+    - deadline (if mentioned):
+      * type: explicit ("need by December 15") or implicit ("last minute")
+      * date: ISO date if explicit deadline
+      * timeframe: "this week", "by tomorrow", "no rush"
+
+    **Relationship Warmth (0-1 scale):**
+    Extract warmth indicators from language:
+    - relationshipWarmth: 0.2-0.4 (distant), 0.5-0.7 (neutral), 0.8-1.0 (warm)
+      * "my amazing mom" → 0.95 (very warm)
+      * "my mom" → 0.75 (warm)
+      * "my mother" → 0.65 (neutral-warm)
+      * "coworker" → 0.5 (neutral)
+      * "my difficult boss" → 0.3 (distant)
+    - relationshipQuality:
+      * indicators: ["my amazing mom", "dear friend", "difficult boss"]
+      * sharedHistory: ["we used to garden together", "college roommates"]
+      * giftGivingPatterns: ["I always get her jewelry", "first time giving"]
+
+    **Gift Importance:**
+    - giftImportance: critical|important|nice-to-have
+      * "need to make this special" → critical
+      * "important milestone" → critical
+      * "want something nice" → important
+      * "casual gift" → nice-to-have
+    - importanceReasons: ["first gift to partner", "major milestone", "make up for absence"]
+
+    **Milestones Detection:**
+    Extract significant life milestones:
+    - type: birthday|anniversary|retirement|graduation|promotion|achievement|other
+    - description: exact phrase from query
+    - significance: major|moderate|minor
+      * "turning 50" → {type: birthday, description: "turning 50", significance: major}
+      * "1st anniversary" → {type: anniversary, description: "first anniversary", significance: major}
+      * "got promoted" → {type: promotion, description: "got promoted", significance: moderate}
+
+    **Life Transitions:**
+    Detect major life changes that affect gift context:
+    - type: retirement|new_parent|new_job|relocation|empty_nest|health_change|other
+    - description: exact phrase from query
+    - stage: recent ("just retired"), current ("expecting"), upcoming ("about to move")
+    - impact: major|moderate|minor
+      * "just retired" → {type: retirement, description: "just retired", stage: recent, impact: major}
+      * "expecting a baby" → {type: new_parent, description: "expecting a baby", stage: upcoming, impact: major}
+      * "new job" → {type: new_job, description: "started new job", stage: recent, impact: moderate}
+      * "moved to apartment" → {type: relocation, description: "moved to apartment", stage: recent, impact: moderate}
+
+    **Temporal Signals:**
+    - recentChanges: ["recently started yoga", "just moved", "new hobby"]
+    - anticipatedEvents: ["about to retire", "expecting baby", "upcoming wedding"]
+    - seasonalContext: "first Christmas together", "summer birthday", "holiday season"
 
 # INFERENCE GUIDELINES
 - Stay close to what user actually said
@@ -283,6 +370,30 @@ Return valid JSON matching the enhanced ListenerOutput schema. Only include fiel
     if (extraction.giftPhilosophy) {
       const trueCount = Object.values(extraction.giftPhilosophy).filter(Boolean).length;
       score += Math.min(5, trueCount * 1);
+    }
+
+    // NEW: Emotional context (5% weight)
+    maxScore += 5;
+    if (extraction.emotionalContext) {
+      // Base points for having emotional context
+      score += 1;
+
+      // Sentiment detection
+      if (extraction.emotionalContext.sentiment) score += 0.5;
+      if (extraction.emotionalContext.sentimentStrength && extraction.emotionalContext.sentimentStrength > 0.5) score += 0.5;
+
+      // Urgency detection
+      if (extraction.emotionalContext.urgency) score += 0.5;
+
+      // Relationship warmth
+      if (extraction.emotionalContext.relationshipWarmth !== undefined) score += 0.5;
+
+      // Gift importance
+      if (extraction.emotionalContext.giftImportance) score += 0.5;
+
+      // Milestones and transitions (high value signals)
+      if (extraction.emotionalContext.milestones && extraction.emotionalContext.milestones.length > 0) score += 0.75;
+      if (extraction.emotionalContext.lifeTransitions && extraction.emotionalContext.lifeTransitions.length > 0) score += 0.75;
     }
 
     return Math.min(1.0, score / maxScore);
