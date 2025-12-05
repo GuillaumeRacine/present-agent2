@@ -17,6 +17,7 @@ import {
   MeaningOutput,
 } from '../../types/agents.js';
 import { Driver } from 'neo4j-driver';
+import neo4j from 'neo4j-driver';
 import { embeddingCache } from '../../lib/embedding-cache.js';
 import { logger } from '../../lib/logger.js';
 import { ARCHETYPE_ATTRIBUTES, GiftArchetype } from '../../types/gift-attributes.js';
@@ -355,7 +356,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         requiredValues: params.requiredValues || [],
         relationshipType: params.relationshipType || 'unknown',
         archetypeAttributes,
-        limit: expandedParams.limit,
+        limit: neo4j.int(expandedParams.limit), // BUG FIX: Use neo4j.int() for integer parameters
       });
 
       this.log(`Hybrid query returned ${result.records.length} products`);
@@ -1083,8 +1084,13 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       }
 
       return candidates;
-    } catch (error) {
-      logger.warn('Fulltext fallback failed', { error });
+    } catch (error: any) {
+      // Handle case where fulltext index isn't available (Neo4j Aura Free tier)
+      if (error.code === 'Neo.ClientError.Procedure.ProcedureNotFound') {
+        this.log('Fulltext index not available on this Neo4j instance - using standard search');
+      } else {
+        logger.warn('Fulltext fallback failed', { error });
+      }
       return [];
     } finally {
       await session.close();
