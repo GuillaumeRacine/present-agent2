@@ -98,20 +98,26 @@ async function analyzeCurrentState(spinner: Ora): Promise<{
   const driver = getDriver();
   const session = driver.session();
 
+  // Helper to safely convert Neo4j integers
+  const toNumber = (val: any): number => {
+    if (val === null || val === undefined) return 0;
+    return typeof val.toNumber === 'function' ? val.toNumber() : Number(val);
+  };
+
   try {
     // Count total interests
     const interestCountResult = await session.run(`
       MATCH (i:Interest)
       RETURN count(i) as total
     `);
-    const totalInterests = interestCountResult.records[0]?.get('total').toNumber() || 0;
+    const totalInterests = toNumber(interestCountResult.records[0]?.get('total'));
 
     // Count total products
     const productCountResult = await session.run(`
       MATCH (p:Product)
       RETURN count(p) as total
     `);
-    const totalProducts = productCountResult.records[0]?.get('total').toNumber() || 0;
+    const totalProducts = toNumber(productCountResult.records[0]?.get('total'));
 
     // Get interest distribution
     const distributionResult = await session.run(`
@@ -123,7 +129,7 @@ async function analyzeCurrentState(spinner: Ora): Promise<{
 
     const topInterests = distributionResult.records.map(r => ({
       name: r.get('interest'),
-      count: r.get('productCount').toNumber(),
+      count: toNumber(r.get('productCount')),
     }));
 
     // Find poorly tagged interests (< 5 products)
@@ -138,7 +144,7 @@ async function analyzeCurrentState(spinner: Ora): Promise<{
 
     const poorlyTaggedInterests = poorlyTaggedResult.records.map(r => ({
       name: r.get('interest'),
-      count: r.get('productCount').toNumber(),
+      count: toNumber(r.get('productCount')),
     }));
 
     // Calculate average interests per product

@@ -20,7 +20,12 @@ import { Driver } from 'neo4j-driver';
 import neo4j from 'neo4j-driver';
 import { embeddingCache } from '../../lib/embedding-cache.js';
 import { logger } from '../../lib/logger.js';
-import { ARCHETYPE_ATTRIBUTES, GiftArchetype } from '../../types/gift-attributes.js';
+import {
+  ARCHETYPE_ATTRIBUTES,
+  GiftArchetype,
+  extractAttributesFromProductProps,
+  getPrimaryArchetype as deriveArchetypeFromAttributes,
+} from '../../types/gift-attributes.js';
 import { cache, CacheTTL } from '../../lib/cache.js';
 import { generateEmbedding } from '../../lib/llm.js';
 
@@ -534,6 +539,10 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       ? socialProofCountRaw
       : (socialProofCountRaw?.toNumber ? socialProofCountRaw.toNumber() : 0);
 
+    // Normalize enriched gift attributes from Neo4j (snake_case) into camelCase map
+    const attributes = extractAttributesFromProductProps(product);
+    const matchedAttributes = Object.keys(attributes);
+
     // Extract new dimension scores (with fallback for backward compatibility)
     const functionalMatchScore = record.get('functionalMatchScore') || vectorScore;
     const emotionalMatchScore = record.get('emotionalMatchScore') || 0;
@@ -546,16 +555,22 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
 
     // PHASE 1.2: Populate matchedArchetype from Meaning Agent output
     const primaryArchetype = meaningFramework ? this.getPrimaryArchetype(meaningFramework) : 'thoughtful';
+    const attributeArchetype = matchedAttributes.length > 0
+      ? deriveArchetypeFromAttributes(attributes as any)
+      : null;
+    const matchedArchetype = attributeArchetype || primaryArchetype;
 
     return {
       product: {
-        id: product.id,
+        id: product.id || product.product_id,
         title: product.title,
         description: product.description,
         price: product.price,
         vendor: product.vendor,
         imageUrl: product.imageUrl,
         url: product.url,
+        attributes,
+        giftAttributes: attributes,
       },
       scores: {
         graphScore,
@@ -566,7 +581,8 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       matchReasons: {
         matchedInterests: matchedInterests.map((m: any) => m.name),
         matchedValues: matchedValues.map((m: any) => m.name),
-        matchedArchetype: primaryArchetype,
+        matchedArchetype,
+        matchedAttributes,
         socialProofCount,
       },
       graphContext: {
@@ -1089,7 +1105,9 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       if (error.code === 'Neo.ClientError.Procedure.ProcedureNotFound') {
         this.log('Fulltext index not available on this Neo4j instance - using standard search');
       } else {
-        logger.warn('Fulltext fallback failed', { error });
+        logger.warn('Fulltext fallback skipped (procedure unavailable or failed)', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
       return [];
     } finally {

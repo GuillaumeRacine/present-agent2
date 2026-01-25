@@ -93,10 +93,18 @@ async function checkLLM(): Promise<boolean> {
 
   try {
     if (hasAnthropic) {
-      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      const anthropicModule = await import('@anthropic-ai/sdk');
+      const Anthropic = (anthropicModule as any).Anthropic || (anthropicModule as any).default;
+      if (!Anthropic) {
+        throw new Error('Anthropic SDK not available');
+      }
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-      // Lightweight call: get API key info by creating a tiny message with 1 token max
-      await client.messages.create({ model: 'claude-3-5-sonnet-20241022', max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] });
+      // Lightweight call: tiny message to validate key
+      await client.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'ping' }],
+      });
       console.log(chalk.green('✓ Anthropic key appears valid'));
     }
   } catch (err: any) {
@@ -107,25 +115,31 @@ async function checkLLM(): Promise<boolean> {
 }
 
 function checkBackendFrontendEnv(): boolean {
-  console.log(chalk.bold('\nBackend/Frontend URLs:'));
+  console.log(chalk.bold('\\nBackend/Frontend URLs:'));
   const backendPort = process.env.BACKEND_PORT || '3000';
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+  const frontendPort = process.env.FRONTEND_PORT || '3001';
+  const frontendUrl = process.env.FRONTEND_URL || `http://localhost:${frontendPort}`;
+  const expectedFrontendUrl = `http://localhost:${frontendPort}`;
+  const expectedFeBackendUrl = `http://localhost:${backendPort}`;
+
   console.log(`  BACKEND_PORT:   ${backendPort}`);
+  console.log(`  FRONTEND_PORT:  ${frontendPort}`);
   console.log(`  FRONTEND_URL:   ${frontendUrl}`);
 
   const feEnv = loadFrontendEnv();
-  const feBackendUrl = feEnv.BACKEND_URL || 'http://localhost:3000';
+  const feBackendUrl = feEnv.BACKEND_URL || expectedFeBackendUrl;
   console.log(`  frontend/.env BACKEND_URL: ${feBackendUrl}`);
 
   let ok = true;
   if (!feEnv.BACKEND_URL) {
-    console.log(chalk.yellow('! frontend/.env.local missing BACKEND_URL (defaulting to http://localhost:3000)'));
+    console.log(chalk.yellow(`! frontend/.env.local missing BACKEND_URL (defaulting to ${expectedFeBackendUrl})`));
   }
-  if (!frontendUrl.includes('3001')) {
-    console.log(chalk.yellow('! FRONTEND_URL should usually be http://localhost:3001 for local dev'));
+  if (!feBackendUrl.includes(backendPort)) {
+    console.log(chalk.yellow(`! Frontend BACKEND_URL should match backend port ${backendPort} (expected ${expectedFeBackendUrl})`));
+    ok = false;
   }
-  if (!feBackendUrl.includes('3000')) {
-    console.log(chalk.yellow('! Frontend BACKEND_URL should usually be http://localhost:3000 for local dev'));
+  if (!frontendUrl.includes(frontendPort)) {
+    console.log(chalk.yellow(`! FRONTEND_URL should match frontend port ${frontendPort} (expected ${expectedFrontendUrl})`));
     ok = false;
   }
   return ok;
@@ -154,4 +168,3 @@ main().catch((err) => {
   console.error(chalk.red('Unexpected error in env check:'), err);
   process.exit(1);
 });
-

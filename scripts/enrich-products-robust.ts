@@ -746,8 +746,8 @@ async function fetchProductsNeedingEnrichment(
     const query = `
       MATCH (p:Product)
       WHERE ${afterId ? 'p.id > $afterId AND' : ''}
-            (NOT (p)-[:MATCHES_INTEREST]->(:Interest)
-             OR size([(p)-[:MATCHES_INTEREST]->() | 1]) < 2
+            ((NOT (p)-[:MATCHES_INTEREST]->(:Interest)
+             OR size([(p)-[:MATCHES_INTEREST]->() | 1]) < 2)
              OR p.isPractical IS NULL)
       WITH p ORDER BY p.id
       LIMIT toInteger($limit)

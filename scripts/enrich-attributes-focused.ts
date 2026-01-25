@@ -19,6 +19,7 @@
  *   --batch-size N      Products per LLM call (default: 20)
  *   --concurrency N     Parallel batches (default: 3)
  *   --target N          Stop after enriching N products (default: all)
+ *   --provider NAME     Force specific provider (gemini, openai, anthropic)
  *   --verbose           Show detailed LLM logs
  */
 
@@ -95,8 +96,24 @@ const providers: Record<string, { available: boolean; failures: number; cooldown
   anthropic: { available: !!anthropicClient, failures: 0, cooldownUntil: 0 },
 };
 
+let forcedProvider: string | null = null;
+
 function selectProvider(): string | null {
   const now = Date.now();
+
+  // If a provider is forced, only use that one
+  if (forcedProvider) {
+    const provider = providers[forcedProvider];
+    if (!provider || !provider.available) {
+      throw new Error(`Forced provider '${forcedProvider}' is not available`);
+    }
+    if (provider.cooldownUntil >= now) {
+      throw new Error(`Forced provider '${forcedProvider}' is on cooldown`);
+    }
+    return forcedProvider;
+  }
+
+  // Otherwise use normal priority order
   const order = ['gemini', 'openai', 'anthropic'];
 
   for (const name of order) {
@@ -260,7 +277,16 @@ async function enrichAttributesBatch(
     const costPerToken = PROVIDER_COSTS[provider as keyof typeof PROVIDER_COSTS] || 0.15;
     stats.estimatedCost += tokens * costPerToken / 1_000_000;
 
-    const parsed = JSON.parse(response);
+    let parsed = JSON.parse(response);
+
+    // Handle different response formats
+    // OpenAI might wrap in { "products": [...] }, Gemini might return plain array
+    if (parsed.products && Array.isArray(parsed.products)) {
+      parsed = parsed.products;
+    } else if (!Array.isArray(parsed)) {
+      throw new Error('LLM response is not an array and has no products field');
+    }
+
     const results: AttributeResult[] = [];
 
     for (let i = 0; i < products.length; i++) {
@@ -419,9 +445,24 @@ async function runAttributeEnrichment(options: {
   batchSize: number;
   concurrency: number;
   target?: number;
+  provider?: string;
   verbose: boolean;
 }) {
   const spinner = ora('Initializing...').start();
+
+  // Set forced provider if specified
+  if (options.provider) {
+    forcedProvider = options.provider.toLowerCase();
+    const provider = providers[forcedProvider];
+    if (!provider || !provider.available) {
+      spinner.fail(`Provider '${options.provider}' is not available or not configured`);
+      console.log('\nAvailable providers:');
+      Object.entries(providers)
+        .filter(([_, p]) => p.available)
+        .forEach(([name]) => console.log(`  - ${name}`));
+      return;
+    }
+  }
 
   // Check providers
   const availableProviders = Object.entries(providers)
@@ -438,7 +479,7 @@ async function runAttributeEnrichment(options: {
   console.log(chalk.bold.cyan('═══════════════════════════════════════════════════════════════════════\n'));
 
   console.log(`Mode: ${options.dryRun ? chalk.yellow('DRY RUN') : chalk.green('LIVE')}`);
-  console.log(`Providers: ${availableProviders.map(p => chalk.cyan(p)).join(', ')}`);
+  console.log(`Providers: ${forcedProvider ? chalk.yellow.bold(forcedProvider + ' (FORCED)') : availableProviders.map(p => chalk.cyan(p)).join(', ')}`);
   console.log(`Batch size: ${chalk.white(options.batchSize)} | Concurrency: ${chalk.white(options.concurrency)}\n`);
 
   // Initialize Neo4j
@@ -594,6 +635,7 @@ const options = {
   batchSize: args.includes('--batch-size') ? parseInt(args[args.indexOf('--batch-size') + 1]) : 20,
   concurrency: args.includes('--concurrency') ? parseInt(args[args.indexOf('--concurrency') + 1]) : 3,
   target: args.includes('--target') ? parseInt(args[args.indexOf('--target') + 1]) : undefined,
+  provider: args.includes('--provider') ? args[args.indexOf('--provider') + 1] : undefined,
   verbose: args.includes('--verbose'),
 };
 

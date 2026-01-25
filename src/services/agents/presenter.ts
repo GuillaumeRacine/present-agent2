@@ -11,6 +11,7 @@ import {
   FinalRecommendation,
 } from '../../types/agents';
 import OpenAI from 'openai';
+import { extractAttributesFromProductProps } from '../../types/gift-attributes';
 
 export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
   name = 'Presenter';
@@ -73,6 +74,7 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
   private selectTopCandidates(context: any): any[] {
     const candidates = context.validatorContext.validatedCandidates;
     const stories = context.stories;
+    const budget = context.validatorContext.explorerContext?.meaningContext?.constraintsContext?.hardConstraints?.budget;
 
     // Combine candidates with their stories
     const combined = candidates.map((candidate: any) => ({
@@ -80,25 +82,34 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
       story: stories.find((s: any) => s.productId === candidate.product.id),
     }));
 
-    // Sort by hybrid score and take top 5
-    return combined
-      .sort((a: any, b: any) => b.scores.hybridScore - a.scores.hybridScore)
-      .slice(0, 5);
+    const inBudget = (c: any) =>
+      !budget || (c.product.price >= budget.min && c.product.price <= budget.max);
+
+    // Prioritize in-budget candidates, then fill with best remaining
+    const sorted = combined.sort((a: any, b: any) => b.scores.hybridScore - a.scores.hybridScore);
+    const prioritized = sorted.filter(inBudget);
+    const filled = prioritized.length >= 3 ? prioritized : [...prioritized, ...sorted];
+
+    return filled.slice(0, 5);
   }
 
   private selectFallbackCandidates(context: any): any[] {
     // When validation fails, use top Explorer candidates sorted by vector score
     const allCandidates = context.validatorContext.explorerContext.candidates;
+    const budget = context.validatorContext.explorerContext?.meaningContext?.constraintsContext?.hardConstraints?.budget;
 
     if (!allCandidates || allCandidates.length === 0) {
       return [];
     }
 
+    const inBudget = (c: any) =>
+      !budget || (c.product.price >= budget.min && c.product.price <= budget.max);
+
     // Sort by vector score (most reliable when graph scores are 0)
     // and take top 3 as fallback
-    return allCandidates
-      .sort((a: any, b: any) => b.scores.vectorScore - a.scores.vectorScore)
-      .slice(0, 3);
+    const sorted = allCandidates.sort((a: any, b: any) => b.scores.vectorScore - a.scores.vectorScore);
+    const prioritized = sorted.filter(inBudget);
+    return (prioritized.length > 0 ? prioritized : sorted).slice(0, 3);
   }
 
   private generateFallbackReasoning(candidate: any): string {
@@ -197,7 +208,15 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
     };
 
     // Extract attributes from product
-    const attributes = product.attributes || product.giftAttributes || {};
+    const normalizedAttributes =
+      (product.attributes && Object.keys(product.attributes).length > 0
+        ? product.attributes
+        : null) ||
+      (product.giftAttributes && Object.keys(product.giftAttributes).length > 0
+        ? product.giftAttributes
+        : null) ||
+      extractAttributesFromProductProps(product);
+    const attributes = normalizedAttributes || {};
 
     // Filter to true attributes and map to labels
     const badges = Object.entries(attributes)

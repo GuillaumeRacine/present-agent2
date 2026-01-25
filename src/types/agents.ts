@@ -4,6 +4,7 @@
  * These types define the complete context passing chain between all 10 agents
  * in the recommendation workflow.
  */
+import { GiftAttributes } from './gift-attributes';
 
 // ============================================================================
 // 1. Listener Agent Types
@@ -508,6 +509,8 @@ export interface ProductCandidate {
     vendor: string;
     imageUrl?: string;
     url?: string;
+    attributes?: Partial<GiftAttributes>;
+    giftAttributes?: Partial<GiftAttributes>;
   };
 
   // Scoring breakdown
@@ -523,6 +526,7 @@ export interface ProductCandidate {
     matchedInterests: string[];
     matchedValues: string[];
     matchedArchetype: string;
+    matchedAttributes?: string[];
     socialProofCount?: number; // Similar users who liked this
     complementaryTo?: string[]; // If recipient has other interests
   };
@@ -694,6 +698,8 @@ export interface FinalRecommendation {
     vendor: string;
     imageUrl?: string;
     url?: string;
+    attributes?: Partial<GiftAttributes>;
+    giftAttributes?: Partial<GiftAttributes>;
   };
   reasoning: string; // The personal story
   confidence: number; // 0-1

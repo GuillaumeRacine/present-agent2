@@ -225,13 +225,19 @@ See [docs/API.md](docs/API.md) for complete API documentation.
 
 ## Current Status
 
-**✅ Production Ready - v2.2.0**
+**✅ Production Ready - v2.4.0 - Enrichment Automation Active**
+**📈 Live enrichment in progress:** see `ENRICHMENT_STATUS.md` for real-time monitoring.
 
-### Attribute System (Complete)
-- **41,704 products** in catalog
-- **99.7% attribute coverage** (41,562 products)
-- **14 gift attributes** with rich multi-dimensional profiles
-- **Archetype matching operational** (practical, sentimental, experiential, etc.)
+### Data (December 6, 2025)
+- **88,674 products** in Neo4j catalog
+- **Interest coverage**: 99.3% (88,053 products) ✅
+- **Occasion coverage**: 84.6% (75,060 products) ✅
+- **Attribute coverage**: 53.2% (47,139 products) ⚡ **ENRICHING**
+  - **Active enrichment**: 1,660/41,535 products done (4%)
+  - **Target**: 95%+ coverage by December 7, 2025
+  - **ETA**: 5-7 hours (~03:00-05:00 AM PST)
+  - **Cost so far**: $0.048 (estimated total: ~$0.08)
+  - **Monitor**: `./scripts/monitor-enrichment.sh`
 
 ### Recommendation System
 - **10-agent architecture** fully operational
@@ -239,8 +245,13 @@ See [docs/API.md](docs/API.md) for complete API documentation.
 - **100% success rate** on easy scenarios
 - **Fast performance**: 25-30 seconds average query time
 
-### Recent Achievements
-- ✅ LLM-based attribute population completed ($35, 30 minutes)
+### Recent Achievements (December 2025)
+- ✅ **Enrichment automation launched** (December 6, 2025)
+- ✅ **Query bug fixed**: WHERE clause preventing attribute enrichment
+- ✅ **Response parsing improved**: Handles all OpenAI JSON formats
+- ✅ **Batch validation added**: 80% success threshold with fail-fast
+- ✅ **Automated retry system**: Production-grade resilience
+- ✅ **Monitoring tools**: Real-time progress tracking
 - ✅ Interactive CLI chat interface for user testing
 - ✅ Multi-agent workflow transparency and logging
 - ✅ Conversation persistence and history tracking
@@ -253,24 +264,48 @@ See [docs/API.md](docs/API.md) for complete API documentation.
 
 ## Documentation
 
-### Core Documentation
-- **[Attribute System Validation](docs/reports/ATTRIBUTE_SYSTEM_VALIDATION_REPORT.md)** - System status & quality metrics
-- **[Agent Performance Analysis](docs/reports/AGENT_PERFORMANCE_ANALYSIS.md)** - Agent scoring & optimization roadmap
-- **[User Testing Guide](docs/guides/USER_TESTING_GUIDE.md)** - How to test recommendations
-- **[Complete Attribute Guide](docs/guides/COMPLETE_ATTRIBUTE_POPULATION_GUIDE.md)** - Attribute population setup
-- **[Architecture](docs/ARCHITECTURE.md)** - Complete system architecture
+### Getting Started
+- **[QUICKSTART](docs/QUICKSTART.md)** - Get running in 5 minutes
+- **[Architecture](docs/ARCHITECTURE.md)** - Complete system design
 - **[API Documentation](docs/API.md)** - API endpoints and usage
-- **[Documentation Hub](docs/README.md)** - All documentation
+- **[User Testing Guide](docs/guides/USER_TESTING_GUIDE.md)** - How to test recommendations
 
-### Guides & References
-- **[Repository Guidelines](docs/contributor/AGENTS.md)** - Contributor workflow and standards
-- **[Frontend Guide](docs/FRONTEND_GUIDE.md)** - Complete frontend documentation
-- **[Persona Testing](docs/guides/PERSONA_TESTING_FRAMEWORK.md)** - Testing framework guide
-- **[Testing Guide](docs/guides/TESTING_GUIDE.md)** - Recommendation testing
-- **[Dialogue Manager](docs/guides/DIALOGUE_MANAGER_QUICKSTART.md)** - Conversation system guide
+### Documentation Hub
+- **[docs/README.md](docs/README.md)** - Complete documentation index organized by category
 
-### Archives
-- **[Phase A & B Reports](docs/archive/phase-ab/)** - Historical test reports
+### Key Resources by Role
+
+#### For Developers
+- [QUICKSTART](docs/QUICKSTART.md) - Setup in 5 minutes
+- [ARCHITECTURE](docs/ARCHITECTURE.md) - System design
+- [API](docs/API.md) - API reference
+- [Frontend Guide](docs/FRONTEND_GUIDE.md) - UI development
+- [Testing Guide](docs/guides/TESTING_GUIDE.md) - Testing strategies
+- [Repository Guidelines](docs/contributor/AGENTS.md) - Contribution standards
+
+#### For Operations
+- [Runbooks](docs/runbooks/) - Operational procedures
+- [Data Status](docs/reports/DATA_STATUS_CURRENT.md) - Current metrics
+- [Monitoring Guide](docs/guides/MONITORING.md) - System monitoring
+- [Enrichment Status](ENRICHMENT_STATUS.md) - Live enrichment tracking
+
+#### For Product/QA
+- [Testing Executive Summary](docs/reports/TESTING_EXECUTIVE_SUMMARY.md) - Quality overview
+- [Agent Performance Analysis](docs/reports/AGENT_PERFORMANCE_ANALYSIS.md) - Agent optimization
+- [Validation Reports](docs/validation/) - UX validation
+- [Quality Reports](docs/quality/) - Quality assessments
+- [Persona Testing](docs/guides/PERSONA_TESTING_FRAMEWORK.md) - Automated testing
+
+#### For Data Team
+- [Attribute System](docs/attributes/) - 100-attribute system
+- [Attribute Validation](docs/reports/ATTRIBUTE_SYSTEM_VALIDATION_REPORT.md) - Quality metrics
+- [Enrichment Guide](docs/guides/COMPLETE_ATTRIBUTE_POPULATION_GUIDE.md) - Data enrichment
+- [Enrichment Runbook](docs/runbooks/hybrid-enrichment.md) - Operational procedures
+
+### Claude Code Integration
+- **[.claude/README.md](.claude/README.md)** - Claude Code configuration
+- **[Custom Commands](.claude/commands/)** - Slash commands (/build, /test, /ingest, etc.)
+- **[Agent Definitions](.claude/agents/)** - All agent specifications
 
 ## Development
 
@@ -295,6 +330,21 @@ npm run attributes:status      # Check attribute coverage
 
 # Build
 npm run build            # Build for production
+```
+
+### Enrichment Monitoring
+
+Monitor the active enrichment process:
+
+```bash
+# Real-time progress monitoring
+./scripts/monitor-enrichment.sh
+
+# Check database statistics
+npx tsx scripts/analyze-product-stats.ts
+
+# View enrichment status
+cat ENRICHMENT_STATUS.md
 ```
 
 ### Adding New Products
@@ -379,6 +429,7 @@ For questions or issues, please open a GitHub issue.
 
 ---
 
-**Version**: 2.2.0
-**Last Updated**: November 26, 2025
-**Status**: Production Ready - 99.7% Attribute Coverage, 190/190 Tests Passing
+**Version**: 2.4.0 - Enrichment Automation
+**Last Updated**: December 6, 2025
+**Status**: Production Ready - Active Enrichment (53.2% → 95%+ target), 190/190 Tests Passing
+**Enrichment Monitoring**: `./scripts/monitor-enrichment.sh` | See `ENRICHMENT_STATUS.md` for details

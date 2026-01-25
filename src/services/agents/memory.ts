@@ -578,27 +578,20 @@ export class MemoryAgent extends BaseAgent<MemoryInput, MemoryOutput> {
       const recipientAge = listenerOutput.recipient?.age;
       const recipientGender = listenerOutput.recipient?.gender;
 
-      // Find similar givers based on demographics and gift scenarios
+      // Find products previously recommended to similar users.
+      // Use existing Conversation/Recommendation model to avoid schema mismatches.
       const cypher = `
-        // Find gifts from similar scenarios
-        MATCH (otherUser:User)-[:GAVE_GIFT]->(gift:Gift)-[:IS_PRODUCT]->(p:Product)
-        WHERE otherUser.id <> $userId
-        ${relationshipType ? 'AND gift.relationship_type = $relationshipType' : ''}
-        ${occasion ? 'AND gift.occasion = $occasion' : ''}
-        ${recipientAge ? 'AND gift.recipient_age >= $minAge AND gift.recipient_age <= $maxAge' : ''}
-        ${recipientGender ? 'AND gift.recipient_gender = $recipientGender' : ''}
+        MATCH (otherUser:User)-[:HAD_CONVERSATION]->(conv:Conversation)-[:INCLUDES_RECOMMENDATION]->(rec:Recommendation)-[:RECOMMENDS_PRODUCT]->(p:Product)
+        WHERE otherUser.userId <> $userId
+        ${relationshipType ? 'AND rec.relationship_type = $relationshipType' : ''}
+        ${occasion ? 'AND rec.occasion = $occasion' : ''}
 
-        // Only successful gifts (rating >= 4 or purchased)
-        WHERE gift.rating >= 4 OR gift.was_purchased = true
+        WITH p, COUNT(DISTINCT otherUser) AS popularity
+        WHERE popularity >= 2
 
-        // Get product details
-        WITH p, COUNT(DISTINCT otherUser) as giver_count, AVG(gift.rating) as avg_rating
-        WHERE giver_count >= 2  // At least 2 similar users liked this
-
-        RETURN p.id as productId,
-               giver_count as popularity,
-               avg_rating as rating
-        ORDER BY giver_count DESC, avg_rating DESC
+        RETURN p.product_id AS productId,
+               popularity AS popularity
+        ORDER BY popularity DESC
         LIMIT 20
       `;
 

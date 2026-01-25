@@ -101,6 +101,14 @@ export async function createFulltextIndexes(): Promise<void> {
             name: index.name,
             status: 'exists'
           });
+        } else if (error.code === 'Neo.ClientError.Procedure.ProcedureNotFound') {
+          // Fulltext indexes not available on Neo4j Aura Free tier
+          logSchemaSetup({
+            operation: 'fulltext_index',
+            name: index.name,
+            status: 'skipped'
+          });
+          logger.warn('Fulltext indexes not available on this Neo4j instance (Aura Free tier limitation)');
         } else {
           throw error;
         }
@@ -254,27 +262,25 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
   try {
     logger.info('Ingesting test data...');
 
-    // 1. Create test users
+    // 1. Create test users (use MERGE to avoid duplicates)
     if (verbose) logger.info('Creating test users...');
     await session.run(`
-      CREATE (u1:User {
-        id: 'user_test_001',
-        email: 'john@example.com',
-        name: 'John Doe',
-        profile_embedding: $profileEmbed1,
-        value_embedding: $valueEmbed1,
-        style_embedding: $styleEmbed1,
-        created_at: datetime()
-      })
-      CREATE (u2:User {
-        id: 'user_test_002',
-        email: 'sarah@example.com',
-        name: 'Sarah Smith',
-        profile_embedding: $profileEmbed2,
-        value_embedding: $valueEmbed2,
-        style_embedding: $styleEmbed2,
-        created_at: datetime()
-      })
+      MERGE (u1:User {id: 'user_test_001'})
+      ON CREATE SET
+        u1.email = 'john@example.com',
+        u1.name = 'John Doe',
+        u1.profile_embedding = $profileEmbed1,
+        u1.value_embedding = $valueEmbed1,
+        u1.style_embedding = $styleEmbed1,
+        u1.created_at = datetime()
+      MERGE (u2:User {id: 'user_test_002'})
+      ON CREATE SET
+        u2.email = 'sarah@example.com',
+        u2.name = 'Sarah Smith',
+        u2.profile_embedding = $profileEmbed2,
+        u2.value_embedding = $valueEmbed2,
+        u2.style_embedding = $styleEmbed2,
+        u2.created_at = datetime()
     `, {
       profileEmbed1: generateMockEmbedding(),
       valueEmbed1: generateMockEmbedding(),
@@ -287,41 +293,20 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
     // 2. Create common interests
     if (verbose) logger.info('Creating interests...');
     await session.run(`
-      CREATE (i1:Interest {
-        id: 'interest_coffee',
-        name: 'coffee',
-        interest_embedding: $embed1
-      })
-      CREATE (i2:Interest {
-        id: 'interest_reading',
-        name: 'reading',
-        interest_embedding: $embed2
-      })
-      CREATE (i3:Interest {
-        id: 'interest_hiking',
-        name: 'hiking',
-        interest_embedding: $embed3
-      })
-      CREATE (i4:Interest {
-        id: 'interest_cooking',
-        name: 'cooking',
-        interest_embedding: $embed4
-      })
-      CREATE (i5:Interest {
-        id: 'interest_yoga',
-        name: 'yoga',
-        interest_embedding: $embed5
-      })
-      CREATE (i6:Interest {
-        id: 'interest_gaming',
-        name: 'gaming',
-        interest_embedding: $embed6
-      })
-      CREATE (i7:Interest {
-        id: 'interest_gardening',
-        name: 'gardening',
-        interest_embedding: $embed7
-      })
+      MERGE (i1:Interest {id: 'interest_coffee'})
+      ON CREATE SET i1.name = 'coffee', i1.interest_embedding = $embed1
+      MERGE (i2:Interest {id: 'interest_reading'})
+      ON CREATE SET i2.name = 'reading', i2.interest_embedding = $embed2
+      MERGE (i3:Interest {id: 'interest_hiking'})
+      ON CREATE SET i3.name = 'hiking', i3.interest_embedding = $embed3
+      MERGE (i4:Interest {id: 'interest_cooking'})
+      ON CREATE SET i4.name = 'cooking', i4.interest_embedding = $embed4
+      MERGE (i5:Interest {id: 'interest_yoga'})
+      ON CREATE SET i5.name = 'yoga', i5.interest_embedding = $embed5
+      MERGE (i6:Interest {id: 'interest_gaming'})
+      ON CREATE SET i6.name = 'gaming', i6.interest_embedding = $embed6
+      MERGE (i7:Interest {id: 'interest_gardening'})
+      ON CREATE SET i7.name = 'gardening', i7.interest_embedding = $embed7
     `, {
       embed1: generateMockEmbedding(),
       embed2: generateMockEmbedding(),
@@ -332,34 +317,19 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
       embed7: generateMockEmbedding(),
     });
 
-    // 3. Create common values
+    // 3. Create common values (use MERGE to avoid duplicates)
     if (verbose) logger.info('Creating values...');
     await session.run(`
-      CREATE (v1:Value {
-        id: 'value_eco_friendly',
-        name: 'eco-friendly',
-        value_embedding: $embed1
-      })
-      CREATE (v2:Value {
-        id: 'value_vegan',
-        name: 'vegan',
-        value_embedding: $embed2
-      })
-      CREATE (v3:Value {
-        id: 'value_handmade',
-        name: 'handmade',
-        value_embedding: $embed3
-      })
-      CREATE (v4:Value {
-        id: 'value_local',
-        name: 'local',
-        value_embedding: $embed4
-      })
-      CREATE (v5:Value {
-        id: 'value_minimalist',
-        name: 'minimalist',
-        value_embedding: $embed5
-      })
+      MERGE (v1:Value {id: 'value_eco_friendly'})
+      ON CREATE SET v1.name = 'eco-friendly', v1.value_embedding = $embed1
+      MERGE (v2:Value {id: 'value_vegan'})
+      ON CREATE SET v2.name = 'vegan', v2.value_embedding = $embed2
+      MERGE (v3:Value {id: 'value_handmade'})
+      ON CREATE SET v3.name = 'handmade', v3.value_embedding = $embed3
+      MERGE (v4:Value {id: 'value_local'})
+      ON CREATE SET v4.name = 'local', v4.value_embedding = $embed4
+      MERGE (v5:Value {id: 'value_minimalist'})
+      ON CREATE SET v5.name = 'minimalist', v5.value_embedding = $embed5
     `, {
       embed1: generateMockEmbedding(),
       embed2: generateMockEmbedding(),
@@ -368,34 +338,19 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
       embed5: generateMockEmbedding(),
     });
 
-    // 4. Create common occasions
+    // 4. Create common occasions (use MERGE to avoid duplicates)
     if (verbose) logger.info('Creating occasions...');
     await session.run(`
-      CREATE (o1:Occasion {
-        id: 'occasion_birthday',
-        name: 'birthday',
-        occasion_embedding: $embed1
-      })
-      CREATE (o2:Occasion {
-        id: 'occasion_anniversary',
-        name: 'anniversary',
-        occasion_embedding: $embed2
-      })
-      CREATE (o3:Occasion {
-        id: 'occasion_christmas',
-        name: 'christmas',
-        occasion_embedding: $embed3
-      })
-      CREATE (o4:Occasion {
-        id: 'occasion_just_because',
-        name: 'just_because',
-        occasion_embedding: $embed4
-      })
-      CREATE (o5:Occasion {
-        id: 'occasion_graduation',
-        name: 'graduation',
-        occasion_embedding: $embed5
-      })
+      MERGE (o1:Occasion {id: 'occasion_birthday'})
+      ON CREATE SET o1.name = 'birthday', o1.occasion_embedding = $embed1
+      MERGE (o2:Occasion {id: 'occasion_anniversary'})
+      ON CREATE SET o2.name = 'anniversary', o2.occasion_embedding = $embed2
+      MERGE (o3:Occasion {id: 'occasion_christmas'})
+      ON CREATE SET o3.name = 'christmas', o3.occasion_embedding = $embed3
+      MERGE (o4:Occasion {id: 'occasion_just_because'})
+      ON CREATE SET o4.name = 'just_because', o4.occasion_embedding = $embed4
+      MERGE (o5:Occasion {id: 'occasion_graduation'})
+      ON CREATE SET o5.name = 'graduation', o5.occasion_embedding = $embed5
     `, {
       embed1: generateMockEmbedding(),
       embed2: generateMockEmbedding(),
@@ -404,32 +359,30 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
       embed5: generateMockEmbedding(),
     });
 
-    // 5. Create test recipients
+    // 5. Create test recipients (use MERGE to avoid duplicates)
     if (verbose) logger.info('Creating recipients...');
     await session.run(`
       MATCH (u:User {id: 'user_test_001'})
-      CREATE (r1:Recipient {
-        id: 'recipient_dad',
-        name: 'Dad',
-        age: 58,
-        gender: 'male',
-        interest_embedding: $interestEmbed1,
-        personality_embedding: $personalityEmbed1
-      })
-      CREATE (r2:Recipient {
-        id: 'recipient_girlfriend',
-        name: 'Emily',
-        age: 28,
-        gender: 'female',
-        interest_embedding: $interestEmbed2,
-        personality_embedding: $personalityEmbed2
-      })
-      CREATE (u)-[:HAS_RELATIONSHIP {
+      MERGE (r1:Recipient {id: 'recipient_dad'})
+      ON CREATE SET
+        r1.name = 'Dad',
+        r1.age = 58,
+        r1.gender = 'male',
+        r1.interest_embedding = $interestEmbed1,
+        r1.personality_embedding = $personalityEmbed1
+      MERGE (r2:Recipient {id: 'recipient_girlfriend'})
+      ON CREATE SET
+        r2.name = 'Emily',
+        r2.age = 28,
+        r2.gender = 'female',
+        r2.interest_embedding = $interestEmbed2,
+        r2.personality_embedding = $personalityEmbed2
+      MERGE (u)-[:HAS_RELATIONSHIP {
         relationship_type: 'parent',
         closeness: 'close',
         years_known: 58
       }]->(r1)
-      CREATE (u)-[:HAS_RELATIONSHIP {
+      MERGE (u)-[:HAS_RELATIONSHIP {
         relationship_type: 'romantic_partner',
         closeness: 'intimate',
         years_known: 0.25
@@ -441,25 +394,25 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
       personalityEmbed2: generateMockEmbedding(),
     });
 
-    // 6. Link recipients to interests
+    // 6. Link recipients to interests (use MERGE to avoid duplicates)
     if (verbose) logger.info('Linking recipients to interests...');
     await session.run(`
       MATCH (r:Recipient {id: 'recipient_dad'}), (i:Interest)
       WHERE i.name IN ['coffee', 'reading', 'gardening']
-      CREATE (r)-[:INTERESTED_IN {strength: 0.9}]->(i)
+      MERGE (r)-[:INTERESTED_IN {strength: 0.9}]->(i)
     `);
     await session.run(`
       MATCH (r:Recipient {id: 'recipient_girlfriend'}), (i:Interest)
       WHERE i.name IN ['yoga', 'cooking', 'hiking']
-      CREATE (r)-[:INTERESTED_IN {strength: 0.85}]->(i)
+      MERGE (r)-[:INTERESTED_IN {strength: 0.85}]->(i)
     `);
 
-    // 7. Link recipients to values
+    // 7. Link recipients to values (use MERGE to avoid duplicates)
     if (verbose) logger.info('Linking recipients to values...');
     await session.run(`
       MATCH (r:Recipient {id: 'recipient_girlfriend'}), (v:Value)
       WHERE v.name IN ['vegan', 'eco-friendly']
-      CREATE (r)-[:VALUES {importance: 0.95, is_requirement: true}]->(v)
+      MERGE (r)-[:VALUES {importance: 0.95, is_requirement: true}]->(v)
     `);
 
     // 8. Create test products
@@ -547,20 +500,20 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
     ];
 
     for (const product of products) {
+      // Use MERGE to avoid duplicates on test products
       await session.run(`
-        CREATE (p:Product {
-          id: $id,
-          title: $title,
-          description: $description,
-          price: $price,
-          vendor: $vendor,
-          available: true,
-          product_embedding: $productEmbed,
-          style_embedding: $styleEmbed,
-          sentiment_embedding: $sentimentEmbed,
-          use_case_embedding: $useCaseEmbed,
-          created_at: datetime()
-        })
+        MERGE (p:Product {id: $id})
+        ON CREATE SET
+          p.title = $title,
+          p.description = $description,
+          p.price = $price,
+          p.vendor = $vendor,
+          p.available = true,
+          p.product_embedding = $productEmbed,
+          p.style_embedding = $styleEmbed,
+          p.sentiment_embedding = $sentimentEmbed,
+          p.use_case_embedding = $useCaseEmbed,
+          p.created_at = datetime()
       `, {
         id: product.id,
         title: product.title,
@@ -573,36 +526,36 @@ export async function ingestTestData(verbose: boolean = false): Promise<void> {
         useCaseEmbed: generateMockEmbedding(),
       });
 
-      // Link to interests
+      // Link to interests (use MERGE to avoid duplicates)
       if (product.interests && product.interests.length > 0) {
         await session.run(`
           MATCH (p:Product {id: $productId}), (i:Interest)
           WHERE i.name IN $interests
-          CREATE (p)-[:MATCHES_INTEREST {relevance_score: 0.9}]->(i)
+          MERGE (p)-[:MATCHES_INTEREST {relevance_score: 0.9}]->(i)
         `, {
           productId: product.id,
           interests: product.interests,
         });
       }
 
-      // Link to occasions
+      // Link to occasions (use MERGE to avoid duplicates)
       if (product.occasions && product.occasions.length > 0) {
         await session.run(`
           MATCH (p:Product {id: $productId}), (o:Occasion)
           WHERE o.name IN $occasions
-          CREATE (p)-[:SUITABLE_FOR {suitability_score: 0.85}]->(o)
+          MERGE (p)-[:SUITABLE_FOR {suitability_score: 0.85}]->(o)
         `, {
           productId: product.id,
           occasions: product.occasions,
         });
       }
 
-      // Link to values
+      // Link to values (use MERGE to avoid duplicates)
       if (product.values && product.values.length > 0) {
         await session.run(`
           MATCH (p:Product {id: $productId}), (v:Value)
           WHERE v.name IN $values
-          CREATE (p)-[:ALIGNS_WITH {alignment_score: 0.92}]->(v)
+          MERGE (p)-[:ALIGNS_WITH {alignment_score: 0.92}]->(v)
         `, {
           productId: product.id,
           values: product.values,

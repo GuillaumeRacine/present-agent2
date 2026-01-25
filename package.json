@@ -38,7 +38,16 @@
     "attributes:status": "tsx scripts/check-attribute-status.ts",
     "env:check": "tsx scripts/check-env.ts",
     "tag:occasions": "tsx scripts/tag-occasions.ts",
-    "docs:organize": "./scripts/organize-docs.sh"
+    "docs:organize": "./scripts/organize-docs.sh",
+    "import:raw": "tsx scripts/import-raw-products.ts",
+    "enrich": "tsx scripts/enrich-products-robust.ts",
+    "enrich:live": "TMPDIR=/tmp tsx scripts/enrich-products-robust.ts --live",
+    "enrich:test": "tsx scripts/enrich-products-robust.ts --verbose",
+    "enrich:run": "./run-enrichment-robust.sh",
+    "enrich:multi": "tsx scripts/enrich-attributes-multi-llm.ts",
+    "enrich:multi:live": "tsx scripts/enrich-attributes-multi-llm.ts --live",
+    "enrich:multi:test": "tsx scripts/enrich-attributes-multi-llm.ts --limit 100 --verbose",
+    "test:fallback": "tsx scripts/test-multi-llm-fallback.ts"
   },
   "keywords": [
     "recommendation-engine",
@@ -47,7 +56,8 @@
     "gift-recommendations"
   ],
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.10.0",
+    "@anthropic-ai/sdk": "^0.71.0",
+    "@google/generative-ai": "^0.24.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/nodemailer": "^7.0.3",
     "@types/stream-json": "^1.7.8",

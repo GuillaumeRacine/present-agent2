@@ -24,6 +24,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { initNeo4j, getDriver, getSession } from '../src/lib/neo4j.js';
 import { generateEmbedding, generateEmbeddingsBatch } from '../src/lib/llm.js';
+import { buildProductId } from '../src/lib/product-id.js';
 import { logger } from '../src/lib/logger.js';
 import ora from 'ora';
 import chalk from 'chalk';
@@ -519,6 +520,12 @@ async function ingestProducts(productStream: AsyncGenerator<Product>, productIds
         const params = batch.map((product, idx) => ({
           id: product.id,
           vendor: product.source_website,
+          product_id: buildProductId({
+            vendor: product.source_website,
+            sku: product.sku,
+            url: product.product_url,
+            fallbackId: product.id,
+          }),
           title: product.title,
           description: product.description || '',
           price: parseFloat(product.price),
@@ -541,8 +548,9 @@ async function ingestProducts(productStream: AsyncGenerator<Product>, productIds
             try {
               await session.run(`
                 UNWIND $products AS p
-                MERGE (product:Product {id: p.id})
-                SET product.vendor = p.vendor,
+                MERGE (product:Product {product_id: p.product_id})
+                SET product.id = coalesce(product.id, p.id),
+                    product.vendor = p.vendor,
                     product.title = p.title,
                     product.description = p.description,
                     product.price = p.price,

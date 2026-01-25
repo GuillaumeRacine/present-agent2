@@ -70,3 +70,9 @@ test-*.ts
 test-*.js
 demo-*.ts
 validate-*.ts
+
+# Large data files (stored in Google Drive)
+data/export/products.json
+data/processed/unified_catalog.json
+data/raw/products*.json
+data/export/*.bak.*

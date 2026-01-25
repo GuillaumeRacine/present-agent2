@@ -12,7 +12,12 @@
 
 import { BaseAgent } from './base';
 import { ValidatorInput, ValidatorOutput, ValidationResult, ProductCandidate } from '../../types/agents';
-import { calculateAttributeMatchScore, GiftArchetype, inferAttributesFromProduct } from '../../types/gift-attributes';
+import {
+  calculateAttributeMatchScore,
+  GiftArchetype,
+  inferAttributesFromProduct,
+  extractAttributesFromProductProps,
+} from '../../types/gift-attributes';
 import OpenAI from 'openai';
 
 // Quality gate thresholds (strict)
@@ -386,12 +391,19 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
     const meaningFramework = input.explorerContext.meaningContext.meaningFramework;
     const desiredArchetype = meaningFramework.giftArchetype as GiftArchetype;
 
-    // Infer product attributes from description
-    const productAttributes = inferAttributesFromProduct({
-      title: candidate.product.title || '',
-      description: candidate.product.description || '',
-      interests: candidate.matchReasons?.matchedInterests || [],
-    });
+    // Prefer enriched attributes from Neo4j; fall back to inference when missing
+    const hydratedAttributes =
+      candidate.product.attributes ||
+      candidate.product.giftAttributes ||
+      extractAttributesFromProductProps(candidate.product as any);
+    const productAttributes =
+      hydratedAttributes && Object.keys(hydratedAttributes).length > 0
+        ? hydratedAttributes
+        : inferAttributesFromProduct({
+            title: candidate.product.title || '',
+            description: candidate.product.description || '',
+            interests: candidate.matchReasons?.matchedInterests || [],
+          });
 
     // Calculate archetype match score
     const archetypeScore = calculateAttributeMatchScore(productAttributes, desiredArchetype);
@@ -458,11 +470,18 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
       // If giver values personalization highly (>0.7), be strict
       if (personalizationImportance > 0.7) {
         // Check if product has personalization attributes
-        const productAttributes = inferAttributesFromProduct({
-          title: candidate.product.title || '',
-          description: candidate.product.description || '',
-          interests: candidate.matchReasons?.matchedInterests || [],
-        });
+        const hydratedAttributes =
+          candidate.product.attributes ||
+          candidate.product.giftAttributes ||
+          extractAttributesFromProductProps(candidate.product as any);
+        const productAttributes =
+          hydratedAttributes && Object.keys(hydratedAttributes).length > 0
+            ? hydratedAttributes
+            : inferAttributesFromProduct({
+                title: candidate.product.title || '',
+                description: candidate.product.description || '',
+                interests: candidate.matchReasons?.matchedInterests || [],
+              });
 
         const hasPersonalization = productAttributes.isPersonalized ||
                                    productAttributes.isSentimental ||

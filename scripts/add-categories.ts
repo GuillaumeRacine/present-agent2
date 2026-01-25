@@ -125,7 +125,9 @@ async function getProductCount(): Promise<number> {
 
   try {
     const result = await session.run('MATCH (p:Product) RETURN count(p) AS count');
-    return result.records[0].get('count').toNumber();
+    const count = result.records[0].get('count');
+    // Handle both Neo4j Integer objects and regular numbers
+    return typeof count.toNumber === 'function' ? count.toNumber() : Number(count);
   } finally {
     await session.close();
   }
@@ -163,16 +165,16 @@ async function linkProductsToCategories(): Promise<{
 
       spinner.text = `Processing products ${skip + 1}-${skip + batchSize} of ${effectiveTotal.toLocaleString()}`;
 
-      // Fetch batch of products
+      // Fetch batch of products (use int() for SKIP/LIMIT to avoid float issues)
       const result = await session.run(
         `
         MATCH (p:Product)
         RETURN p.id AS id, p.title AS title, p.description AS description
         ORDER BY p.id
-        SKIP $skip
-        LIMIT $limit
+        SKIP toInteger($skip)
+        LIMIT toInteger($limit)
         `,
-        { skip, limit: batchSize }
+        { skip: Math.floor(skip), limit: Math.floor(batchSize) }
       );
 
       if (result.records.length === 0) {

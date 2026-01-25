@@ -1,0 +1,16 @@
+{
+  "lastProcessedId": "armsoar.com-22054",
+  "processedCount": 1920,
+  "stats": {
+    "totalInDb": 88674,
+    "needsAttributes": 41535,
+    "processedThisRun": 1920,
+    "attributesSet": 3137,
+    "tokensUsed": 223009,
+    "estimatedCost": 0.05588475000000001,
+    "errors": 1,
+    "startTime": 1765068980424,
+    "lastCheckpoint": 1765068980424
+  },
+  "timestamp": "2025-12-07T03:43:44.427Z"
+}

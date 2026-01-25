@@ -1,0 +1,131 @@
+[
+  {
+    "batchNumber": 302,
+    "productIds": [
+      "carylbakervisage.com-31562",
+      "carylbakervisage.com-31563",
+      "carylbakervisage.com-31564",
+      "carylbakervisage.com-31565",
+      "carylbakervisage.com-31566",
+      "carylbakervisage.com-31567",
+      "carylbakervisage.com-31568",
+      "carylbakervisage.com-31569",
+      "carylbakervisage.com-31570",
+      "carylbakervisage.com-31571",
+      "carylbakervisage.com-31572",
+      "carylbakervisage.com-31573",
+      "carylbakervisage.com-31574",
+      "carylbakervisage.com-31575",
+      "carylbakervisage.com-31576",
+      "carylbakervisage.com-31577",
+      "carylbakervisage.com-31578",
+      "carylbakervisage.com-31579",
+      "carylbakervisage.com-31580",
+      "carylbakervisage.com-31581"
+    ],
+    "attempts": [
+      {
+        "provider": "openai",
+        "error": "Batch validation failed",
+        "successRate": 0.5
+      },
+      {
+        "provider": "anthropic",
+        "error": "401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CVsST7Vv3CHC2WicQBjoB\"}",
+        "successRate": 0
+      },
+      {
+        "provider": "gemini",
+        "error": "Batch validation failed",
+        "successRate": 0.45
+      }
+    ],
+    "timestamp": "2025-12-07T13:54:19.776Z"
+  },
+  {
+    "batchNumber": 781,
+    "productIds": [
+      "hoakaswimwear.com-8277",
+      "hoakaswimwear.com-8278",
+      "hoakaswimwear.com-8279",
+      "hoakaswimwear.com-8280",
+      "hoakaswimwear.com-8281",
+      "hoakaswimwear.com-8282",
+      "hoakaswimwear.com-8283",
+      "hoakaswimwear.com-8284",
+      "hoakaswimwear.com-8285",
+      "hoakaswimwear.com-8286",
+      "hoakaswimwear.com-8287",
+      "hoakaswimwear.com-8288",
+      "hoakaswimwear.com-8289",
+      "hoakaswimwear.com-8290",
+      "hoakaswimwear.com-8291",
+      "hoakaswimwear.com-8292",
+      "hoakaswimwear.com-8293",
+      "hoakaswimwear.com-8294",
+      "hoakaswimwear.com-8295",
+      "hoakaswimwear.com-8296"
+    ],
+    "attempts": [
+      {
+        "provider": "openai",
+        "error": "Batch validation failed",
+        "successRate": 0.55
+      },
+      {
+        "provider": "anthropic",
+        "error": "401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CVscAJ5qw3TZvP6phFAqt\"}",
+        "successRate": 0
+      },
+      {
+        "provider": "gemini",
+        "error": "Batch validation failed",
+        "successRate": 0.5
+      }
+    ],
+    "timestamp": "2025-12-07T16:01:39.895Z"
+  },
+  {
+    "batchNumber": 1206,
+    "productIds": [
+      "nailcareer.com-30124",
+      "nailcareer.com-30125",
+      "nailcareer.com-30126",
+      "nailcareer.com-30127",
+      "nailcareer.com-30128",
+      "nailcareer.com-30129",
+      "nailcareer.com-30130",
+      "nailcareer.com-30131",
+      "nailcareer.com-30132",
+      "nailcareer.com-30133",
+      "nailcareer.com-30134",
+      "nailcareer.com-30135",
+      "nailcareer.com-30136",
+      "nailcareer.com-30137",
+      "nailcareer.com-30138",
+      "nailcareer.com-30139",
+      "nailcareer.com-30140",
+      "nailcareer.com-30141",
+      "nailcareer.com-30142",
+      "nailcareer.com-30143"
+    ],
+    "attempts": [
+      {
+        "provider": "openai",
+        "error": "Batch validation failed",
+        "successRate": 0.75
+      },
+      {
+        "provider": "anthropic",
+        "error": "401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CVuGw1tSmwV2C6oki8ZYh\"}",
+        "successRate": 0
+      },
+      {
+        "provider": "gemini",
+        "error": "Batch validation failed",
+        "successRate": 0.75
+      }
+    ],
+    "timestamp": "2025-12-08T13:10:41.270Z"
+  }
+]

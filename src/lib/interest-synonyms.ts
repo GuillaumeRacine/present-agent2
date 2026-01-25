@@ -511,8 +511,11 @@ export const INTEREST_TAXONOMY: Record<string, string[]> = {
     'food culture', 'dining', 'restaurants', 'food exploration'
   ],
   'bbq': [
-    'bbq', 'barbecue', 'grilling', 'smoking meat', 'pitmaster',
-    'outdoor cooking', 'grill master', 'smoker', 'meat smoking'
+    'bbq', 'barbecue', 'barbeque', 'grilling', 'grill', 'smoking meat', 'pitmaster',
+    'outdoor cooking', 'grill master', 'smoker', 'meat smoking',
+    'grilling gadgets', 'bbq gadgets', 'grilling tools', 'bbq tools', 'grill tools',
+    'grill set', 'grill kit', 'grill accessories', 'smoker accessories', 'pellet grill',
+    'bbq gift', 'grilling gift'
   ],
 
   // ========== TECHNOLOGY ==========

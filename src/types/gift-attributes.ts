@@ -370,6 +370,71 @@ export const ARCHETYPE_ATTRIBUTES: Record<GiftArchetype, (keyof GiftAttributes)[
   ],
 };
 
+// Consolidated list of enriched gift attributes we store on Product nodes.
+// Combines archetype-driving attributes with those surfaced in UX (badges).
+const ATTRIBUTE_KEYS: (keyof GiftAttributes)[] = Array.from(
+  new Set<keyof GiftAttributes>([
+    // Archetype drivers
+    ...Object.values(ARCHETYPE_ATTRIBUTES).flat(),
+    // Sustainability & craft
+    'isEcoFriendly',
+    'isHandcrafted',
+    'isLocal',
+    'isEthicallySourced',
+    'isFairTrade',
+    'isZeroWaste',
+    'isRecycled',
+    // Utility & format
+    'isTechEnabled',
+    'isPortable',
+    'isSpaceSaving',
+    'isConsumable',
+    'isReadyToUse',
+    // Aesthetic & uniqueness
+    'isArtistic',
+    'isMinimalist',
+    'isBold',
+    'isElegant',
+    'isQuirky',
+    'isUnique',
+    'isTimeless',
+    'isConversationStarter',
+    // Wellness & education
+    'isWellness',
+    'isCreative',
+    'isEducational',
+    'isAspirational',
+    // Core emotional hooks
+    'isRomantic',
+    'isNostalgic',
+    'isComforting',
+  ])
+);
+
+const camelToSnake = (key: string) =>
+  key.replace(/([A-Z])/g, '_$1').toLowerCase();
+
+/**
+ * Normalize raw product properties (Neo4j snake_case + camelCase) into
+ * the GiftAttributes shape with true/false flags.
+ */
+export function extractAttributesFromProductProps(
+  props: Record<string, any> | undefined | null
+): Partial<GiftAttributes> {
+  const attributes: Partial<GiftAttributes> = {};
+  if (!props) return attributes;
+
+  for (const key of ATTRIBUTE_KEYS) {
+    const snake = camelToSnake(key);
+    const raw = props[key] ?? props[snake];
+    if (raw === true || raw === 'true' || raw === 1) {
+      (attributes as any)[key] = true;
+    }
+  }
+
+  return attributes;
+}
+
 /**
  * Interest to Attribute Hints
  *

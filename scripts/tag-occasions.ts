@@ -17,6 +17,7 @@ dotenv.config({ path: '.env.local' });
 import { initNeo4j, getDriver, closeNeo4j } from '../src/lib/neo4j.js';
 import { chatCompletion } from '../src/lib/llm.js';
 import chalk from 'chalk';
+import neo4j from 'neo4j-driver';
 
 type OccasionName =
   | 'birthday'
@@ -119,7 +120,7 @@ async function main() {
        WHERE NOT (p)-[:SUITABLE_FOR]->(:Occasion)
        RETURN p.id as id, p.title as title, p.description as description
        LIMIT $limit`,
-      { limit }
+      { limit: neo4j.int(limit) }
     );
 
     const products = res.records.map((r) => ({

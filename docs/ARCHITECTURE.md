@@ -73,7 +73,7 @@ Present-Agent2 is a sophisticated multi-agent AI system that provides personaliz
 │  ┌──────────────────────┐      ┌──────────────────────┐        │
 │  │    Neo4j Database    │      │    External APIs     │        │
 │  │                      │      │                      │        │
-│  │  • Products (41,686) │      │  • OpenAI (GPT-4)   │        │
+│  │  • Products (~88k, see DATA_STATUS_CURRENT) │      │  • OpenAI (GPT-4)   │        │
 │  │  • Interests (710+)  │      │  • Cohere (embeds)  │        │
 │  │  • Recipients        │      │  • Anthropic        │        │
 │  │  • Conversations     │      │                      │        │
@@ -306,7 +306,7 @@ User Query: "Gift for my wine-loving mom, budget $50"
 
 | Node Type | Count | Status |
 |-----------|-------|--------|
-| Products | 41,686 | ✅ Complete |
+| Products | ~88k (see DATA_STATUS_CURRENT) | ✅ Complete |
 | Interests | 710 (growing) | 🚀 Phase C |
 | Recipients | Variable | 📈 Growing |
 | Users | Variable | 📈 Growing |

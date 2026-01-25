@@ -1,4 +1,6 @@
-import { DialogueManagerAgent } from './src/services/agents/dialogue-manager.js';
+// Run with: node --loader tsx test-dialogue-turn.mjs
+// or:       tsx test-dialogue-turn.mjs
+import { DialogueManagerAgent } from './src/services/agents/dialogue-manager.ts';
 
 const agent = new DialogueManagerAgent();
 
