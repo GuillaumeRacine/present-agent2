@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+
+# Neo4j data (3GB+ — stored locally, not in repo)
+neo4j-data/
+
+# Environment variables (NEVER COMMIT)
+.env
+.env.local
+.env*.local
+*.key
+*.cert
+*.pem
+*credentials*
+*secrets*
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+coverage/
+
+# OS files
+.DS_Store
+._*
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Large data files (product catalogs, enrichment outputs, raw exports)
+scripts/product_enrichment/output/
+src/data/export/
+src/data/processed/
+src/data/raw/
+src/data/interest-rebuild-state.json
+src/data/interest-stats.json
+src/data/archive/
+data/export/products.json
+data/processed/unified_catalog.json
+data/raw/products*.json
+data/export/*.bak.*
+
+# Checkpoint files
+.tmp/
+*.checkpoint.json
+*-checkpoint.json
+*-failures.json
+*.tsbuildinfo
+
+# Claude Code session transcripts (large, ephemeral)
+.claude/projects/*/[0-9a-f]*.jsonl

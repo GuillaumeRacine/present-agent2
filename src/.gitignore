@@ -1,0 +1,78 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+test-results/
+
+# Production
+/build
+/dist
+/.next/
+/out/
+
+# Misc
+.DS_Store
+._*
+*.pem
+
+# Environment variables (NEVER COMMIT THESE!)
+.env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env
+!.env.example
+
+# Credentials and secrets (NEVER COMMIT THESE!)
+*credentials*
+*secrets*
+*secret*
+*.key
+*.cert
+id_rsa
+id_ed25519
+*.p12
+*.pfx
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+.env.local
+
+# Temporary files and checkpoints
+.tmp/
+*.checkpoint.json
+.gift-attributes-checkpoint.json
+
+# Test files
+test-*.ts
+test-*.js
+demo-*.ts
+validate-*.ts
+
+# Large data files (stored in Google Drive)
+data/export/products.json
+data/processed/unified_catalog.json
+data/raw/products*.json
+data/export/*.bak.*

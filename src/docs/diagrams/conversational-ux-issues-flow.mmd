@@ -1,0 +1,70 @@
+%% Conversational UX Improvement - Issues Dependency Flow
+%% View this file in GitHub or with a Mermaid viewer
+
+graph TB
+    subgraph "Phase 1: Core Backend (Week 1-2)"
+        I1["#1: DialogueManager Agent<br/>P0 | 3-4 days<br/>Core decision logic"]
+        I2["#2: Question Generation<br/>P0 | 5-6 days<br/>Generate smart questions"]
+        I3["#3: Conversation State<br/>P0 | 2-3 days<br/>Track history, prevent dupes"]
+        I4["#4: Orchestrator Integration<br/>P0 | 2-3 days<br/>Branch on dialogue mode"]
+    end
+
+    subgraph "Phase 2: Frontend & Integration (Week 2-3)"
+        I5["#5: Answer Merging<br/>P1 | 2-3 days<br/>Enrich context with answers"]
+        I6["#6: Question UI Component<br/>P1 | 3-4 days<br/>Beautiful question rendering"]
+        I7["#7: Chat Integration<br/>P1 | 2-3 days<br/>Q&A flow in chat"]
+        I8["#8: API Endpoint<br/>P1 | 1-2 days<br/>Handle clarifications"]
+    end
+
+    subgraph "Phase 3: Polish & Validation (Week 3-4)"
+        I9["#9: Hybrid Mode<br/>P2 | 2-3 days<br/>Show + refine"]
+        I10["#10: Persona Testing<br/>P1 | 2-3 days<br/>Validate improvement"]
+        I11["#11: Analytics<br/>P2 | 1-2 days<br/>Track engagement"]
+        I12["#12: Documentation<br/>P2 | 1 day<br/>User & dev guides"]
+    end
+
+    %% Dependencies
+    I1 --> I2
+    I1 --> I3
+    I1 --> I4
+    I2 --> I3
+    I2 --> I4
+    I3 --> I4
+
+    I3 --> I5
+    I4 --> I6
+    I4 --> I7
+    I5 --> I8
+
+    I2 --> I9
+    I4 --> I9
+    I6 --> I9
+    I7 --> I9
+
+    I4 --> I10
+    I5 --> I10
+    I6 --> I10
+    I7 --> I10
+    I8 --> I10
+
+    I9 --> I11
+    I10 --> I11
+
+    I10 --> I12
+    I11 --> I12
+
+    %% Styling
+    classDef p0 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    classDef p1 fill:#ffd43b,stroke:#fab005,color:#000
+    classDef p2 fill:#69db7c,stroke:#37b24d,color:#000
+
+    class I1,I2,I3,I4 p0
+    class I5,I6,I7,I8,I10 p1
+    class I9,I11,I12 p2
+
+    %% Legend
+    subgraph Legend
+        L1[P0: Critical]:::p0
+        L2[P1: High Priority]:::p1
+        L3[P2: Medium Priority]:::p2
+    end
