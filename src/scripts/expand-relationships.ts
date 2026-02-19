@@ -521,14 +521,23 @@ ${dryRun ? '\nUse --live flag to apply changes' : ''}
       return;
     }
 
-    // Step 5: Remove existing GIFT_FOR_RELATIONSHIP rels (clean slate)
+    // Step 5: Remove existing GIFT_FOR_RELATIONSHIP rels (clean slate, batched to avoid OOM)
     spinner.start('Removing old GIFT_FOR_RELATIONSHIP relationships...');
     const session3 = driver.session();
-    await session3.run(`
-      MATCH ()-[r:GIFT_FOR_RELATIONSHIP]->()
-      DELETE r
-    `);
-    spinner.succeed('Removed old GIFT_FOR_RELATIONSHIP relationships');
+    let deletedTotal = 0;
+    while (true) {
+      const delResult = await session3.run(`
+        MATCH ()-[r:GIFT_FOR_RELATIONSHIP]->()
+        WITH r LIMIT 10000
+        DELETE r
+        RETURN count(r) AS deleted
+      `);
+      const deleted = delResult.records[0].get('deleted').toNumber ? delResult.records[0].get('deleted').toNumber() : Number(delResult.records[0].get('deleted'));
+      deletedTotal += deleted;
+      spinner.text = `Removing old GIFT_FOR_RELATIONSHIP relationships... ${deletedTotal.toLocaleString()} deleted`;
+      if (deleted === 0) break;
+    }
+    spinner.succeed(`Removed ${deletedTotal.toLocaleString()} old GIFT_FOR_RELATIONSHIP relationships`);
 
     // Step 6: Create relationships in batches
     spinner.start(`Creating ${relLinks.length.toLocaleString()} relationship links...`);
