@@ -14,6 +14,7 @@ Usage:
     python3 shopify_scraper.py --brands brands.json --output ./output/shopify_data.json
     python3 shopify_scraper.py --brand-url https://matethelabel.com --output ./output/shopify_data.json
     python3 shopify_scraper.py --discover-only  # Just list available endpoints per brand
+    python3 shopify_scraper.py --bestsellers-only --max-bestsellers 15 --output ./output/shopify_bestsellers.json
 """
 
 import json
@@ -223,8 +224,22 @@ def extract_product_popularity(product: Dict, rank: Optional[int] = None) -> Dic
     return result
 
 
-def scrape_brand(brand_url: str) -> Dict[str, Any]:
-    """Scrape a single brand for popularity data."""
+def scrape_brand(
+    brand_url: str,
+    bestsellers_only: bool = False,
+    max_bestsellers: int = 100,
+    existing_collections: Optional[List[Dict]] = None,
+    existing_bs_handle: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Scrape a single brand for popularity data.
+
+    Args:
+        brand_url: The Shopify store URL.
+        bestsellers_only: If True, skip full catalog fetch (Step 3).
+        max_bestsellers: Maximum bestseller products to fetch per brand.
+        existing_collections: Pre-discovered collections from a previous discover-only run.
+        existing_bs_handle: Pre-discovered bestseller handle from a previous discover-only run.
+    """
     brand_url = normalize_brand_url(brand_url)
     result = {
         'brand_url': brand_url,
@@ -239,41 +254,53 @@ def scrape_brand(brand_url: str) -> Dict[str, Any]:
 
     print(f"\n  Scraping {brand_url}...")
 
-    # Step 1: Discover collections
-    collections = discover_collections(brand_url)
-    result['collections'] = [
-        {'handle': c['handle'], 'title': c['title']}
-        for c in collections
-    ]
-    time.sleep(REQUEST_DELAY)
+    # Step 1: Discover collections (skip if already known)
+    if existing_collections is not None:
+        collections_raw = existing_collections
+        result['collections'] = [
+            {'handle': c['handle'], 'title': c['title']}
+            for c in collections_raw
+        ]
+    else:
+        collections_raw = discover_collections(brand_url)
+        result['collections'] = [
+            {'handle': c['handle'], 'title': c['title']}
+            for c in collections_raw
+        ]
+        time.sleep(REQUEST_DELAY)
 
     # Step 2: Find bestseller collection
-    bs_handle = find_bestseller_collection(collections)
+    if existing_bs_handle:
+        bs_handle = existing_bs_handle
+    else:
+        bs_handle = find_bestseller_collection(collections_raw)
+
     if bs_handle:
         result['bestseller_collection'] = bs_handle
         print(f"    Found bestseller collection: {bs_handle}")
 
-        bs_products = fetch_collection_products(brand_url, bs_handle)
+        bs_products = fetch_collection_products(brand_url, bs_handle, max_products=max_bestsellers)
         result['bestseller_products'] = [
             extract_product_popularity(p, rank=i + 1)
-            for i, p in enumerate(bs_products)
+            for i, p in enumerate(bs_products[:max_bestsellers])
         ]
         print(f"    Fetched {len(result['bestseller_products'])} bestseller products")
         time.sleep(REQUEST_DELAY)
     else:
         print(f"    No bestseller collection found")
 
-    # Step 3: Fetch full catalog
-    all_products = fetch_all_products(brand_url)
-    result['all_products'] = [
-        extract_product_popularity(p) for p in all_products
-    ]
-    print(f"    Fetched {len(result['all_products'])} total products")
+    # Step 3: Fetch full catalog (skip in bestsellers-only mode)
+    if not bestsellers_only:
+        all_products = fetch_all_products(brand_url)
+        result['all_products'] = [
+            extract_product_popularity(p) for p in all_products
+        ]
+        print(f"    Fetched {len(result['all_products'])} total products")
 
     # Step 4: Compute brand-level stats
     result['stats'] = {
         'total_products': len(result['all_products']),
-        'collection_count': len(collections),
+        'collection_count': len(result['collections']),
         'has_bestseller_collection': bs_handle is not None,
         'bestseller_count': len(result['bestseller_products']),
     }
@@ -311,6 +338,38 @@ def get_brand_urls_from_bcorp(input_dir: str) -> List[str]:
     return sorted(brands)
 
 
+def get_brand_urls_from_neo4j(uri: str = 'bolt://localhost:7687', password: str = 'presentagent2024') -> List[str]:
+    """Extract unique normalized brand URLs from Neo4j."""
+    try:
+        from neo4j import GraphDatabase
+    except ImportError:
+        print("neo4j package not found, falling back to cypher-shell...")
+        import subprocess
+        cmd = [
+            'docker', 'exec', 'present-agent-neo4j', 'cypher-shell',
+            '-u', 'neo4j', '-p', password,
+            'MATCH (p:Product) RETURN DISTINCT p.brand_url AS brand ORDER BY brand'
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        brands = set()
+        for line in proc.stdout.strip().split('\n')[1:]:  # skip header
+            url = line.strip().strip('"')
+            if url:
+                brands.add(normalize_brand_url(url))
+        return sorted(brands)
+
+    driver = GraphDatabase.driver(uri, auth=('neo4j', password))
+    brands = set()
+    with driver.session() as session:
+        result = session.run('MATCH (p:Product) RETURN DISTINCT p.brand_url AS brand')
+        for record in result:
+            url = record['brand']
+            if url:
+                brands.add(normalize_brand_url(url))
+    driver.close()
+    return sorted(brands)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Scrape Shopify stores for popularity data')
     parser.add_argument('--brand-url', help='Scrape a single brand URL')
@@ -325,6 +384,18 @@ def main():
     parser.add_argument('--output', default='./output/shopify_data.json')
     parser.add_argument('--discover-only', action='store_true',
                         help='Only discover collections, do not fetch products')
+    parser.add_argument('--bestsellers-only', action='store_true',
+                        help='Only fetch bestseller collection products, skip full catalog')
+    parser.add_argument('--max-bestsellers', type=int, default=15,
+                        help='Maximum bestseller products per brand (default: 15)')
+    parser.add_argument('--use-discovery', type=str, default=None,
+                        help='Path to existing discover-only JSON to reuse collection data')
+    parser.add_argument('--from-neo4j', action='store_true',
+                        help='Get brand URLs from Neo4j database instead of bcorp files')
+    parser.add_argument('--neo4j-uri', default='bolt://localhost:7687',
+                        help='Neo4j connection URI')
+    parser.add_argument('--neo4j-password', default='presentagent2024',
+                        help='Neo4j password')
     parser.add_argument('--limit', type=int, default=0,
                         help='Limit number of brands to scrape (0=all)')
     parser.add_argument('--resume-from', type=str, default=None,
@@ -338,6 +409,9 @@ def main():
     elif args.brands_file:
         with open(args.brands_file) as f:
             brands = json.load(f)
+    elif args.from_neo4j:
+        print(f"Extracting brand URLs from Neo4j ({args.neo4j_uri})...")
+        brands = get_brand_urls_from_neo4j(args.neo4j_uri, args.neo4j_password)
     else:
         print(f"Extracting brand URLs from {args.bcorp_dir}...")
         brands = get_brand_urls_from_bcorp(args.bcorp_dir)
@@ -356,6 +430,13 @@ def main():
         brands = brands[:args.limit]
         print(f"Limited to {len(brands)} brands")
 
+    # Load existing discovery data if provided
+    discovery_data = {}
+    if args.use_discovery and os.path.exists(args.use_discovery):
+        with open(args.use_discovery) as f:
+            discovery_data = json.load(f)
+        print(f"Loaded discovery data for {len(discovery_data)} brands from {args.use_discovery}")
+
     # Load existing results for resume support
     results = {}
     if os.path.exists(args.output):
@@ -366,9 +447,22 @@ def main():
     # Scrape
     for i, brand_url in enumerate(brands):
         normalized = normalize_brand_url(brand_url)
+
+        # Skip if already scraped with actual product data
         if normalized in results:
-            print(f"[{i+1}/{len(brands)}] Skipping {normalized} (already scraped)")
-            continue
+            existing = results[normalized]
+            has_product_data = (
+                len(existing.get('bestseller_products', [])) > 0 or
+                len(existing.get('all_products', [])) > 0
+            )
+            # In bestsellers-only mode, skip if we already have bestseller data
+            if args.bestsellers_only and has_product_data:
+                print(f"[{i+1}/{len(brands)}] Skipping {normalized} (already has data)")
+                continue
+            # In full mode, skip if we have all_products
+            if not args.bestsellers_only and not args.discover_only and len(existing.get('all_products', [])) > 0:
+                print(f"[{i+1}/{len(brands)}] Skipping {normalized} (already scraped)")
+                continue
 
         print(f"[{i+1}/{len(brands)}] {normalized}")
 
@@ -387,7 +481,21 @@ def main():
             print(f"    {len(collections)} collections, bestseller: {bs_handle or 'none'}")
             time.sleep(REQUEST_DELAY)
         else:
-            result = scrape_brand(normalized)
+            # Check if we have pre-discovered collection data
+            existing_collections = None
+            existing_bs_handle = None
+            disc = discovery_data.get(normalized) or results.get(normalized)
+            if disc:
+                existing_collections = disc.get('collections', [])
+                existing_bs_handle = disc.get('bestseller_collection')
+
+            result = scrape_brand(
+                normalized,
+                bestsellers_only=args.bestsellers_only,
+                max_bestsellers=args.max_bestsellers,
+                existing_collections=existing_collections,
+                existing_bs_handle=existing_bs_handle,
+            )
             results[normalized] = result
 
         # Save periodically (every 10 brands)
@@ -407,9 +515,19 @@ def main():
         1 for r in results.values()
         if r.get('bestseller_collection')
     )
+    total_bs_products = sum(
+        len(r.get('bestseller_products', []))
+        for r in results.values()
+    )
+    brands_with_bs_data = sum(
+        1 for r in results.values()
+        if len(r.get('bestseller_products', [])) > 0
+    )
     print(f"\n=== SCRAPE SUMMARY ===")
     print(f"Brands scraped: {len(results)}")
     print(f"Brands with bestseller collection: {brands_with_bs}")
+    print(f"Brands with bestseller data fetched: {brands_with_bs_data}")
+    print(f"Total bestseller products: {total_bs_products}")
     print(f"Output: {args.output}")
 
 

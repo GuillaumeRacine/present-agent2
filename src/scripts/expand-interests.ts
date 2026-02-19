@@ -345,6 +345,146 @@ async function expandProductInterests(
 }
 
 /**
+ * Category-to-Interest bridging map.
+ * Creates MATCHES_INTEREST relationships from existing IN_CATEGORY relationships.
+ * This fixes thin interest pools where categories have 10-50x more coverage.
+ */
+const CATEGORY_TO_INTEREST: Record<string, string[]> = {
+  // Games & entertainment
+  'Games & Puzzles': ['board-games', 'puzzles'],
+  'Board Games': ['board-games'],
+  'Card Games': ['board-games'],
+  'Video Games': ['gaming'],
+  // Home
+  'Home Decor': ['home-decor'],
+  'Wall Art': ['home-decor', 'art'],
+  'Candles & Home Fragrance': ['home-decor'],
+  'Furniture': ['home-decor'],
+  // Fashion & accessories
+  'Watches': ['watches'],
+  'Jewelry': ['jewelry'],
+  'Handbags & Wallets': ['handbags'],
+  'Sneakers & Athletic Shoes': ['sneakers'],
+  // Entertainment
+  'Movies & TV': ['movies'],
+  'Music & Instruments': ['music'],
+  // Tech
+  'Smart Home': ['smart-home'],
+  'Electronics': ['tech'],
+  'Gadgets': ['tech'],
+  // Arts & crafts
+  'Art Supplies': ['art', 'crafts'],
+  'Craft Supplies': ['crafts'],
+  'Knitting & Crochet': ['knitting'],
+  'Sewing': ['sewing'],
+  'Pottery & Ceramics': ['pottery'],
+  // Books & learning
+  'Books': ['reading'],
+  'Audiobooks & Podcasts': ['audiobooks', 'podcasts'],
+  // Outdoor & fitness
+  'Outdoor Gear': ['outdoors'],
+  'Camping Gear': ['camping'],
+  'Cycling': ['cycling'],
+  'Yoga & Pilates': ['yoga', 'pilates'],
+  'Fitness & Exercise': ['fitness'],
+  // Food & beverage
+  'Coffee & Tea': ['coffee', 'tea'],
+  'Wine & Spirits': ['wine'],
+  'Gourmet Food': ['foodie', 'cooking'],
+  'Cooking & Baking': ['cooking', 'baking'],
+  'BBQ & Grilling': ['bbq'],
+  // Pets
+  'Pet Supplies': ['pets'],
+  'Dog Supplies': ['dogs'],
+  'Cat Supplies': ['cats'],
+  // Kids
+  'Toys': ['toys'],
+  'Baby & Kids': ['parenting'],
+  // Beauty & wellness
+  'Skincare': ['skincare'],
+  'Beauty': ['beauty'],
+  'Wellness': ['wellness'],
+  // Garden
+  'Garden': ['gardening'],
+  'Plants': ['gardening', 'houseplants'],
+  // Travel
+  'Travel Accessories': ['travel'],
+  'Luggage': ['travel'],
+};
+
+/**
+ * Bridge IN_CATEGORY relationships to MATCHES_INTEREST.
+ * For each product with an IN_CATEGORY relationship to a mapped category,
+ * creates a MATCHES_INTEREST relationship to the corresponding interest.
+ */
+async function bridgeCategoryToInterest(
+  dryRun: boolean,
+  verbose: boolean,
+  spinner: Ora
+): Promise<{ newRelationships: number; categoriesBridged: number }> {
+  spinner.start('Bridging categories to interests...');
+
+  const driver = getDriver();
+  const session = driver.session();
+
+  let totalNew = 0;
+  let categoriesBridged = 0;
+
+  try {
+    for (const [categoryName, interests] of Object.entries(CATEGORY_TO_INTEREST)) {
+      for (const interestName of interests) {
+        // Count how many new rels this would create
+        const countResult = await session.run(`
+          MATCH (p:Product)-[:IN_CATEGORY]->(c:Category {name: $category})
+          WHERE NOT (p)-[:MATCHES_INTEREST]->(:Interest {name: $interest})
+          RETURN count(p) AS cnt
+        `, { category: categoryName, interest: interestName });
+
+        const count = countResult.records[0]?.get('cnt')?.toNumber?.() || Number(countResult.records[0]?.get('cnt')) || 0;
+
+        if (count === 0) continue;
+
+        categoriesBridged++;
+        totalNew += count;
+
+        if (verbose) {
+          console.log(`  ${categoryName} → ${interestName}: +${count} products`);
+        }
+
+        if (!dryRun) {
+          // Batch create the relationships
+          await session.run(`
+            MATCH (p:Product)-[:IN_CATEGORY]->(c:Category {name: $category})
+            WHERE NOT (p)-[:MATCHES_INTEREST]->(:Interest {name: $interest})
+            WITH p
+            MATCH (i:Interest {name: $interest})
+            MERGE (p)-[r:MATCHES_INTEREST]->(i)
+            ON CREATE SET
+              r.relevance_score = 0.75,
+              r.confidence = 0.65,
+              r.reasoning = 'Bridged from IN_CATEGORY: ' + $category,
+              r.extracted_at = datetime(),
+              r.extraction_method = 'category_bridge'
+          `, { category: categoryName, interest: interestName });
+        }
+      }
+    }
+
+    await session.close();
+
+    const action = dryRun ? '[DRY RUN] Would create' : 'Created';
+    spinner.succeed(
+      `${action} ${totalNew} interest relationships from ${categoriesBridged} category→interest bridges`
+    );
+
+    return { newRelationships: totalNew, categoriesBridged };
+  } catch (error) {
+    await session.close();
+    throw error;
+  }
+}
+
+/**
  * Main expansion function
  */
 async function expandInterestsMain(dryRun: boolean, verbose: boolean) {
@@ -407,17 +547,23 @@ ${dryRun ? '\nUse --live flag to apply changes' : ''}
     console.log('');
     const newNodes = await createInterestNodes(dryRun, spinner);
 
-    // Step 3: Expand product interests
+    // Step 3: Expand product interests (text matching)
     console.log('');
     const expansionStats = await expandProductInterests(dryRun, verbose, spinner);
+
+    // Step 4: Bridge categories to interests
+    console.log('');
+    const bridgeStats = await bridgeCategoryToInterest(dryRun, verbose, spinner);
 
     // Final summary
     console.log('\n📊 Expansion Summary:');
     console.log(`   Products analyzed: ${expansionStats.productsAnalyzed}`);
     console.log(`   Products updated: ${expansionStats.productsUpdated}`);
-    console.log(`   New interest relationships: ${expansionStats.totalNewRelationships}`);
+    console.log(`   New interest relationships (text): ${expansionStats.totalNewRelationships}`);
+    console.log(`   New interest relationships (category bridge): ${bridgeStats.newRelationships}`);
+    console.log(`   Total new: ${expansionStats.totalNewRelationships + bridgeStats.newRelationships}`);
     console.log(
-      `   Avg interests per product: ${expansionStats.avgInterestsPerProduct.before.toFixed(2)} → ${expansionStats.avgInterestsPerProduct.after.toFixed(2)}`
+      `   Avg interests per product: ${expansionStats.avgInterestsPerProduct.before.toFixed(2)} → ${expansionStats.avgInterestsPerProduct.after.toFixed(2)} (before bridge)`
     );
 
     // Show top newly tagged interests

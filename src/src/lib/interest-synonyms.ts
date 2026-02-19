@@ -646,7 +646,7 @@ export const INTEREST_TAXONOMY: Record<string, string[]> = {
     'essays', 'true stories', 'factual books'
   ],
   'audiobooks': [
-    'audiobooks', 'audio books', 'listening', 'audible', 'book listening',
+    'audiobooks', 'audiobook', 'audio books', 'audio book', 'listening', 'audible', 'book listening',
     'narrated books', 'audio reading'
   ],
   'poetry': [
@@ -656,12 +656,14 @@ export const INTEREST_TAXONOMY: Record<string, string[]> = {
 
   // ========== GAMES & ENTERTAINMENT ==========
   'board-games': [
-    'board games', 'tabletop games', 'board gaming', 'game night',
-    'strategy games', 'euro games', 'party games', 'card games'
+    'board games', 'board game', 'tabletop games', 'tabletop game', 'board gaming',
+    'game night', 'strategy games', 'strategy game', 'euro games', 'party games',
+    'card games', 'card game', 'dice game', 'dice games'
   ],
   'puzzles': [
-    'puzzles', 'jigsaw puzzles', 'puzzle solving', 'brain teasers',
-    'logic puzzles', 'crosswords', 'sudoku', 'puzzle games'
+    'puzzles', 'puzzle', 'jigsaw puzzles', 'jigsaw puzzle', 'puzzle solving',
+    'brain teasers', 'brain teaser', 'logic puzzles', 'logic puzzle',
+    'crosswords', 'crossword', 'sudoku', 'puzzle games'
   ],
   'chess': [
     'chess', 'chess player', 'chess strategy', 'chess club',
@@ -686,8 +688,9 @@ export const INTEREST_TAXONOMY: Record<string, string[]> = {
     'cut flowers', 'flower gardens', 'blooms'
   ],
   'home-decor': [
-    'home decor', 'interior design', 'home styling', 'decorating',
-    'home aesthetics', 'interior decorating', 'home improvement'
+    'home decor', 'interior design', 'home styling', 'decorating', 'decorative',
+    'home aesthetics', 'interior decorating', 'home improvement', 'ornament',
+    'wall art', 'vase', 'accent piece', 'homeware', 'furnishings'
   ],
   'organizing': [
     'organizing', 'organization', 'decluttering', 'home organization',
@@ -726,8 +729,8 @@ export const INTEREST_TAXONOMY: Record<string, string[]> = {
     'rings', 'bracelets', 'fine jewelry', 'costume jewelry'
   ],
   'watches': [
-    'watches', 'timepieces', 'watch collecting', 'horology', 'wristwatches',
-    'watch enthusiast', 'mechanical watches', 'luxury watches'
+    'watches', 'watch', 'timepieces', 'timepiece', 'watch collecting', 'horology',
+    'wristwatches', 'wristwatch', 'watch enthusiast', 'mechanical watches', 'luxury watches'
   ],
   'sneakers': [
     'sneakers', 'kicks', 'trainers', 'sneaker culture', 'sneakerhead',
@@ -844,8 +847,8 @@ export const INTEREST_TAXONOMY: Record<string, string[]> = {
 
   // ========== SOCIAL & ENTERTAINMENT ==========
   'movies': [
-    'movies', 'films', 'cinema', 'film buff', 'movie lover',
-    'movie watching', 'film enthusiast', 'cinephile'
+    'movies', 'movie', 'films', 'film', 'cinema', 'film buff', 'movie lover',
+    'movie watching', 'film enthusiast', 'cinephile', 'dvd', 'blu-ray', 'blu ray'
   ],
   'tv-shows': [
     'tv shows', 'television', 'series', 'binge watching', 'streaming',

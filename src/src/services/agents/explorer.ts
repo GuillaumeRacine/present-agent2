@@ -38,6 +38,45 @@ interface HybridSearchParams {
   requiredValues?: string[];
   isRetry?: boolean;
   searchDirection?: 'broaden' | 'narrow' | 'pivot';
+  occasion?: string;
+  giftRelationships?: string[];
+  archetypeAttributes?: string[]; // boolean attribute flags matching the primary archetype
+}
+
+/**
+ * Map a listener/relationship-agent relationship type to the
+ * GiftRelationship node names in the database.
+ * Returns all possible matches (gender-agnostic where needed).
+ */
+function mapToGiftRelationships(relationshipType: string): string[] {
+  const mapping: Record<string, string[]> = {
+    parent: ['mother', 'father'],
+    romantic_partner: ['wife', 'husband', 'partner'],
+    partner: ['wife', 'husband', 'partner'],
+    spouse: ['wife', 'husband', 'partner'],
+    sibling: ['sister', 'brother'],
+    child: ['daughter', 'son', 'children'],
+    grandparent: ['grandparent'],
+    extended_family: ['aunt_uncle', 'niece_nephew', 'grandparent'],
+    friend: ['friend'],
+    best_friend: ['friend'],
+    colleague: ['coworker', 'boss'],
+    coworker: ['coworker'],
+    boss: ['boss'],
+    teacher: ['teacher'],
+    mentor: ['teacher', 'boss'],
+    neighbor: ['neighbor'],
+    // Direct matches (if listener already returns the DB name)
+    mother: ['mother'],
+    father: ['father'],
+    wife: ['wife'],
+    husband: ['husband'],
+    sister: ['sister'],
+    brother: ['brother'],
+    daughter: ['daughter'],
+    son: ['son'],
+  };
+  return mapping[relationshipType.toLowerCase()] || ['friend'];
 }
 
 export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
@@ -132,6 +171,25 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       const relationshipType =
         input.meaningContext?.constraintsContext?.relationshipContext?.relationshipAnalysis?.type || 'friend';
 
+      // Extract occasion from listener context (deep path through agent chain)
+      const listenerContext = (input.meaningContext?.constraintsContext as any)?.relationshipContext?.memoryContext?.listenerContext;
+      const occasion = listenerContext?.occasion?.name || undefined;
+      const giftRelationships = mapToGiftRelationships(relationshipType);
+
+      if (occasion) {
+        this.log(`Occasion context: ${occasion}`);
+      }
+      this.log(`Gift relationships: [${giftRelationships.join(', ')}] (from ${relationshipType})`);
+
+      // Derive archetype attributes for attribute-based scoring
+      const primaryArchetype = this.getPrimaryArchetype(meaningFramework) as GiftArchetype;
+      const archetypeAttributes = ARCHETYPE_ATTRIBUTES[primaryArchetype] || [];
+      // Convert camelCase to snake_case for Neo4j property names
+      const archetypeAttrSnake = archetypeAttributes.map(a =>
+        a.replace(/([A-Z])/g, '_$1').toLowerCase()
+      );
+      this.log(`Archetype: ${primaryArchetype}, attribute filters: [${archetypeAttrSnake.join(', ')}]`);
+
       // Execute hybrid search (graph + vector)
       const isRetry = !!input.barRaiserFeedback;
       const candidates = await this.hybridSearch({
@@ -142,6 +200,9 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         discoveryHints,
         relationshipType,
         requiredValues,
+        occasion,
+        giftRelationships,
+        archetypeAttributes: archetypeAttrSnake,
       });
 
       this.log(`Found ${candidates.length} candidates from hybrid search`);
@@ -285,6 +346,23 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       }
     }
 
+    // Apply archetype attribute boost — re-rank based on how well products match the archetype
+    const archetype = this.getPrimaryArchetype(params.meaningFramework) as GiftArchetype;
+    if (archetype && ARCHETYPE_ATTRIBUTES[archetype]) {
+      const desiredAttrs = ARCHETYPE_ATTRIBUTES[archetype];
+      for (const candidate of finalCandidates) {
+        const attrs = candidate.product.giftAttributes || {};
+        let attrMatches = 0;
+        for (const attr of desiredAttrs) {
+          if ((attrs as any)[attr] === true) attrMatches++;
+        }
+        const attrScore = desiredAttrs.length > 0 ? attrMatches / desiredAttrs.length : 0;
+        // Attribute boost: up to 8% of total score for perfect archetype match
+        candidate.scores.hybridScore += 0.08 * attrScore;
+      }
+      this.log(`Archetype boost applied: ${archetype} (${desiredAttrs.length} attributes)`);
+    }
+
     // Sort by hybrid score
     finalCandidates.sort((a, b) => b.scores.hybridScore - a.scores.hybridScore);
 
@@ -352,47 +430,77 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
             toLower(COALESCE(product.description, '')) CONTAINS toLower(term)
           ] AS textMatchedInterests
 
-        // Combine interest paths
+        // Combine interest paths — ADDITIVE scoring (multi-path matches score higher)
         WITH product, vectorScore,
+          graphMatchedInterests + [cat IN graphMatchedCategories WHERE NOT cat IN graphMatchedInterests] +
+          [t IN textMatchedInterests WHERE NOT t IN graphMatchedInterests AND NOT t IN graphMatchedCategories]
+          AS allMatchedNames,
+          [name IN graphMatchedInterests | {name: name, strength: 0.9}] +
+          [cat IN graphMatchedCategories WHERE NOT cat IN graphMatchedInterests | {name: cat, strength: 0.8}] +
+          [t IN textMatchedInterests WHERE NOT t IN graphMatchedInterests AND NOT t IN graphMatchedCategories | {name: t, strength: 0.6}]
+          AS matchedInterests,
+          // Additive: graph 0.9 base + 0.05 bonus for category match + 0.03 bonus for text match, capped at 1.0
+          CASE WHEN SIZE(graphMatchedInterests) > 0 THEN
+            CASE WHEN graphInterestScore > 0 THEN graphInterestScore ELSE 0.9 END
+          ELSE 0.0 END +
+          CASE WHEN SIZE(graphMatchedCategories) > 0 THEN 0.05 ELSE 0.0 END +
+          CASE WHEN SIZE(textMatchedInterests) > 0 THEN 0.03 ELSE 0.0 END
+          AS rawInterestScore
+
+        WITH product, vectorScore, matchedInterests,
+          // Fallback: if no graph match, use category (0.8) or text (0.6)
           CASE
-            WHEN SIZE(graphMatchedInterests) > 0 THEN
-              [name IN graphMatchedInterests | {name: name, strength: 0.9}]
-            WHEN SIZE(graphMatchedCategories) > 0 THEN
-              [cat IN graphMatchedCategories | {name: cat, strength: 0.8}]
-            WHEN SIZE(textMatchedInterests) > 0 THEN
-              [t IN textMatchedInterests | {name: t, strength: 0.6}]
-            ELSE []
-          END AS matchedInterests,
-          CASE
-            WHEN SIZE(graphMatchedInterests) > 0 THEN
-              CASE WHEN graphInterestScore > 0 THEN graphInterestScore ELSE 0.9 END
-            WHEN SIZE(graphMatchedCategories) > 0 THEN 0.8
-            WHEN SIZE(textMatchedInterests) > 0 THEN 0.6
-            ELSE 0
+            WHEN rawInterestScore > 0 THEN rawInterestScore
+            WHEN SIZE([m IN matchedInterests WHERE m.strength = 0.8]) > 0 THEN 0.8
+            WHEN SIZE([m IN matchedInterests WHERE m.strength = 0.6]) > 0 THEN 0.6
+            ELSE 0.0
           END AS interestScore
 
-        // Gift quality signals
+        // Gift quality signals — include ratings, reviews, bestseller
         WITH product, vectorScore, matchedInterests, interestScore,
           COALESCE(product.gift_suitability_score, 0) / 100.0 AS giftQualityScore,
           COALESCE(product.popularity_score, 0) / 100.0 AS popularityScore,
-          CASE WHEN product.gift_proven = true THEN 0.2 ELSE 0.0 END AS giftProvenBonus
+          CASE WHEN product.gift_proven = true THEN 0.15 ELSE 0.0 END AS giftProvenBonus,
+          CASE WHEN product.is_bestseller = true THEN 0.10 ELSE 0.0 END AS bestsellerBonus,
+          CASE WHEN COALESCE(product.avg_rating, 0) >= 4.5 AND COALESCE(product.review_count, 0) >= 3 THEN 0.08 ELSE 0.0 END AS socialProofBonus
+
+        // Occasion + relationship + persona context matching
+        OPTIONAL MATCH (product)-[:GIFT_FOR_OCCASION]->(occ:GiftOccasion)
+        WHERE occ.name = $occasion
+        OPTIONAL MATCH (product)-[:GIFT_FOR_RELATIONSHIP]->(rel:GiftRelationship)
+        WHERE rel.name IN $giftRelationships
+        OPTIONAL MATCH (product)-[:FITS_PERSONA]->(persona:GiftPersona)
+        WITH product, vectorScore, matchedInterests, interestScore,
+          giftQualityScore, popularityScore, giftProvenBonus, bestsellerBonus, socialProofBonus,
+          CASE WHEN occ IS NOT NULL THEN 1.0 ELSE 0.0 END AS occasionMatch,
+          CASE WHEN rel IS NOT NULL THEN 1.0 ELSE 0.0 END AS relationshipMatch,
+          CASE WHEN persona IS NOT NULL THEN 0.5 ELSE 0.0 END AS personaMatch
 
         // Price fitness
         WITH product, vectorScore, matchedInterests, interestScore,
-          giftQualityScore, popularityScore, giftProvenBonus,
+          giftQualityScore, popularityScore, giftProvenBonus, bestsellerBonus, socialProofBonus,
+          occasionMatch, relationshipMatch, personaMatch,
           CASE
             WHEN product.price = 0 THEN 0.0
             WHEN $budgetMax = $budgetMin THEN 1.0
             ELSE 1.0 - (ABS(product.price - ($budgetMin + $budgetMax) / 2.0) / (($budgetMax - $budgetMin) / 2.0 + 0.01))
           END AS priceFitScore
 
-        // Hybrid score
+        // Hybrid score: vector 35% + interest 25% + quality 15% + price 15% + context 10%
+        // Quality capped at 1.0, includes social proof signals
+        // Vector penalty: halve vector contribution when zero interests matched but user stated interests
         WITH product, vectorScore, matchedInterests, interestScore,
-          giftQualityScore, popularityScore, giftProvenBonus, priceFitScore,
-          (0.35 * vectorScore +
-           0.25 * interestScore +
-           0.15 * ((giftQualityScore + popularityScore) / 2.0 + giftProvenBonus) +
-           0.15 * priceFitScore) AS hybridScore,
+          giftQualityScore, popularityScore, giftProvenBonus, bestsellerBonus, socialProofBonus,
+          priceFitScore, occasionMatch, relationshipMatch, personaMatch,
+          (0.35 * vectorScore *
+            CASE WHEN SIZE(matchedInterests) = 0 AND SIZE($allInterests) > 0 THEN 0.5 ELSE 1.0 END +
+           0.25 * CASE WHEN interestScore > 1.0 THEN 1.0 ELSE interestScore END +
+           0.15 * CASE
+             WHEN (giftQualityScore + popularityScore) / 2.0 + giftProvenBonus + bestsellerBonus + socialProofBonus > 1.0 THEN 1.0
+             ELSE (giftQualityScore + popularityScore) / 2.0 + giftProvenBonus + bestsellerBonus + socialProofBonus
+           END +
+           0.15 * priceFitScore +
+           0.10 * (occasionMatch * 0.4 + relationshipMatch * 0.4 + personaMatch * 0.2)) AS hybridScore,
           (vectorScore + interestScore + priceFitScore) / 3.0 AS confidenceScore
 
         ORDER BY hybridScore DESC
@@ -408,8 +516,10 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         allInterests,
         budgetMin: params.budget.min,
         budgetMax: params.budget.max,
-        vectorLimit: neo4j.int(limit * 3), // fetch 3x, filter down
+        vectorLimit: neo4j.int(limit * 10), // fetch 10x to survive budget filtering
         limit: neo4j.int(limit),
+        occasion: params.occasion || '',
+        giftRelationships: params.giftRelationships || [],
       });
 
       return result.records.map(record => this.recordToCandidateSimple(record, params.meaningFramework));
@@ -446,28 +556,57 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         WHERE i.name IN $allInterests
         WITH product, vectorScore,
           COLLECT(DISTINCT i.name) AS matchedInterestNames,
-          COALESCE(AVG(mi.relevance_score), 0) AS interestScore
+          COALESCE(AVG(mi.relevance_score), 0) AS graphInterestScore
+
+        // Also check categories for additive scoring
+        OPTIONAL MATCH (product)-[:IN_CATEGORY]->(c:Category)
+        WHERE c.name IN $allInterests
+        WITH product, vectorScore, matchedInterestNames, graphInterestScore,
+          COLLECT(DISTINCT c.name) AS matchedCategoryNames
 
         WITH product, vectorScore,
-          [name IN matchedInterestNames | {name: name, strength: 0.9}] AS matchedInterests,
+          [name IN matchedInterestNames | {name: name, strength: 0.9}] +
+          [cat IN matchedCategoryNames WHERE NOT cat IN matchedInterestNames | {name: cat, strength: 0.8}]
+          AS matchedInterests,
           CASE WHEN SIZE(matchedInterestNames) > 0 THEN
-            CASE WHEN interestScore > 0 THEN interestScore ELSE 0.9 END
+            CASE WHEN graphInterestScore > 0 THEN graphInterestScore ELSE 0.9 END +
+            CASE WHEN SIZE(matchedCategoryNames) > 0 THEN 0.05 ELSE 0.0 END
+          WHEN SIZE(matchedCategoryNames) > 0 THEN 0.8
           ELSE 0 END AS interestScore,
           COALESCE(product.gift_suitability_score, 0) / 100.0 AS giftQualityScore,
           COALESCE(product.popularity_score, 0) / 100.0 AS popularityScore,
-          CASE WHEN product.gift_proven = true THEN 0.2 ELSE 0.0 END AS giftProvenBonus,
+          CASE WHEN product.gift_proven = true THEN 0.15 ELSE 0.0 END AS giftProvenBonus,
+          CASE WHEN product.is_bestseller = true THEN 0.10 ELSE 0.0 END AS bestsellerBonus,
+          CASE WHEN COALESCE(product.avg_rating, 0) >= 4.5 AND COALESCE(product.review_count, 0) >= 3 THEN 0.08 ELSE 0.0 END AS socialProofBonus,
           CASE
             WHEN product.price = 0 THEN 0.0
             WHEN $budgetMax = $budgetMin THEN 1.0
             ELSE 1.0 - (ABS(product.price - ($budgetMin + $budgetMax) / 2.0) / (($budgetMax - $budgetMin) / 2.0 + 0.01))
           END AS priceFitScore
 
+        // Occasion + relationship + persona context
+        OPTIONAL MATCH (product)-[:GIFT_FOR_OCCASION]->(occ:GiftOccasion)
+        WHERE occ.name = $occasion
+        OPTIONAL MATCH (product)-[:GIFT_FOR_RELATIONSHIP]->(rel:GiftRelationship)
+        WHERE rel.name IN $giftRelationships
+        OPTIONAL MATCH (product)-[:FITS_PERSONA]->(persona:GiftPersona)
         WITH product, vectorScore, matchedInterests, interestScore,
-          giftQualityScore, popularityScore, giftProvenBonus, priceFitScore,
-          (0.35 * vectorScore +
-           0.25 * interestScore +
-           0.15 * ((giftQualityScore + popularityScore) / 2.0 + giftProvenBonus) +
-           0.15 * priceFitScore) AS hybridScore,
+          giftQualityScore, popularityScore, giftProvenBonus, bestsellerBonus, socialProofBonus, priceFitScore,
+          CASE WHEN occ IS NOT NULL THEN 1.0 ELSE 0.0 END AS occasionMatch,
+          CASE WHEN rel IS NOT NULL THEN 1.0 ELSE 0.0 END AS relationshipMatch,
+          CASE WHEN persona IS NOT NULL THEN 0.5 ELSE 0.0 END AS personaMatch,
+          // Vector penalty: halve vector contribution when zero interests matched but user stated interests
+          (0.35 * vectorScore *
+            CASE WHEN SIZE(matchedInterests) = 0 AND SIZE($allInterests) > 0 THEN 0.5 ELSE 1.0 END +
+           0.25 * CASE WHEN interestScore > 1.0 THEN 1.0 ELSE interestScore END +
+           0.15 * CASE
+             WHEN (giftQualityScore + popularityScore) / 2.0 + giftProvenBonus + bestsellerBonus + socialProofBonus > 1.0 THEN 1.0
+             ELSE (giftQualityScore + popularityScore) / 2.0 + giftProvenBonus + bestsellerBonus + socialProofBonus
+           END +
+           0.15 * priceFitScore +
+           0.10 * (CASE WHEN occ IS NOT NULL THEN 0.4 ELSE 0.0 END +
+                   CASE WHEN rel IS NOT NULL THEN 0.4 ELSE 0.0 END +
+                   CASE WHEN persona IS NOT NULL THEN 0.2 ELSE 0.0 END)) AS hybridScore,
           (vectorScore + interestScore + priceFitScore) / 3.0 AS confidenceScore
 
         ORDER BY hybridScore DESC
@@ -483,8 +622,10 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         allInterests,
         budgetMin: params.budget.min,
         budgetMax: params.budget.max,
-        vectorLimit: neo4j.int(limit * 3),
+        vectorLimit: neo4j.int(limit * 10),
         limit: neo4j.int(limit),
+        occasion: params.occasion || '',
+        giftRelationships: params.giftRelationships || [],
       });
 
       return result.records.map(record => this.recordToCandidateSimple(record, params.meaningFramework));
@@ -527,30 +668,47 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         WITH product, matchedInterestNames, avgRelevance,
           COLLECT(DISTINCT c.name) AS matchedCategories
 
-        // Gift quality signals
+        // Gift quality signals — include ratings, reviews, bestseller
         WITH product, matchedInterestNames, avgRelevance, matchedCategories,
           COALESCE(product.gift_suitability_score, 0) / 100.0 AS giftQualityScore,
           COALESCE(product.popularity_score, 0) / 100.0 AS popularityScore,
-          CASE WHEN product.gift_proven = true THEN 0.2 ELSE 0.0 END AS giftProvenBonus,
+          CASE WHEN product.gift_proven = true THEN 0.15 ELSE 0.0 END AS giftProvenBonus,
+          CASE WHEN product.is_bestseller = true THEN 0.10 ELSE 0.0 END AS bestsellerBonus,
+          CASE WHEN COALESCE(product.avg_rating, 0) >= 4.5 AND COALESCE(product.review_count, 0) >= 3 THEN 0.08 ELSE 0.0 END AS socialProofBonus,
           CASE
             WHEN product.price = 0 THEN 0.0
             WHEN $budgetMax = $budgetMin THEN 1.0
             ELSE 1.0 - (ABS(product.price - ($budgetMin + $budgetMax) / 2.0) / (($budgetMax - $budgetMin) / 2.0 + 0.01))
           END AS priceFitScore
 
-        // Score: interest coverage + quality + price fit
+        // Occasion + relationship + persona context
+        OPTIONAL MATCH (product)-[:GIFT_FOR_OCCASION]->(occ:GiftOccasion)
+        WHERE occ.name = $occasion
+        OPTIONAL MATCH (product)-[:GIFT_FOR_RELATIONSHIP]->(rel:GiftRelationship)
+        WHERE rel.name IN $giftRelationships
+        OPTIONAL MATCH (product)-[:FITS_PERSONA]->(persona:GiftPersona)
+
+        // Score: interest coverage + quality + price fit + context
         WITH product,
           [name IN matchedInterestNames | {name: name, strength: 0.9}] +
           [cat IN matchedCategories | {name: cat, strength: 0.8}] AS matchedInterests,
-          // Interest coverage: fraction of queried interests matched
           toFloat(SIZE(matchedInterestNames) + SIZE(matchedCategories)) / $interestCount AS coverageScore,
           avgRelevance AS interestScore,
-          giftQualityScore, popularityScore, giftProvenBonus, priceFitScore,
-          // Hybrid score for graph-first (no vector component, boost interest weight)
-          (0.40 * avgRelevance +
-           0.20 * ((giftQualityScore + popularityScore) / 2.0 + giftProvenBonus) +
-           0.20 * priceFitScore +
-           0.20 * toFloat(SIZE(matchedInterestNames)) / $interestCount) AS hybridScore
+          giftQualityScore, popularityScore, giftProvenBonus, bestsellerBonus, socialProofBonus, priceFitScore,
+          CASE WHEN occ IS NOT NULL THEN 1.0 ELSE 0.0 END AS occasionMatch,
+          CASE WHEN rel IS NOT NULL THEN 1.0 ELSE 0.0 END AS relationshipMatch,
+          CASE WHEN persona IS NOT NULL THEN 0.5 ELSE 0.0 END AS personaMatch,
+          // Hybrid score for graph-first (no vector component, boost interest weight + context)
+          (0.35 * avgRelevance +
+           0.20 * CASE
+             WHEN (giftQualityScore + popularityScore) / 2.0 + giftProvenBonus + bestsellerBonus + socialProofBonus > 1.0 THEN 1.0
+             ELSE (giftQualityScore + popularityScore) / 2.0 + giftProvenBonus + bestsellerBonus + socialProofBonus
+           END +
+           0.15 * priceFitScore +
+           0.20 * toFloat(SIZE(matchedInterestNames)) / $interestCount +
+           0.10 * (CASE WHEN occ IS NOT NULL THEN 0.4 ELSE 0.0 END +
+                   CASE WHEN rel IS NOT NULL THEN 0.4 ELSE 0.0 END +
+                   CASE WHEN persona IS NOT NULL THEN 0.2 ELSE 0.0 END)) AS hybridScore
 
         ORDER BY hybridScore DESC
         LIMIT $limit
@@ -567,6 +725,8 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         budgetMax: params.budget.max,
         interestCount: interests.length,
         limit: neo4j.int(limit),
+        occasion: params.occasion || '',
+        giftRelationships: params.giftRelationships || [],
       });
 
       this.log(`Interest-graph search found ${result.records.length} candidates`);
@@ -581,7 +741,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
   }
 
   /**
-   * Simplified record → candidate conversion (no occasion/relationship fields)
+   * Record → candidate conversion from Cypher query results
    */
   private recordToCandidateSimple(record: any, meaningFramework?: MeaningOutput['meaningFramework']): ProductCandidate {
     const product = record.get('product').properties;
@@ -594,6 +754,10 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
 
     const primaryArchetype = meaningFramework ? this.getPrimaryArchetype(meaningFramework) : 'thoughtful';
 
+    // Extract gift attributes from product properties
+    const giftAttributes = extractAttributesFromProductProps(product);
+    const reviewCount = typeof product.review_count === 'number' ? product.review_count : parseInt(product.review_count) || 0;
+
     return {
       product: {
         id: product.product_url || product.id,
@@ -604,7 +768,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         imageUrl: product.imageUrl || null,
         url: product.product_url || product.url,
         attributes: {},
-        giftAttributes: {},
+        giftAttributes,
       },
       scores: {
         graphScore: interestScore,
@@ -616,8 +780,8 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         matchedInterests: matchedInterests.map((m: any) => m.name || m).filter(Boolean),
         matchedValues: [],
         matchedArchetype: primaryArchetype,
-        matchedAttributes: [],
-        socialProofCount: 0,
+        matchedAttributes: Object.keys(giftAttributes).filter(k => (giftAttributes as any)[k] === true),
+        socialProofCount: reviewCount,
       },
       graphContext: {
         pathLength: 1,
@@ -748,13 +912,17 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         }
       }
 
+      // Helper to normalize vendor URLs (strip trailing slash, protocol, www)
+      const normalizeVendor = (vendor: string): string =>
+        vendor.replace(/\/+$/, '').replace(/^https?:\/\/(www\.)?/, '').toLowerCase();
+
       // Helper to add a candidate with tracking
       const addCandidate = (candidate: ProductCandidate): boolean => {
         const normalizedTitle = this.normalizeTitle(candidate.product.title);
         if (titleSeen.has(normalizedTitle)) return false;
         if (selectedIds.has(candidate.product.id)) return false;
 
-        const vendor = candidate.product.vendor;
+        const vendor = normalizeVendor(candidate.product.vendor);
         const categories = productCategories.get(candidate.product.id) || [];
         const primaryCategory = categories[0] || 'uncategorized';
         const price = candidate.product.price;
@@ -1032,7 +1200,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
           END AS normalizedScore
 
         ORDER BY fulltextScore DESC
-        LIMIT 10
+        LIMIT 25
 
         RETURN product, fulltextScore, normalizedScore, matchedTerms
       `;
