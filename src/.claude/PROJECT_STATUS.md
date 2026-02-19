@@ -1,143 +1,192 @@
 # Project Status for Claude Code
 
-**Last Updated**: February 17, 2026
-**Version**: 3.0.0 - Local Infrastructure + Enrichment Pipeline
+**Last Updated**: February 19, 2026
+**Version**: 3.2.0 - Quality Fixes + Product Expansion
 
 ---
 
-## Current State: Active Development - Local Neo4j + Python Pipeline
+## Current State: Active Development - Quality Testing & Product Expansion
 
 ```
 +===========================================================+
 |              PRESENT-AGENT2 STATUS                        |
 +===========================================================+
-|  Version:       3.0.0 - Local Infrastructure              |
-|  Products (DB): 64,964 (deduplicated)                     |
-|  Interest Coverage:  99.3%                                |
-|  Occasion Coverage:  84.6%                                |
-|  Attribute Coverage: 74.6% (14 boolean flags)             |
-|  Embeddings:    In progress (64,954 products)             |
-|  Neo4j Instance: Local Docker (bolt://localhost:7687)     |
-|  Test Suite:    190/190 passing                           |
+|  Version:       3.2.0 - Quality Fixes + Expansion         |
+|  Products (DB): 67,739 (367 brands)                        |
+|  Interest Coverage:  66.3% (44,911 products)               |
+|  Category Coverage:  78.3% (53,006 products)               |
+|  Occasion Coverage:  100%  (67,729 products)               |
+|  Relationship Coverage: 98.8% (66,920 products)            |
+|  Attribute Coverage: 72.3% (48,973 products, 14 flags)     |
+|  Embeddings:    100% (67,739 products)                     |
+|  Neo4j Instance: Local Docker (bolt://localhost:7687)      |
+|  Bar Raiser Avg: ~64/100 (target: ≥60)                    |
 +===========================================================+
 ```
 
 ---
 
-## Recent Completion: Multi-LLM Attribute Enrichment
+## Recent: Quality Fixes (February 19, 2026)
 
-**Completed**: December 8, 2025, 09:14 AM PST
-**Duration**: 25 hours 39 minutes
-**Status**: ✅ SUCCESS
+End-to-end quality testing with 5 personas revealed 7 critical issues (avg Bar Raiser score 52/100). Six fixes were implemented:
 
-### Results
-- **Products Enriched**: 29,124 / 29,124 (100%)
-- **Attributes Added**: 48,370 total values
-- **Success Rate**: 99.99% (only 3 complete failures)
-- **Final Coverage**: 74.6% (66,134/88,674 products)
-- **Total Cost**: $1.12 ($0.000039 per product)
+### Fix 1: Storyteller "unknown shopper" prompt
+- **File:** `src/services/agents/storyteller.ts`
+- Replaced giver-referencing prompt with recipient-focused instruction
+- Made all dual-context instructions conditional on `giverContext` existence
+- Added `stripGiverReferences()` deterministic post-processing with regex patterns
+- **Result:** Eliminates "As an unknown shopper" in reasoning text
 
-### Provider Performance
-- **OpenAI gpt-4o-mini**: 97.5% of workload (28,364 products) - $1.11
-- **Gemini 2.0 Flash**: 2.5% as fallback (720 products) - $0.01
-- **Anthropic Claude**: Never needed (0 products) - $0.00
+### Fix 2: Answer merger — diverse answer formats
+- **File:** `src/services/conversation/answer-merger.ts`
+- Fixed `interests` handler to accept arrays (was crashing on `["cooking", "travel"]`)
+- Fixed `occasion` handler to normalize string→object format with `urgency: 'planned'`
+- Added `recipientAge`, `recipientGender`, `age`, `gender` handlers
+- Updated `CONFIDENCE_BOOST_VALUES`, `calculateConfidenceBoost`, `buildNaturalQuery`
+- **Result:** Turn 2 clarification no longer returns 500 error
 
-### Key Files
-- **Report**: `docs/reports/MULTI_LLM_ENRICHMENT_FINAL_REPORT.md`
-- **Log**: `logs/multi-llm-enrichment-full.log`
-- **Checkpoint**: `data/.enrich-attributes-multi-llm-checkpoint.json`
-- **Failures**: `data/.enrich-attributes-multi-llm-failures.json` (3 products)
+### Fix 3: Missing Interest nodes for underserved niches
+- **Script:** `src/scripts/add-missing-interests.ts`
+- Added Interest nodes: skateboarding (119 products), music (+39), extreme sports (1,355), outdoor adventure (5,270)
+- **Result:** Skateboarding/music queries now return relevant products
 
-### 14 Attributes Added
-Each enriched product now has boolean flags for:
-- `is_practical`, `is_luxury`, `is_personalizable`
-- `is_experiential`, `is_collectible`, `is_tech`
-- `is_handmade`, `is_eco_friendly`, `is_educational`
-- `is_novelty`, `is_sentimental`, `is_wellness`
-- `is_subscription`, `is_foodie`
+### Fix 4: Zero-match vector penalty
+- **File:** `src/services/agents/explorer.ts`
+- Halves vector score contribution when product matches zero stated interests
+- Applied to both `searchForInterest()` and `searchByEmbedding()` Cypher queries
+- **Result:** Reduces irrelevant high-vector-similarity products (tea for coffee queries)
+
+### Fix 5: Coffee interest cleanup
+- **Script:** `src/scripts/clean-coffee-interest.ts`
+- Removed 35 furniture products (coffee tables, desks, etc.) from coffee Interest
+- **Result:** Coffee interest no longer returns furniture
+
+### Fix 6: Test harness format fix
+- **File:** `scripts/test_quality.py`
+- Updated occasion format from string to `{"name": "birthday"}` object
+- Kept `interests` as array (Fix 2 now handles it)
+
+### Quality Test Results (Post-Fix)
+| Persona | Before | After | Notes |
+|---------|--------|-------|-------|
+| Vague gift | 500 error | 83/100 | Turn 2 works, diverse results |
+| Dad (coffee/outdoor) | 42/100 | 42-48/100 | Improved but needs more coffee products |
+| Wife (yoga/wellness) | 72/100 | 65-72/100 | Good, LLM variance |
+| Nephew (skateboarding) | 42/100 | 55-65/100 | Music t-shirts vs meditation |
+| Boss (tea/reading) | 62/100 | 72-82/100 | Strong tea results |
+| **Average** | **52/100** | **~64/100** | Target ≥60 met |
+
+---
+
+## Recent: Product Expansion (February 19, 2026)
+
+### iCloud CSV Ingest
+- **Source:** `~/Library/Mobile Documents/.../BCorp/all_gifts_skus.csv` (15,308 records)
+- **Script:** `src/scripts/ingest-missing-gift-brands.ts`
+- **Result:** 3,110 new products from 20 brands loaded into Neo4j
+- Brands include: goodeeworld.com, bomajewelry.com, noondaycollection.com, fable.com, olympiacoffee.com, metriccoffee.com, etc.
+- 2,775 embeddings generated (~13 min)
+- Graph links created: 2,812 interest + 681 category + 11,100 occasion + 8,325 relationship
+
+### Shopify Enrichment (Prior)
+- All 315 original brands scraped for bestsellers (1,113 matched) and full catalog (37K products, 11K tags matched)
+- Shopify tags loaded for 11,062 products
+- Shopify product_type loaded for 11,062 products
 
 ---
 
 ## What's Working
 
 ### Core System
-- 10-agent recommendation engine
-- Neo4j graph database (88,674 products)
-- Hybrid search (graph + vector + text fallback)
-- Conversation persistence
+- 10+1 agent recommendation engine (includes Bar Raiser quality gate)
+- Neo4j graph database (67,739 products, 367 brands)
+- Hybrid search (graph + vector + text fallback + archetype attribute boost)
+- Zero-match vector penalty for irrelevant results
+- Conversation persistence with clarification flow
 - Web interface (chat + logs + products)
-- Interactive CLI chat interface
-- Interest taxonomy (105 canonical interests, 872 synonyms)
+- Deterministic post-processing to strip giver-referencing language
 
-### Data Quality (December 8, 2025)
-- **Products**: 88,674 total
-- **Interests**: 99.3% coverage (88,053 products)
-  - 105 canonical interests
-  - 872 synonyms mapped
-  - Average: 5.2 interests per product
-- **Occasions**: 84.6% coverage (75,060 products)
-  - 41 occasion tags
-  - Average: 3.1 occasions per product
-- **Attributes**: 74.6% coverage (66,134 products) ✅
-  - 14 boolean gift attributes
-  - Average: 3.4 attributes per product
-  - Multi-LLM fallback strategy proven effective
-
-### Test Coverage
-- Unit tests: 190/190 passing
-- Integration tests: Working
-- Persona testing: 15 personas documented
-- Real-world user testing: Framework ready
+### Data Quality (February 19, 2026)
+- **Products**: 67,739 total (367 brands)
+- **Embeddings**: 100% coverage (1536-dim OpenAI text-embedding-3-small)
+- **Interests**: 66.3% coverage (44,911 products)
+  - 110 Interest nodes (including skateboarding, music, extreme sports, outdoor adventure)
+  - 102,491 MATCHES_INTEREST relationships
+- **Categories**: 78.3% coverage (53,006 products)
+  - 59 Category nodes
+  - 139,467 IN_CATEGORY relationships
+- **Occasions**: 100% coverage (67,729 products)
+  - 15 GiftOccasion nodes
+  - 550,937 GIFT_FOR_OCCASION relationships
+- **Relationships**: 98.8% coverage (66,920 products)
+  - 18 GiftRelationship nodes
+  - 461,997 GIFT_FOR_RELATIONSHIP relationships
+- **Attributes**: 72.3% coverage (48,973 products)
+  - 14 boolean gift attribute flags
+- **Quality signals**: 1,113 bestsellers, 665 with reviews, 11,062 with Shopify tags
+- **Personas**: 4 GiftPersona nodes, 139 FITS_PERSONA relationships
 
 ---
 
 ## System Architecture
 
 ### Multi-Agent Workflow
-1. **Listener** - Extracts context from conversation
-2. **Memory** - Recalls past preferences and purchases
-3. **Relationship** - Understands social dynamics
-4. **Constraints** - Validates requirements (budget, shipping, availability)
-5. **Meaning** - Identifies emotional/symbolic significance
-6. **Explorer** - Searches product catalog with hybrid approach
-7. **Validator** - Ensures recommendations meet all criteria
-8. **Storyteller** - Generates personal, contextual reasoning
-9. **Presenter** - Formats recommendations for user
-10. **Learning** - Captures feedback for improvement
+1. **Listener** — Extracts context from conversation
+2. **Memory** — Recalls past preferences and purchases
+3. **Relationship** — Understands social dynamics
+4. **Constraints** — Validates requirements (budget, shipping, availability)
+5. **Meaning** — Identifies emotional/symbolic significance
+6. **Explorer** — Searches product catalog with hybrid approach
+7. **Validator** — Ensures recommendations meet all criteria
+8. **Storyteller** — Generates personal, contextual reasoning (with post-processing)
+9. **Presenter** — Formats recommendations for user
+10. **Learner** — Captures feedback for improvement
+11. **Bar Raiser** — Quality gate scoring (target ≥60/100)
 
 ### Search Capabilities
-- **Graph Search**: Semantic relationships in Neo4j
-- **Vector Search**: Embedding-based similarity
-- **Text Fallback**: Full-text search for edge cases
-- **Hybrid Fusion**: Combines all three approaches
+- **Graph Search**: Interest/Category/Occasion/Relationship traversal
+- **Vector Search**: Embedding-based similarity (1536-dim, cosine)
+- **Text Fallback**: Full-text search on title/description/brand
+- **Hybrid Fusion**: vector 35% + interest 25% + quality 15% + price 15% + context 10% + archetype boost 8%
+- **Zero-match penalty**: Vector score halved when product matches zero stated interests
+- **Archetype boost**: Boolean attribute flags matched to persona archetype (up to 8%)
+- **Brand diversity**: Vendor URL normalization prevents brand dominance
 
-### Enrichment System
-- **Multi-LLM Strategy**: OpenAI → Gemini → Anthropic fallback
-- **Batch Processing**: 20 products per batch
-- **Validation**: 80% success rate threshold
-- **Checkpointing**: Every 100 products
-- **Cost Tracking**: Per-provider cost monitoring
+### Clarification Flow
+- **DialoguePresenter** → asks clarifying questions (Turn 1)
+- **AnswerMerger** → merges answers into context (Turn 2)
+  - Handles: interests (array), occasion (string/object), recipientAge, recipientGender
+- **Orchestrator** → runs full pipeline with enriched context
 
 ---
 
 ## Neo4j Database
 
 **Instance**: Local Docker (`bolt://localhost:7687`)
-**Status**: Active (requires Docker Desktop running)
-**Size**: 64,964 products (deduplicated)
+**Container**: `present-agent-neo4j`
+**Size**: 67,739 products (367 brands)
 
-### Schema
-- **Product**: Core product node with all attributes
-- **Interest**: 105 canonical interests
-- **InterestSynonym**: 872 mapped synonyms
-- **Occasion**: 41 occasion categories
-- **Category**: Product categories from source data
+### Schema Summary
+- **Product**: Core node with 14 boolean attribute flags, embeddings, quality signals
+- **Interest**: 110 nodes (canonical interests)
+- **Category**: 59 nodes
+- **GiftOccasion**: 15 nodes
+- **GiftRelationship**: 18 nodes
+- **GiftPersona**: 4 nodes
 
-### Relationships
-- `HAS_INTEREST`: Product → Interest (weighted)
-- `SUITABLE_FOR`: Product → Occasion (weighted)
-- `IN_CATEGORY`: Product → Category
-- `SYNONYM_OF`: InterestSynonym → Interest
+### Graph Relationships
+| Type | Count | Coverage |
+|------|-------|----------|
+| MATCHES_INTEREST | 102,491 | 66.3% |
+| IN_CATEGORY | 139,467 | 78.3% |
+| GIFT_FOR_OCCASION | 550,937 | 100% |
+| GIFT_FOR_RELATIONSHIP | 461,997 | 98.8% |
+| FITS_PERSONA | 139 | <1% |
+
+### Indexes
+- **Vector**: `product_embedding` on `embedding` field (1536-dim, cosine)
+- **Fulltext**: `product_search` on `title`, `description`, `brand_url`
+- **Property**: `product_url` (unique constraint)
 
 ---
 
@@ -145,47 +194,50 @@ Each enriched product now has boolean flags for:
 
 ### Enrichment
 ```bash
-# Multi-LLM enrichment (COMPLETED - no need to re-run)
-npm run enrich:multi:live
+# Graph enrichment (from src/)
+npx tsx scripts/expand-interests.ts --live    # Interest nodes + MATCHES_INTEREST
+npx tsx scripts/expand-categories.ts --live   # Category nodes + IN_CATEGORY
+npx tsx scripts/expand-occasions.ts --live    # GiftOccasion tagging
+npx tsx scripts/expand-relationships.ts --live # GiftRelationship tagging
+npx tsx scripts/expand-attributes.ts --live   # 14 boolean attribute flags
 
-# Test multi-LLM on small batch
-npm run enrich:multi:test
+# Product ingest
+npx tsx scripts/ingest-missing-gift-brands.ts          # Dry run
+npx tsx scripts/ingest-missing-gift-brands.ts --live    # Load products
+npx tsx scripts/ingest-missing-gift-brands.ts --live --embed  # Load + embeddings + graph links
 
-# Resume from checkpoint if needed
-npm run enrich:multi:live  # Auto-resumes from checkpoint
+# Taxonomy cleanup
+npx tsx scripts/add-missing-interests.ts     # Add skateboarding, music, extreme sports, outdoor adventure
+npx tsx scripts/clean-coffee-interest.ts     # Remove furniture from coffee interest
+```
+
+### Python Pipeline (from project root)
+```bash
+python3 scripts/product_enrichment/shopify_scraper.py --from-neo4j --bestsellers-only  # Scrape bestsellers
+python3 scripts/product_enrichment/shopify_scraper.py --from-neo4j                      # Full catalog scrape
+python3 scripts/product_enrichment/load_bestsellers.py   # Load bestseller flags
+python3 scripts/product_enrichment/load_shopify_tags.py  # Load Shopify tags + product_type
+python3 scripts/product_enrichment/load_neo4j.py         # Load enriched catalog
 ```
 
 ### Testing
 ```bash
-# Run all tests
+# Quality test (from project root)
+python3 scripts/test_quality.py              # Run 5-persona quality test
+
+# Unit tests (from src/)
 npm test
-
-# Test personas
-npm run test:personas:quick
-
-# Test recommendation quality
-npm run test:recommendation-quality
 ```
 
 ### Development
 ```bash
-# Start backend server
-npm run server
-
-# Start frontend dev server
+# Start backend + frontend (from src/)
 npm run dev
+# Backend: http://localhost:3000 | Frontend: http://localhost:3001
 
-# Interactive chat
-npm run chat
-```
-
-### Data Management
-```bash
-# Export current data
-npm run export:products
-
-# Verify database integrity
-npm run verify:coverage
+# Start Neo4j
+./start-local.sh
+./start-local.sh --status
 ```
 
 ---
@@ -193,98 +245,68 @@ npm run verify:coverage
 ## Next Steps
 
 ### Immediate Priorities
-1. ✅ Complete multi-LLM attribute enrichment
-2. [ ] Review 3 failed products manually
-3. [ ] Test recommendation improvements with new attributes
-4. [ ] Monitor recommendation quality metrics
+1. **Run enrichment on new products** — The 2,775 new products from iCloud CSV need full enrichment:
+   - `expand-occasions.ts --live` (currently have basic 4-occasion links from ingest, need full 15-occasion coverage)
+   - `expand-relationships.ts --live` (currently have basic 3-relationship links, need full 18-relationship coverage)
+   - `expand-attributes.ts --live` (new products have no boolean attribute flags)
+   - `expand-interests.ts --live` (improve interest coverage from 66.3%)
+2. **Re-run quality test** — Verify Bar Raiser avg ≥60 after enrichment
+3. **Etsy API integration** — API key registered (app: "present-agent"), pending activation. Rate: 5 QPS / 5K QPD. Fills teen/skateboarding/music/tech gaps.
+
+### Product Catalog Gaps
+- **Teen/youth**: Skateboarding (119 products), music (limited), gaming (none)
+- **Coffee**: Improved with olympiacoffee + metriccoffee, but still tea-heavy
+- **Tech**: Very limited B-Corp tech products
+- **Experiences**: No experience/subscription gifts yet (research in `research/EXPERIENCE_GIFT_DATA_SOURCES.md`)
 
 ### Future Enhancements
-1. **Remaining Products**: Consider enriching 22,540 remaining products (25.4%)
-2. **Attribute Usage**: Integrate attributes into recommendation scoring
-3. **User Testing**: Validate improvements with real users
-4. **Performance Optimization**: Monitor query performance with new attributes
+1. **Wave 1 product expansion** — Etsy API for handmade/unique gifts (plan in `docs/PRODUCT_EXPANSION_WAVES.md`)
+2. **Interest coverage** — Currently 66.3%, target 90%+ (run expand-interests on full catalog)
+3. **Response time optimization** — Currently 38-87s per recommendation (parallelize LLM calls, use faster models for some agents)
+4. **More review data** — Only 665 products (1%) have reviews. Scrape more review sources.
+5. **FITS_PERSONA expansion** — Only 139 relationships. Need more persona tagging.
 
 ---
 
 ## Important Notes for LLMs and Subagents
 
-### Multi-LLM Enrichment (COMPLETED)
-- **Status**: ✅ Complete (December 8, 2025)
-- **DO NOT re-run** unless specifically requested by user
-- **Results**: 74.6% coverage is sufficient for production use
-- **Script**: `scripts/enrich-attributes-multi-llm.ts`
-- **Report**: `docs/reports/MULTI_LLM_ENRICHMENT_FINAL_REPORT.md`
+### Quality Fixes (v3.2.0)
+- **Storyteller** has deterministic post-processing that strips giver-referencing phrases. Do not add "As an unknown shopper" or similar language.
+- **Answer merger** now handles array interests, string/object occasions, and age/gender fields. Test with both formats.
+- **Explorer** has zero-match vector penalty. Products matching zero stated interests get halved vector score.
+- **Bar Raiser** target is ≥60/100. Current average ~64/100 (LLM variance means individual runs may differ).
 
-### If User Requests More Enrichment
-1. Check current coverage first (should be 74.6%)
-2. Review failed products in `data/.enrich-attributes-multi-llm-failures.json`
-3. Consider if remaining 25.4% needs enrichment
-4. Estimate costs and time before proceeding
-
-### Key Checkpoint Files
-- Interests: `data/.expand-interests-checkpoint.json`
-- Occasions: `data/.tag-occasions-checkpoint.json`
-- Attributes: `data/.enrich-attributes-multi-llm-checkpoint.json`
-- All support resume/recovery from interruptions
+### Pre-existing TypeScript Issues
+- 287 total TS errors, all pre-existing (scripts/, tests, dialogue-presenter, answer-merger)
+- `skipQuestions` not in OrchestratorInput type but used in server.ts
+- Mock agent modules not created (`./agents/__mocks__/*`)
+- Do NOT attempt to fix these unless specifically asked
 
 ### Environment Variables Required
 ```bash
-# Neo4j (local Docker)
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=presentagent2024
-
-# LLM Providers
 OPENAI_API_KEY=[in .env.local]
 ANTHROPIC_API_KEY=[in .env.local]
 GEMINI_API_KEY=[in .env.local]
+ETSY_API_KEY=[pending activation]
 ```
 
-### Documentation
-- **Main README**: `/README.md`
-- **Documentation Hub**: `/docs/README.md`
-- **Master Index**: `/docs/DOCUMENTATION_INDEX.md`
-- **Architecture**: `/docs/ARCHITECTURE.md`
-- **Latest Report**: `/docs/reports/MULTI_LLM_ENRICHMENT_FINAL_REPORT.md`
+### Key Data Sources
+- **iCloud BCorp folder**: `~/Library/Mobile Documents/com~apple~CloudDocs/Knowledge/BCorp/`
+  - `all_gifts_skus.csv` — 15,308 gift-curated product records (43 brands)
+  - `master.csv` — Full B-Corp product catalog
+- **Missing brands list**: `/tmp/missing_brands.txt` — 154 brands with ~5K products not yet in Neo4j
+- **Shopify data**: `data/shopify_*.json` — Scraped bestsellers and full catalog data
 
 ---
 
-## Recent Changes (v2.5.0)
-
-### December 8, 2025
-- ✅ Completed multi-LLM attribute enrichment
-- ✅ Enriched 29,124 products (99.99% success rate)
-- ✅ Achieved 74.6% attribute coverage
-- ✅ Created comprehensive final report
-- ✅ Multi-LLM fallback strategy proven effective
-- ✅ Cost: $1.12 (under budget)
-- ✅ Updated all documentation
-
-### December 7, 2025
-- Implemented multi-LLM enrichment script
-- Added checkpoint recovery system
-- Tested fallback strategy (OpenAI → Gemini → Anthropic)
-- Started full enrichment run
-
-### December 6, 2025
-- Created enrichment planning documents
-- Set up monitoring and logging
-- Configured three LLM providers
-
----
-
-## Contact & Resources
-
-- **Repository**: Present-Agent2 (private)
-- **Neo4j Instance**: Local Docker (`bolt://localhost:7687`)
-- **Documentation**: Root `CLAUDE.md` → sub-files in `docs/`
-- **Support**: Check `/docs/runbooks/` for operational procedures
-
----
-
-**Version History**
+## Version History
+- v3.2.0 (Feb 19, 2026): Quality fixes (storyteller, answer-merger, explorer), product expansion (+2,775 products from 20 brands), missing interests, coffee cleanup
+- v3.1.0 (Feb 18, 2026): Explorer overhaul (additive scoring, archetype boost, quality signals, brand diversity), Wave 0 enrichment complete
 - v3.0.0 (Feb 17, 2026): Local Docker Neo4j, Python enrichment pipeline, doc restructure
-- v2.5.0 (Dec 8, 2025): Multi-LLM enrichment complete
+- v2.5.0 (Dec 8, 2025): Multi-LLM attribute enrichment complete
 - v2.4.0 (Dec 6, 2025): Enrichment automation implemented
 - v2.3.0 (Dec 5, 2025): Documentation overhaul
 - v2.2.0 (Dec 4, 2025): Agent optimizations

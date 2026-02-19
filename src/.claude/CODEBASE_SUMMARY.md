@@ -1,7 +1,7 @@
 # Codebase Summary - Quick Reference
 
-**Last Updated**: February 17, 2026
-**Version**: 3.0.0
+**Last Updated**: February 19, 2026
+**Version**: 3.2.0
 
 ---
 
@@ -11,42 +11,67 @@
 Present-Agent2/
 ├── src/
 │   ├── services/
-│   │   ├── agents/          # 10 specialized agents
-│   │   ├── orchestrator.ts  # Agent coordination
-│   │   ├── interest-extractor.ts  # LLM extraction
+│   │   ├── agents/               # 10+1 specialized agents
+│   │   │   ├── listener.ts       # Extract context from queries
+│   │   │   ├── memory.ts         # Recall history + profiles
+│   │   │   ├── relationship.ts   # Analyze relationship dynamics
+│   │   │   ├── constraints.ts    # Validate requirements
+│   │   │   ├── meaning.ts        # Identify interests
+│   │   │   ├── explorer.ts       # Hybrid search (graph+vector+text+archetype)
+│   │   │   ├── validator.ts      # Quality check
+│   │   │   ├── storyteller.ts    # Generate reasoning (with post-processing)
+│   │   │   ├── presenter.ts      # Format response
+│   │   │   ├── recipient-learner.ts  # Build recipient profiles
+│   │   │   └── bar-raiser.ts     # Quality gate scoring
+│   │   ├── conversation/
+│   │   │   ├── answer-merger.ts  # Merge clarification answers into context
+│   │   │   └── dialogue-presenter.ts  # Generate clarifying questions
+│   │   ├── orchestrator.ts       # Agent coordination
+│   │   ├── interest-extractor.ts # LLM extraction
 │   │   ├── conversation-persister.ts  # History storage
-│   │   └── feedback-collector.ts  # Learning system
+│   │   └── feedback-collector.ts # Learning system
 │   ├── lib/
-│   │   ├── neo4j.ts        # Database connection
-│   │   └── logger.ts       # Winston logging
+│   │   ├── neo4j.ts              # Database connection
+│   │   └── logger.ts             # Winston logging
 │   ├── types/
-│   │   ├── agents.ts       # Agent interfaces
-│   │   └── recipient.ts    # Recipient data types
-│   └── server.ts           # Express API server
+│   │   ├── agents.ts             # Agent interfaces
+│   │   └── recipient.ts          # Recipient data types
+│   └── server.ts                 # Express API server
 ├── frontend/
 │   ├── app/
-│   │   ├── page.tsx        # Chat UI
-│   │   ├── logs/           # Conversation logs viewer
-│   │   ├── products/       # Product explorer
-│   │   └── api/            # API proxy routes
+│   │   ├── page.tsx              # Chat UI
+│   │   ├── logs/                 # Conversation logs viewer
+│   │   ├── products/             # Product explorer
+│   │   └── api/                  # API proxy routes
 │   └── ...
 ├── scripts/
-│   ├── product_enrichment/ # Python enrichment pipeline
-│   │   ├── shopify_scraper.py
-│   │   ├── review_parser.py
-│   │   ├── recipient_signals.py
-│   │   ├── composite_scorer.py
-│   │   ├── load_neo4j.py
-│   │   └── run_pipeline.sh
-│   ├── rebuild-interests-batched.sh
-│   ├── test-personas.ts
-│   └── ingest-products.ts
-├── docs/                   # Documentation (sub-files)
-├── data/                   # State files, logs
-├── personas/               # Test personas
-├── docker-compose.yml      # Neo4j Docker config
-├── start-local.sh          # Full startup script
-└── .claude/                # Claude Code context
+│   ├── product_enrichment/       # Python enrichment pipeline
+│   │   ├── shopify_scraper.py    # Shopify bestseller + catalog scraper
+│   │   ├── review_parser.py      # Review data parser
+│   │   ├── recipient_signals.py  # Recipient signal extraction
+│   │   ├── composite_scorer.py   # Quality scoring
+│   │   ├── load_neo4j.py         # Load enriched catalog
+│   │   ├── load_bestsellers.py   # Load bestseller flags
+│   │   ├── load_shopify_tags.py  # Load Shopify tags + product_type
+│   │   └── run_pipeline.sh       # Full pipeline runner
+│   ├── expand-interests.ts       # Interest nodes + MATCHES_INTEREST (110 interests, 102K rels)
+│   ├── expand-categories.ts      # Category nodes + IN_CATEGORY (59 cats, 139K rels)
+│   ├── expand-occasions.ts       # GiftOccasion tagging (15 occasions, 551K rels)
+│   ├── expand-relationships.ts   # GiftRelationship tagging (18 rels, 462K rels)
+│   ├── expand-attributes.ts      # 14 boolean attribute flags (72.3% coverage)
+│   ├── add-missing-interests.ts  # Add skateboarding, music, extreme sports, outdoor adventure
+│   ├── clean-coffee-interest.ts  # Remove furniture from coffee interest
+│   ├── ingest-missing-gift-brands.ts  # Load gift-curated products from iCloud CSV
+│   ├── test-personas.ts          # Persona testing framework
+│   ├── test_quality.py           # 5-persona end-to-end quality test (Python)
+│   └── ingest-products.ts        # Original product ingest
+├── docs/                         # Documentation (sub-files)
+├── research/                     # Academic research + market analysis
+├── data/                         # State files, logs, Shopify data
+├── personas/                     # Test personas
+├── docker-compose.yml            # Neo4j Docker config
+├── start-local.sh                # Full startup script
+└── .claude/                      # Claude Code context
 ```
 
 ---
@@ -58,437 +83,91 @@ Present-Agent2/
 | Agent | File | Model | Purpose |
 |-------|------|-------|---------|
 | **Listener** | `listener.ts` | GPT-4 | Extract context from queries |
-| **Memory** | `memory.ts` | - | Recall history + profiles |
+| **Memory** | `memory.ts` | — | Recall history + profiles |
 | **Relationship** | `relationship.ts` | GPT-4 | Analyze relationship dynamics |
-| **Constraints** | `constraints.ts` | - | Validate requirements |
+| **Constraints** | `constraints.ts` | — | Validate requirements |
 | **Meaning** | `meaning.ts` | GPT-4o-mini | Identify interests |
-| **Explorer** | `explorer.ts` | - | Hybrid search (graph+vector+text) |
-| **Validator** | `validator.ts` | - | Quality check |
-| **Storyteller** | `storyteller.ts` | GPT-4 | Generate reasoning |
-| **Presenter** | `presenter.ts` | - | Format response |
+| **Explorer** | `explorer.ts` | — | Hybrid search (graph+vector+text+archetype) |
+| **Validator** | `validator.ts` | — | Quality check |
+| **Storyteller** | `storyteller.ts` | GPT-4o (temp 0.7) | Generate reasoning + post-processing |
+| **Presenter** | `presenter.ts` | — | Format response |
 | **Learner** | `recipient-learner.ts` | GPT-4 | Build recipient profiles |
+| **Bar Raiser** | `bar-raiser.ts` | GPT-4o-mini | Quality gate scoring (target ≥60/100) |
+
+### Conversation Flow (`src/services/conversation/`)
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **DialoguePresenter** | `dialogue-presenter.ts` | Generate clarifying questions (Turn 1) |
+| **AnswerMerger** | `answer-merger.ts` | Merge answers into context (Turn 2) |
+
+**AnswerMerger handles:** interests (string or array), occasion (string or object), budget, recipientAge/age, recipientGender/gender. Normalizes all to expected downstream format.
 
 ### Key Services
 
 **Orchestrator** (`src/services/orchestrator.ts`)
-- Coordinates agent execution
-- Manages context flow
+- Coordinates agent execution through the full pipeline
+- Manages context flow between agents
+- Handles clarification flow (Turn 1 questions → Turn 2 answers)
 - Error handling and recovery
 - Performance tracking
 
-**Interest Extractor** (`src/services/interest-extractor.ts`)
-- LLM-powered interest extraction (Phase C)
-- Uses GPT-4o-mini
-- Extracts 3-10 interests per product
-- Relevance and confidence scoring
+**Explorer Agent** (`src/services/agents/explorer.ts`)
+- 3 search methods: `searchForInterest()`, `searchByEmbedding()`, `searchFromInterestGraph()`
+- Hybrid scoring: vector 35% + interest 25% + quality 15% + price 15% + context 10% + archetype boost 8%
+- Zero-match penalty: halves vector score when product matches zero stated interests
+- Quality signals: avg_rating ≥ 4.5 → +0.08, is_bestseller → +0.10, gift_proven → +0.15
+- Archetype attribute boost: boolean flags × archetype mapping (up to 8%)
+- Brand diversity: vendor URL normalization, 10x vectorLimit
+- Fulltext fallback with LIMIT 25
 
-**Conversation Persister** (`src/services/conversation-persister.ts`)
-- Stores all conversations in Neo4j
-- Captures queries, responses, context
-- Agent execution metrics
-- History for learning
-
-**Neo4j Client** (`src/lib/neo4j.ts`)
-- Database connection management
-- Query execution
-- Vector search operations
-- Transaction handling
+**Storyteller Agent** (`src/services/agents/storyteller.ts`)
+- GPT-4o at temperature 0.7
+- Conditional dual-context instructions (giver + recipient vs recipient-only)
+- `stripGiverReferences()` deterministic post-processing removes "As an unknown shopper" etc.
+- Only applied when `giverContext` is null
 
 ---
 
 ## Agent Execution Flow
 
-```typescript
-// Simplified orchestrator flow
-async orchestrate(query: string, userId: string, sessionId: string) {
-  // 1. Extract context
-  const context = await listenerAgent.execute(query);
+```
+Turn 1 (initial query):
+  Listener → Memory → Relationship → Constraints → Meaning
+  → DialoguePresenter (if needs clarification) → return questions
 
-  // 2. Recall history + enrich profile
-  const memory = await memoryAgent.execute(context, userId);
-
-  // 3. Analyze relationship
-  const relationship = await relationshipAgent.execute(
-    context,
-    memory.recipient
-  );
-
-  // 4. Validate constraints
-  const constraints = await constraintsAgent.execute(context);
-
-  // 5. Identify meaningful interests
-  const meaning = await meaningAgent.execute(context, relationship);
-
-  // 6. Search products (hybrid: graph + vector + text fallback)
-  const products = await explorerAgent.execute(
-    meaning.interests,
-    constraints
-  );
-
-  // 7. Validate quality
-  const validated = await validatorAgent.execute(products, context);
-
-  // 8. Generate reasoning
-  const recommendations = await storytellerAgent.execute(
-    validated,
-    context,
-    relationship
-  );
-
-  // 9. Format response
-  const response = await presenterAgent.execute(recommendations);
-
-  // 10. Update recipient profile (async)
-  recipientLearnerAgent.execute(context, memory.recipient);
-
-  return response;
-}
+Turn 2 (with answers):
+  AnswerMerger (merge answers into context)
+  → Explorer → Validator → Storyteller → Bar Raiser → Presenter
+  → Learner (async)
+  → return recommendations
 ```
 
 ---
 
 ## Hybrid Search (Explorer Agent)
 
-```typescript
-// src/services/agents/explorer.ts
-
-async execute(interests: string[], constraints: Constraints) {
-  // Tier 1: Graph Search (70% weight)
-  const graphResults = await this.searchByInterests(interests);
-
-  // Tier 2: Vector Search (30% weight)
-  const vectorResults = await this.vectorSearch(interests);
-
-  // Combine and score
-  const combined = this.hybridScore(graphResults, vectorResults);
-
-  // Tier 3: Text Fallback (if <5 results)
-  if (combined.length < 5) {
-    return await this.textFallbackSearch(interests, constraints);
-  }
-
-  return combined;
-}
-
-// Graph search
-async searchByInterests(interests: string[]) {
-  const query = `
-    MATCH (p:Product)-[r:MATCHES_INTEREST]->(i:Interest)
-    WHERE i.name IN $interests
-    WITH p, SUM(r.relevance) as graphScore
-    ORDER BY graphScore DESC
-    LIMIT 100
-    RETURN p, graphScore
-  `;
-  return await this.neo4j.run(query, {interests});
-}
-
-// Vector search
-async vectorSearch(interests: string[]) {
-  const embedding = await this.getEmbedding(interests.join(' '));
-  const query = `
-    CALL db.index.vector.queryNodes(
-      'product-embeddings',
-      100,
-      $embedding
-    )
-    YIELD node as p, score as vectorScore
-    RETURN p, vectorScore
-  `;
-  return await this.neo4j.run(query, {embedding});
-}
-
-// Text fallback (Phase A addition)
-async textFallbackSearch(interests: string[], constraints: Constraints) {
-  const query = `
-    CALL db.index.fulltext.queryNodes(
-      'productSearchIndex',
-      $searchText
-    )
-    YIELD node as p, score as textScore
-    WHERE p.price >= $minPrice AND p.price <= $maxPrice
-    ORDER BY textScore DESC
-    LIMIT 100
-    RETURN p, textScore
-  `;
-  return await this.neo4j.run(query, {
-    searchText: interests.join(' '),
-    minPrice: constraints.minPrice,
-    maxPrice: constraints.maxPrice
-  });
-}
-
-// Hybrid scoring
-hybridScore(graphResults, vectorResults) {
-  const combined = new Map();
-
-  for (const result of graphResults) {
-    combined.set(result.id, {
-      product: result.product,
-      score: result.graphScore * 0.7
-    });
-  }
-
-  for (const result of vectorResults) {
-    if (combined.has(result.id)) {
-      combined.get(result.id).score += result.vectorScore * 0.3;
-    } else {
-      combined.set(result.id, {
-        product: result.product,
-        score: result.vectorScore * 0.3
-      });
-    }
-  }
-
-  return Array.from(combined.values())
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 50);
-}
 ```
-
----
-
-## Phase C Interest Extraction
-
-```typescript
-// src/services/interest-extractor.ts
-
-class InterestExtractor {
-  async extract(product: Product): Promise<Interest[]> {
-    const prompt = `
-      Extract 3-10 relevant, specific interests from this product.
-      Focus on searchable interests that gift buyers would use.
-
-      Product:
-      - Name: ${product.name}
-      - Description: ${product.description}
-      - Category: ${product.category}
-
-      Return interests with:
-      - name: specific interest (e.g., "wine", not "beverages")
-      - relevance: 0.0-1.0 (how relevant is this interest?)
-      - confidence: 0.0-1.0 (how confident are you?)
-      - category: beverages, hobbies, lifestyle, etc.
-
-      Return as JSON array.
-    `;
-
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{role: 'user', content: prompt}],
-      temperature: 0.3,
-      response_format: {type: 'json_object'}
-    });
-
-    const data = JSON.parse(response.choices[0].message.content);
-    const interests = data.interests || [];
-
-    // Filter: Keep relevance > 0.3
-    return interests
-      .filter(i => i.relevance > 0.3)
-      .slice(0, 10);
-  }
-
-  async storeInterests(
-    productId: string,
-    interests: Interest[]
-  ): Promise<void> {
-    const query = `
-      MATCH (p:Product {id: $productId})
-      UNWIND $interests as interest
-
-      MERGE (i:Interest {name: interest.name})
-      ON CREATE SET
-        i.category = interest.category,
-        i.createdAt = timestamp()
-
-      MERGE (p)-[r:MATCHES_INTEREST]->(i)
-      ON CREATE SET
-        r.relevance = interest.relevance,
-        r.confidence = interest.confidence,
-        r.extractedBy = 'llm-phase-c',
-        r.createdAt = timestamp()
-    `;
-
-    await this.neo4j.run(query, {productId, interests});
-  }
-}
-```
-
----
-
-## API Endpoints
-
-```typescript
-// src/server.ts
-
-import express from 'express';
-import { orchestrator } from './services/orchestrator';
-
-const app = express();
-
-// Main recommendation endpoint
-app.post('/api/recommend', async (req, res) => {
-  const {userQuery, userId, sessionId} = req.body;
-
-  try {
-    const result = await orchestrator.orchestrate(
-      userQuery,
-      userId,
-      sessionId
-    );
-
-    res.json(result);
-  } catch (error) {
-    logger.error('Recommendation failed', {error});
-    res.status(500).json({error: error.message});
-  }
-});
-
-// Conversation history
-app.get('/api/conversations', async (req, res) => {
-  const {userId, limit = 50, offset = 0} = req.query;
-
-  const conversations = await neo4j.run(`
-    MATCH (u:User {userId: $userId})-[:HAD_CONVERSATION]->(c:Conversation)
-    ORDER BY c.timestamp DESC
-    SKIP $offset
-    LIMIT $limit
-    RETURN c
-  `, {userId, offset: parseInt(offset), limit: parseInt(limit)});
-
-  res.json(conversations);
-});
-
-// Product search
-app.get('/api/products', async (req, res) => {
-  const {search, minPrice, maxPrice, category, limit = 50} = req.query;
-
-  // ... search logic
-  res.json(products);
-});
-
-// Health check
-app.get('/health', async (req, res) => {
-  try {
-    await neo4j.verifyConnectivity();
-    res.json({
-      status: 'healthy',
-      database: 'connected',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(503).json({
-      status: 'unhealthy',
-      database: 'disconnected',
-      error: error.message
-    });
-  }
-});
-
-app.listen(3000, () => {
-  logger.info('Server started on port 3000');
-});
-```
-
----
-
-## Frontend Structure
-
-```typescript
-// frontend/app/page.tsx - Chat UI
-
-'use client';
-
-export default function Home() {
-  const [query, setQuery] = useState('');
-  const [recommendations, setRecommendations] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async () => {
-    setLoading(true);
-
-    const response = await fetch('/api/recommend', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        userQuery: query,
-        userId: 'user-123',
-        sessionId: generateSessionId()
-      })
-    });
-
-    const data = await response.json();
-    setRecommendations(data.recommendations);
-    setLoading(false);
-  };
-
-  return (
-    <div className="chat-interface">
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Who are you shopping for?"
-      />
-      <button onClick={handleSubmit} disabled={loading}>
-        {loading ? 'Finding gifts...' : 'Get Recommendations'}
-      </button>
-
-      {recommendations.map(rec => (
-        <ProductCard
-          key={rec.product.id}
-          product={rec.product}
-          reasoning={rec.reasoning}
-          score={rec.score}
-        />
-      ))}
-    </div>
-  );
-}
-```
-
----
-
-## Configuration
-
-### Environment Variables (.env.local)
-
-```bash
-# AI APIs
-OPENAI_API_KEY=sk-...
-COHERE_API_KEY=...
-ANTHROPIC_API_KEY=...
-GEMINI_API_KEY=...
-
-# Neo4j (local Docker)
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=presentagent2024
-
-# Server
-BACKEND_PORT=3000
-PORT=3001
-LOG_LEVEL=info
-```
-
-### Package Scripts
-
-```json
-{
-  "scripts": {
-    "dev": "concurrently \"npm run server:dev\" \"npm run frontend\"",
-    "server": "tsx src/server.ts",
-    "server:dev": "tsx --watch src/server.ts",
-    "frontend": "cd frontend && npm run dev",
-
-    "setup:schema": "tsx scripts/setup-schema.ts",
-    "ingest:products": "tsx scripts/ingest-products.ts",
-
-    "test:personas": "tsx scripts/test-personas.ts",
-    "test:personas:quick": "tsx scripts/test-personas.ts quick",
-    "test:personas:list": "tsx scripts/test-personas.ts list"
-  }
-}
+Query interests → Generate embedding from interests
+  ↓
+3 parallel search paths:
+  1. searchForInterest()      — Graph traversal: MATCHES_INTEREST + IN_CATEGORY + GIFT_FOR_OCCASION/RELATIONSHIP
+  2. searchByEmbedding()      — Vector similarity on product_embedding index
+  3. searchFromInterestGraph() — Interest-first graph walk (no vector)
+  ↓
+Merge candidates → Deduplicate by product_url
+  ↓
+Score each candidate:
+  vector 35% × (zero-match penalty 0.5 if no interest match)
+  + interest 25%
+  + quality 15% (avg_rating, review_count, bestseller, gift_proven)
+  + price 15% (fit to budget)
+  + context 10% (occasion, relationship match)
+  + archetype boost up to 8% (boolean flags × persona mapping)
+  ↓
+Brand diversity enforcement → limit per vendor
+  ↓
+Return top N candidates
 ```
 
 ---
@@ -497,288 +176,114 @@ LOG_LEVEL=info
 
 ### Nodes
 
-```cypher
-// Product
-CREATE (p:Product {
-  id: string,
-  name: string,
-  description: string,
-  price: float,
-  vendor: string,
-  category: string,
-  embedding: list<float>  // 1536 dimensions
-})
+| Node | Count | Key Properties |
+|------|-------|---------------|
+| **Product** | 67,739 | product_url (unique), title, description, price, brand_url, embedding, 14 boolean attrs |
+| **Interest** | 110 | name (unique) |
+| **Category** | 59 | name (unique) |
+| **GiftOccasion** | 15 | name (unique) |
+| **GiftRelationship** | 18 | name (unique) |
+| **GiftPersona** | 4 | name |
 
-// Interest
-CREATE (i:Interest {
-  name: string,
-  category: string,
-  createdAt: timestamp
-})
-
-// Recipient
-CREATE (r:Recipient {
-  id: string,
-  name: string,
-  age: int,
-  profile: map
-})
-
-// User
-CREATE (u:User {
-  userId: string
-})
-
-// Conversation
-CREATE (c:Conversation {
-  sessionId: string,
-  query: string,
-  response: string,
-  timestamp: timestamp,
-  context: map,
-  metrics: map
-})
-```
+### Product Properties
+- **Core**: product_url, title, description, price, brand_url, currency, tags, materials
+- **Embeddings**: embedding (1536-dim float array)
+- **Quality signals**: gift_suitability_score, popularity_score, gift_proven, is_bestseller, avg_rating, review_count, recommendation_rate
+- **Boolean attributes (14)**: is_practical, is_luxury, is_consumable, is_experiential, is_sentimental, is_personalized, is_eco_friendly, is_handcrafted, is_artistic, is_educational, is_wellness, is_shared, is_lasting_value, is_conversation_starter
+- **Shopify enrichment**: shopify_tags, shopify_product_type, bestseller_rank
+- **Source tracking**: source (e.g. 'gift_skus_csv')
 
 ### Relationships
 
-```cypher
-// Product matches interest
-(p:Product)-[:MATCHES_INTEREST {
-  relevance: float,  // 0.0-1.0
-  confidence: float, // 0.0-1.0
-  extractedBy: string  // 'llm-phase-c'
-}]->(i:Interest)
-
-// Recipient interested in
-(r:Recipient)-[:INTERESTED_IN {
-  strength: float
-}]->(i:Interest)
-
-// User relationship with recipient
-(u:User)-[:RELATIONSHIP {
-  type: string  // 'mother', 'friend', etc.
-}]->(r:Recipient)
-
-// User had conversation
-(u:User)-[:HAD_CONVERSATION]->(c:Conversation)
-```
+| Type | Count | From → To |
+|------|-------|-----------|
+| MATCHES_INTEREST | 102,491 | Product → Interest |
+| IN_CATEGORY | 139,467 | Product → Category |
+| GIFT_FOR_OCCASION | 550,937 | Product → GiftOccasion |
+| GIFT_FOR_RELATIONSHIP | 461,997 | Product → GiftRelationship |
+| FITS_PERSONA | 139 | Product → GiftPersona |
 
 ### Indexes
-
-```cypher
-// Vector index for products
-CREATE VECTOR INDEX `product-embeddings`
-FOR (p:Product)
-ON p.embedding
-OPTIONS {
-  indexConfig: {
-    `vector.dimensions`: 1536,
-    `vector.similarity_function`: 'cosine'
-  }
-}
-
-// Full-text index for products
-CREATE FULLTEXT INDEX productSearchIndex
-FOR (p:Product)
-ON EACH [p.name, p.description]
-
-// Property indexes
-CREATE INDEX FOR (p:Product) ON (p.id)
-CREATE INDEX FOR (i:Interest) ON (i.name)
-CREATE INDEX FOR (r:Recipient) ON (r.id)
-CREATE INDEX FOR (u:User) ON (u.userId)
-CREATE INDEX FOR (c:Conversation) ON (c.sessionId)
-```
+- **Vector**: `product_embedding` on `embedding` (1536-dim, cosine)
+- **Fulltext**: `product_search` on `title`, `description`, `brand_url`
+- **Constraint**: `product_url` unique on Product
 
 ---
 
-## Testing
+## API Endpoints
 
-### Persona Testing
+### Backend (Express, port 3000)
+- `POST /api/recommend` — Main recommendation endpoint
+- `POST /api/answer` — Submit clarification answers (Turn 2)
+- `GET /api/conversations` — Conversation history
+- `GET /api/products` — Product search
+- `GET /health` — Health check
 
+### Frontend (Next.js, port 3001)
+- `/` — Chat UI
+- `/logs` — Conversation logs viewer
+- `/products` — Product explorer
+
+---
+
+## Configuration
+
+### Environment Variables (.env.local)
 ```bash
-# Quick test (3 personas)
-npm run test:personas:quick
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=...
+GEMINI_API_KEY=...
+COHERE_API_KEY=...
+ETSY_API_KEY=...               # Pending activation
 
-# Full test (all personas)
-npm run test:personas:list
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=presentagent2024
 
-# Single persona
-npm run test:persona -- "Wine Enthusiast"
-```
-
-**Persona File Format** (`personas/wine-enthusiast.json`):
-```json
-{
-  "name": "Wine Enthusiast",
-  "profile": {
-    "description": "Sophisticated wine lover",
-    "shopping_behavior": "Seeks quality, specific varietals"
-  },
-  "test_cases": [
-    {
-      "query": "Gift for fellow wine enthusiast",
-      "expected_themes": ["wine", "sommelier", "tasting"],
-      "min_confidence": 0.6
-    }
-  ]
-}
+BACKEND_PORT=3000
+PORT=3001
+LOG_LEVEL=info
 ```
 
 ---
 
-## Logging
+## Quality Testing
 
-### Winston Logger (`src/lib/logger.ts`)
+### End-to-End Test (`scripts/test_quality.py`)
+Tests 5 personas through the full recommendation pipeline:
+1. **Vague gift** — Tests clarification flow (Turn 1 → Turn 2)
+2. **Dad (coffee/outdoors)** — Tests interest precision
+3. **Wife (yoga/wellness)** — Tests wellness category
+4. **Nephew (skateboarding/music, 16yo)** — Tests teen/niche interests
+5. **Boss (tea/reading)** — Tests occasion + relationship context
 
-```typescript
-import winston from 'winston';
+Each persona scored by Bar Raiser on: product relevance, reasoning quality, diversity, price fit, occasion appropriateness.
 
-export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error'
-    }),
-    new winston.transports.File({
-      filename: 'logs/combined.log'
-    }),
-    new winston.transports.Console({
-      format: winston.format.simple()
-    })
-  ]
-});
-```
-
-### Usage
-
-```typescript
-logger.info('Processing query', {userId, query});
-logger.warn('Low confidence score', {confidence: 0.32});
-logger.error('Agent failed', {error, agent: 'Explorer'});
-logger.debug('Search results', {count: results.length});
-```
-
----
-
-## Common Patterns
-
-### Neo4j Query Pattern
-
-```typescript
-async function queryNeo4j<T>(
-  query: string,
-  params: any
-): Promise<T[]> {
-  const session = driver.session();
-  try {
-    const result = await session.run(query, params);
-    return result.records.map(record => record.toObject());
-  } finally {
-    await session.close();
-  }
-}
-```
-
-### LLM Call Pattern
-
-```typescript
-async function callLLM(
-  prompt: string,
-  options: {model?: string, temperature?: number} = {}
-): Promise<string> {
-  const response = await openai.chat.completions.create({
-    model: options.model || 'gpt-4',
-    messages: [{role: 'user', content: prompt}],
-    temperature: options.temperature || 0.7
-  });
-
-  return response.choices[0].message.content;
-}
-```
-
-### Error Handling Pattern
-
-```typescript
-async function executeAgent<T>(
-  agentFn: () => Promise<T>
-): Promise<T | null> {
-  try {
-    const result = await agentFn();
-    logger.info('Agent succeeded', {result});
-    return result;
-  } catch (error) {
-    logger.error('Agent failed', {error});
-    return null;
-  }
-}
-```
+**Target:** Average Bar Raiser score ≥60/100
+**Current:** ~64/100 (with LLM variance between runs)
 
 ---
 
 ## Key Files to Know
 
 ### Most Important
-1. **`src/services/orchestrator.ts`** - Agent coordination (main workflow)
-2. **`src/services/agents/explorer.ts`** - Hybrid search logic
-3. **`src/services/interest-extractor.ts`** - Phase C extraction
-4. **`src/server.ts`** - API endpoints
+1. **`src/services/orchestrator.ts`** — Agent coordination (main workflow)
+2. **`src/services/agents/explorer.ts`** — Hybrid search with 3 methods + scoring
+3. **`src/services/agents/storyteller.ts`** — Reasoning generation + post-processing
+4. **`src/services/conversation/answer-merger.ts`** — Clarification answer merging
+5. **`src/server.ts`** — API endpoints
 
-### Configuration
-5. **`.env.local`** - Environment variables
-6. **`package.json`** - Scripts and dependencies
+### Enrichment Scripts
+6. **`scripts/expand-interests.ts`** — Interest graph builder (110 interests, 102K rels)
+7. **`scripts/expand-occasions.ts`** — Occasion tagger (15 occasions, 551K rels)
+8. **`scripts/expand-relationships.ts`** — Relationship tagger (18 rels, 462K rels)
+9. **`scripts/expand-attributes.ts`** — Boolean attribute flagger (14 attrs)
+10. **`scripts/ingest-missing-gift-brands.ts`** — iCloud CSV product loader
 
-### Documentation
-7. **`docs/DEPLOYMENT_STATUS.md`** - Current status
-8. **`docs/ARCHITECTURE.md`** - System design
-9. **`.claude/PROJECT_STATUS.md`** - LLM context
-
-### Deployment
-10. **`scripts/rebuild-interests-batched.sh`** - Phase C deployment
-11. **`data/interest-rebuild-state.json`** - Checkpoint state
+### Testing
+11. **`scripts/test_quality.py`** — 5-persona quality test with Bar Raiser scoring
 
 ---
 
-## Quick Debugging
-
-### Check System Health
-```bash
-curl http://localhost:3000/health
-```
-
-### Test Recommendation
-```bash
-curl -X POST http://localhost:3000/api/recommend \
-  -H 'Content-Type: application/json' \
-  -d '{"userQuery":"gift for mom"}'
-```
-
-### View Logs
-```bash
-tail -f logs/combined.log
-grep ERROR logs/error.log | tail -20
-```
-
-### Check Phase C Progress
-```bash
-cat data/interest-rebuild-state.json | jq '.processedProducts'
-```
-
-### Query Neo4j
-```cypher
-// In Neo4j Browser
-MATCH (p:Product)-[r:MATCHES_INTEREST]->(i:Interest)
-RETURN p.name, i.name, r.relevance
-LIMIT 10
-```
-
----
-
-**Last Updated**: February 17, 2026
-**Version**: 3.0.0 (Local Docker Neo4j + Python enrichment pipeline)
+**Last Updated**: February 19, 2026
+**Version**: 3.2.0 (Quality fixes + product expansion)

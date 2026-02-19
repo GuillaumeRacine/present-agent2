@@ -3,7 +3,7 @@
 > 10-agent architecture for intelligent gift recommendations using Neo4j, OpenAI, and Cohere.
 > B-Corp certified products only. Optimizes for both giver and receiver.
 
-**Status:** Active Development | **Version:** 3.0.0 | **Updated:** 2026-02-17
+**Status:** Active Development | **Version:** 3.2.0 | **Updated:** 2026-02-19
 
 ---
 
@@ -44,17 +44,19 @@ User Query → Listener → Memory → Relationship → Constraints → Meaning
 | AI/LLM | OpenAI GPT-4/4o-mini | Reasoning, context extraction, storytelling |
 | Embeddings | OpenAI text-embedding-3-small | 1536-dim product + concept embeddings |
 | Enrichment | Python pipeline | Shopify scraping, review parsing, scoring |
-| Data | B-Corp Products | 64,964 deduplicated products |
+| Data | B-Corp Products | 67,739 products (367 brands) |
 
 ---
 
 ## Current Database
 
 - **Instance:** Local Docker Neo4j 5-community (`bolt://localhost:7687`)
-- **Products:** 64,964 (deduplicated, enriched)
-- **Coverage:** Interests 99.3% | Occasions 84.6% | Attributes 74.6%
-- **Embeddings:** 1536-dim via OpenAI, generation in progress
-- **Search:** Hybrid graph (70%) + vector (30%) + fulltext fallback
+- **Products:** 67,739 (367 brands, deduplicated, enriched)
+- **Coverage:** Interests 66.3% | Categories 78.3% | Occasions 100% | Relationships 98.8% | Attributes 72.3%
+- **Embeddings:** 1536-dim via OpenAI, 100% coverage (67,739 products)
+- **Graph:** 102K interest rels, 139K category rels, 551K occasion rels, 462K relationship rels
+- **Search:** Hybrid graph + vector + fulltext + archetype attribute scoring + zero-match penalty
+- **Quality signals:** 1,113 bestsellers, 665 with reviews, 11,062 with Shopify tags
 
 ---
 
@@ -71,7 +73,11 @@ User Query → Listener → Memory → Relationship → Constraints → Meaning
 | **[docs/CONTEXT_INDEX.md](docs/CONTEXT_INDEX.md)** | Cross-reference to all context files in Guillaume's system |
 | **[src/docs/API.md](src/docs/API.md)** | Full API reference with request/response schemas |
 | **[src/docs/ARCHITECTURE.md](src/docs/ARCHITECTURE.md)** | Detailed system architecture |
+| **[docs/PRODUCT_EXPANSION_WAVES.md](docs/PRODUCT_EXPANSION_WAVES.md)** | 4-wave product expansion plan with category taxonomy |
 | **[research/RESEARCH_INDEX.md](research/RESEARCH_INDEX.md)** | 14 academic papers on gift psychology |
+| **[research/IDEAL_PRODUCT_CATALOG_ANALYSIS.md](research/IDEAL_PRODUCT_CATALOG_ANALYSIS.md)** | Market data, gift psychology, price strategy |
+| **[research/B_CORP_SHOPIFY_BRANDS_RESEARCH.md](research/B_CORP_SHOPIFY_BRANDS_RESEARCH.md)** | 150+ ethical brands mapped by category |
+| **[research/EXPERIENCE_GIFT_DATA_SOURCES.md](research/EXPERIENCE_GIFT_DATA_SOURCES.md)** | 50+ experience/subscription/digital gift platforms |
 | **[src/.claude/PROJECT_STATUS.md](src/.claude/PROJECT_STATUS.md)** | Detailed version history, enrichment stats |
 | **[src/.claude/CODEBASE_SUMMARY.md](src/.claude/CODEBASE_SUMMARY.md)** | Code patterns, agent flow, key files |
 | **[src/.claude/RECOMMENDATION_AGENT_WORKFLOW.md](src/.claude/RECOMMENDATION_AGENT_WORKFLOW.md)** | Deep-dive into multi-agent philosophy |
@@ -90,6 +96,7 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=...          # Fallback LLM
 GEMINI_API_KEY=...             # Fallback LLM
 COHERE_API_KEY=...             # Re-ranking (optional)
+ETSY_API_KEY=...               # Product expansion (pending activation)
 BACKEND_PORT=3000
 PORT=3001
 LOG_LEVEL=info
@@ -117,7 +124,7 @@ LOG_LEVEL=info
 4. `docs/DATABASE_SCHEMA.md` (data model)
 5. `docs/CONTEXT_INDEX.md` (Guillaume's full context system)
 
-**Key files:** `src/services/orchestrator.ts` (main workflow), `src/services/agents/explorer.ts` (hybrid search), `src/server.ts` (API)
+**Key files:** `src/services/orchestrator.ts` (main workflow), `src/services/agents/explorer.ts` (hybrid search), `src/services/agents/storyteller.ts` (reasoning), `src/services/conversation/answer-merger.ts` (clarification flow), `src/server.ts` (API)
 
 ---
 

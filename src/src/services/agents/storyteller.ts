@@ -83,10 +83,14 @@ export class StorytellerAgent extends BaseAgent<StorytellerInput, StorytellerOut
 
 Craft a personal 2-3 sentence explanation for why this product would be a great gift.
 
+${giverContext ? `
 DUAL-CONTEXT PERSONALIZATION IS CRITICAL:
 Your explanation must weave together BOTH the giver's giving style AND the recipient's needs/interests.
 This creates uniquely personal reasoning that shows you understand both people in the relationship.
-
+` : `
+RECIPIENT-FOCUSED PERSONALIZATION:
+Focus entirely on why this product is perfect for the recipient. Do NOT mention the giver at all — no "As a shopper", no "As an unknown shopper", no "you'll appreciate". Just explain why the RECIPIENT will love this gift based on their interests, personality, and needs.
+`}
 ${giverContext ? `
 GIVER CONTEXT (THE PERSON GIVING THE GIFT):
 - Shopping style: ${giverContext.shopping_style} shopper
@@ -102,11 +106,7 @@ HOW TO USE GIVER CONTEXT:
 - Connect to their sentimentality: "${giverContext.sentimentality > 0.7 ? 'This meaningful' : 'This practical'} choice..."
 - Honor their preferences: "${giverContext.preferred_attributes[0] ? 'The ' + giverContext.preferred_attributes[0] + ' aspect aligns with your values' : ''}"
 ` : `
-GIVER CONTEXT: Limited history available - focus more on recipient fit, but mention this is a learning opportunity.
-For new givers, use phrases like:
-- "This could be a great first gift that shows..."
-- "As you're building your gift-giving relationship..."
-- "This thoughtful choice demonstrates..."
+Since this is a first-time recommendation, focus entirely on the recipient's interests, needs, and what makes this product a great fit for them. Do NOT reference the giver's profile, shopping history, or newness — just explain why this specific product is perfect for the recipient.
 `}
 
 RECIPIENT CONTEXT (THE PERSON RECEIVING THE GIFT):
@@ -130,19 +130,21 @@ RELATIONSHIP CONTEXT:
 - Tone to use: ${relationship?.socialNorms?.formalityLevel || 'casual'}
 
 WRITING GUIDELINES:
-✓ DO: Weave giver AND recipient details together in one flowing narrative
+${giverContext ? `✓ DO: Weave giver AND recipient details together in one flowing narrative
+✓ DO: Reference the giver's past patterns if available` : `✓ DO: Write from a neutral perspective — do NOT address the giver directly
+✓ DO: Focus 100% on the recipient and why this product fits them`}
 ✓ DO: Be specific with names, interests, and life events
-✓ DO: Reference the giver's past patterns if available
 ✓ DO: Connect to recipient's current life stage or recent events
 ✓ DO: Use conversational, warm language
 ✓ DO: Reference the matched archetype naturally (e.g., "this practical gift", "this experiential choice", "this thoughtful gesture")
 ✗ DON'T: Use generic phrases like "perfect gift" or "they'll love this"
 ✗ DON'T: Sound like marketing copy
 ✗ DON'T: List features without emotional connection
-✗ DON'T: Forget to mention both giver AND recipient
+${giverContext ? `✗ DON'T: Forget to mention both giver AND recipient` : `✗ DON'T: Say "As a shopper", "As an unknown shopper", "you'll appreciate", or any phrase addressing the gift giver
+✗ DON'T: Reference the giver's profile, history, or shopping style — there is none`}
 ✗ DON'T: Force archetype mentions if they don't flow naturally
 
-DUAL-CONTEXT EXAMPLES (STUDY THESE):
+${giverContext ? `DUAL-CONTEXT EXAMPLES (STUDY THESE):
 
 Example 1 - High personalization with full giver history (experiential archetype):
 "Since you typically give experiential gifts and Sarah just started her coffee roasting hobby, this hands-on coffee cupping class lets her deepen her skills while creating memories. Your preference for meaningful experiences over objects makes this perfect, and at $85 it fits your usual budget for close friends."
@@ -150,21 +152,28 @@ Example 1 - High personalization with full giver history (experiential archetype
 Example 2 - Moderate personalization (practical archetype):
 "As a planned shopper who values quality, this hand-thrown ceramic mug aligns with your appreciation for handmade items. Given Marcus's new apartment and love of morning rituals, it's both practical and personal - exactly the thoughtful-but-useful balance you tend to favor."
 
-Example 3 - Low giver history, focus on recipient:
-"While we're still learning your giving style, this vintage science poster speaks directly to Emma's biology major and her aesthetic taste for retro decor. It's the kind of personalized touch that shows you pay attention to her interests and style."
-
-Example 4 - Sentimental giver + practical recipient:
+Example 3 - Sentimental giver + practical recipient:
 "I know you lean toward sentimental gifts, but Jake's engineering mindset means he'll genuinely appreciate this multi-tool's functionality. It bridges both worlds - practical enough for his daily needs, special enough to show you chose it specifically for his hiking trips."
 
-Example 5 - Budget-conscious + experiential:
+Example 4 - Budget-conscious + experiential:
 "This workshop fits your budget-conscious approach at just $45, while still delivering the experiential gift you prefer. Maya's been wanting to try pottery, and this 2-hour intro class is low-commitment enough for her busy schedule as a new mom."
+` : `RECIPIENT-FOCUSED EXAMPLES (STUDY THESE — notice NONE reference the giver):
 
-Example 6 - Last-minute shopper:
-"As a last-minute shopper, you'll appreciate that this digital gift card delivers instantly while still feeling personal - paired with a note about the indie bookstore being Olivia's favorite weekend spot, it shows thought despite the time crunch."
+Example 1 - Interest-based (experiential archetype):
+"Sarah just started her coffee roasting hobby, and this hands-on coffee cupping class lets her deepen her skills while creating memories. It's a perfect blend of learning and enjoyment for someone at the start of their coffee journey."
 
+Example 2 - Life stage match (practical archetype):
+"Given Marcus's new apartment and love of morning rituals, this hand-thrown ceramic mug is both practical and personal. It'll elevate his daily coffee routine while adding a handcrafted touch to his space."
+
+Example 3 - Personality fit (sentimental archetype):
+"Emma's biology major and her aesthetic taste for retro decor make this vintage science poster a natural fit. It speaks directly to who she is — a thoughtful piece she can display with pride."
+
+Example 4 - Activity match (practical archetype):
+"Jake's engineering mindset means he'll genuinely appreciate this multi-tool's functionality. It's practical enough for his daily needs and rugged enough for his weekend hiking trips."
+`}
 Return JSON format:
 {
-  "reasoning": "2-3 sentence explanation weaving giver style + recipient fit together",
+  "reasoning": "2-3 sentence explanation ${giverContext ? 'weaving giver style + recipient fit together' : 'focused on why this product fits the recipient'}",
   "storyElements": {
     "connectionToRecipient": "How this connects to recipient's interests/life/needs",
     "emotionalResonance": "Why this would be meaningful to them emotionally",
@@ -211,13 +220,16 @@ Return JSON format:
       }
     );
 
+    // Post-process: strip giver-referencing phrases when no giver profile exists
+    const reasoning = giverContext ? story.reasoning : this.stripGiverReferences(story.reasoning);
+
     return {
       productId: candidate.product.id,
-      reasoning: story.reasoning,
+      reasoning,
       whyCopy, // NEW: Concise 1-line reasoning
       storyElements: story.storyElements,
       tone: story.tone,
-      personalizationLevel: this.assessPersonalization(story.reasoning, interests, giverContext),
+      personalizationLevel: this.assessPersonalization(reasoning, interests, giverContext),
     };
   }
 
@@ -317,5 +329,49 @@ Return JSON format:
     if (score >= 6) return 'high';
     if (score >= 3) return 'medium';
     return 'low';
+  }
+
+  /**
+   * Strip giver-referencing phrases from reasoning when no giver profile exists.
+   * GPT sometimes generates "As an unknown shopper..." despite prompt instructions.
+   * This deterministic post-processing guarantees clean output.
+   */
+  private stripGiverReferences(reasoning: string): string {
+    // Patterns that reference the giver when there's no giver context
+    // Each pattern captures the unwanted prefix so we can remove it cleanly
+    const patterns: [RegExp, string][] = [
+      // "As an unknown shopper, you'll appreciate how..." → "The..."
+      [/^As an unknown shopper[^,]*,\s*you'?ll appreciate (how |that |the )?/i, ''],
+      // "As an unknown shopper who..." → ""
+      [/^As an unknown shopper[^,]*,\s*/i, ''],
+      // "As someone who appreciates thoughtful gifts, " → ""
+      [/^As someone who [^,]+,\s*/i, ''],
+      // "As a thoughtful friend who..., " → ""
+      [/^As a thoughtful friend[^,]*,\s*/i, ''],
+      // "As you're still exploring your shopping style, " → ""
+      [/^As you'?re still exploring[^,]*,\s*/i, ''],
+      // "As you're building your gift-giving relationship, " → ""
+      [/^As you'?re building[^,]*,\s*/i, ''],
+      // Mid-sentence: "...especially since you're an unknown shopper..."
+      [/,?\s*especially since you'?re an unknown shopper[^.]*\./i, '.'],
+      // "you'll appreciate" at sentence start
+      [/^You'?ll appreciate (that |how |the )?/i, ''],
+    ];
+
+    let cleaned = reasoning;
+    for (const [pattern, replacement] of patterns) {
+      cleaned = cleaned.replace(pattern, replacement);
+    }
+
+    // Capitalize first letter if we stripped a prefix
+    if (cleaned !== reasoning && cleaned.length > 0) {
+      cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    }
+
+    if (cleaned !== reasoning) {
+      this.log(`Stripped giver reference from reasoning: "${reasoning.slice(0, 60)}..." → "${cleaned.slice(0, 60)}..."`);
+    }
+
+    return cleaned;
   }
 }

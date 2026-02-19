@@ -1,6 +1,8 @@
 # Database Schema (Neo4j)
 
-Local Neo4j 5-community via Docker. Graph + vector hybrid.
+**Last updated:** 2026-02-19
+**Instance:** Local Neo4j 5-community via Docker (`bolt://localhost:7687`)
+**Container:** `present-agent-neo4j`
 
 ---
 
@@ -10,12 +12,12 @@ Local Neo4j 5-community via Docker. Graph + vector hybrid.
 
 | Node | Key Properties | Count |
 |------|---------------|-------|
-| **Product** | id, title, description, price, available, vendor, product_embedding | 64,964 |
-| **Interest** | id, name, category | 105 canonical |
-| **InterestSynonym** | id, synonym, canonical | 872 |
-| **Occasion** | id, name | 41 |
-| **Category** | name | ~27 |
-| **GiftArchetype** | id, name | Gift types (practical, luxury, sentimental, etc.) |
+| **Product** | product_url (unique), title, description, price, brand_url, embedding | 67,739 |
+| **Interest** | name (unique) | 110 |
+| **Category** | name (unique) | 59 |
+| **GiftOccasion** | name (unique) | 15 |
+| **GiftRelationship** | name (unique) | 18 |
+| **GiftPersona** | name | 4 |
 
 ### User/Conversation Nodes
 
@@ -29,91 +31,106 @@ Local Neo4j 5-community via Docker. Graph + vector hybrid.
 
 ---
 
+## Product Properties (Full)
+
+### Core
+- `product_url` — Unique identifier (URL slug)
+- `title` — Product name
+- `description` — Full product description
+- `price` — Numeric price
+- `currency` — Price currency (e.g. "USD")
+- `brand_url` — Brand domain (e.g. "marinelayer.com")
+- `tags` — Product tags (string)
+- `materials` — Product materials (string)
+
+### Embeddings
+- `embedding` — 1536-dim float array (OpenAI text-embedding-3-small)
+
+### Quality Signals
+- `gift_suitability_score` — Composite gift fitness score
+- `popularity_score` — Popularity metric
+- `gift_proven` — Boolean: known good gift
+- `is_bestseller` — Boolean: brand bestseller (1,113 products)
+- `avg_rating` — Average customer rating (665 products)
+- `review_count` — Number of reviews (665 products)
+- `recommendation_rate` — % of reviewers who recommend (665 products)
+- `bestseller_rank` — Rank within brand bestsellers
+
+### Boolean Attribute Flags (14)
+Coverage: 72.3% (48,973 products)
+
+| Flag | Description |
+|------|-------------|
+| `is_practical` | Useful everyday item |
+| `is_luxury` | Premium/luxury item |
+| `is_consumable` | Consumable/food/drink |
+| `is_experiential` | Experience-oriented |
+| `is_sentimental` | Emotionally meaningful |
+| `is_personalized` | Can be personalized |
+| `is_eco_friendly` | Environmentally friendly |
+| `is_handcrafted` | Handmade/artisan |
+| `is_artistic` | Art/creative item |
+| `is_educational` | Learning/educational |
+| `is_wellness` | Health/wellness focused |
+| `is_shared` | Designed for sharing |
+| `is_lasting_value` | Durable/long-lasting |
+| `is_conversation_starter` | Unique/conversation piece |
+
+### Shopify Enrichment
+- `shopify_tags` — Shopify product tags (11,062 products)
+- `shopify_product_type` — Shopify product type (11,062 products)
+
+### Source Tracking
+- `source` — Data source identifier (e.g. `gift_skus_csv` for iCloud CSV imports)
+
+---
+
 ## Relationship Types
 
-| Relationship | From → To | Weight | Purpose |
-|-------------|-----------|--------|---------|
-| `HAS_INTEREST` | Product → Interest | 0.0-1.0 | Product matches interest |
-| `SUITABLE_FOR` | Product → Occasion | 0.0-1.0 | Product fits occasion |
-| `IN_CATEGORY` | Product → Category | - | Product categorization |
-| `SYNONYM_OF` | InterestSynonym → Interest | - | "tech" → "technology" |
-| `HAS_RECIPIENT` | User → Recipient | - | User's known recipients |
-| `PREFERS` | Recipient → Interest | 0.0-1.0 | Recipient preferences |
-| `HAD_CONVERSATION` | User → ConversationTurn | - | Conversation history |
-| `RECOMMENDED` | ConversationTurn → Product | - | Products recommended |
+| Relationship | From → To | Count | Coverage | Properties |
+|-------------|-----------|-------|----------|------------|
+| `MATCHES_INTEREST` | Product → Interest | 102,491 | 66.3% (44,911 products) | relevance_score |
+| `IN_CATEGORY` | Product → Category | 139,467 | 78.3% (53,006 products) | — |
+| `GIFT_FOR_OCCASION` | Product → GiftOccasion | 550,937 | 100% (67,729 products) | — |
+| `GIFT_FOR_RELATIONSHIP` | Product → GiftRelationship | 461,997 | 98.8% (66,920 products) | — |
+| `FITS_PERSONA` | Product → GiftPersona | 139 | <1% | — |
+
+### User-facing Relationships
+| Relationship | From → To | Purpose |
+|-------------|-----------|---------|
+| `HAS_RECIPIENT` | User → Recipient | User's known recipients |
+| `PREFERS` | Recipient → Interest | Recipient preferences |
+| `HAD_CONVERSATION` | User → ConversationTurn | Conversation history |
+| `RECOMMENDED` | ConversationTurn → Product | Products recommended |
 
 ---
 
-## Product Attributes (14 Boolean Flags)
+## Interest Nodes (110)
 
-Added via multi-LLM enrichment (Dec 2025):
+Includes: coffee, tea, yoga, wellness, outdoor, hiking, camping, cooking, wine, beer, gardening, reading, music, skateboarding, extreme sports, outdoor adventure, jewelry, fashion, home decor, art, sustainability, and 88 more.
 
-`is_practical`, `is_luxury`, `is_personalizable`, `is_experiential`, `is_collectible`, `is_tech`, `is_handmade`, `is_eco_friendly`, `is_educational`, `is_novelty`, `is_sentimental`, `is_wellness`, `is_subscription`, `is_foodie`
-
-Coverage: 74.6% of products (66,134/88,674 at time of enrichment).
+Notable additions (v3.2.0): skateboarding (119 products), music (+39 products), extreme sports (1,355 products), outdoor adventure (5,270 products).
 
 ---
 
-## Vector Embeddings (1536 dimensions, cosine similarity)
+## GiftOccasion Nodes (15)
 
-### Product Embeddings (4 types)
-
-| Index | Property | Purpose |
-|-------|----------|---------|
-| `product_embedding` | `product_embedding` | General product representation |
-| `style_embedding` | `style_embedding` | Aesthetic/design style |
-| `sentiment_embedding` | `sentiment_embedding` | Emotional tone |
-| `use_case_embedding` | `use_case_embedding` | How product is used |
-
-### User/Recipient Embeddings (5 types)
-
-| Index | Property | Purpose |
-|-------|----------|---------|
-| `profile_embedding` | `profile_embedding` | User's overall profile |
-| `value_embedding` | `value_embedding` | User's values (sustainability, quality) |
-| `user_style_embedding` | `style_embedding` | User's aesthetic preferences |
-| `interest_embedding` | `interest_embedding` | Recipient's interests |
-| `personality_embedding` | `personality_embedding` | Recipient's personality traits |
-
-### Concept Embeddings (3 types)
-
-| Index | Property | Purpose |
-|-------|----------|---------|
-| `interest_concept` | `interest_embedding` | Interest semantic representation |
-| `value_concept` | `value_embedding` | Value semantic representation |
-| `occasion_concept` | `occasion_embedding` | Occasion semantic representation |
-
-**Total:** 12 vector indexes, all 1536-dim via OpenAI `text-embedding-3-small`.
+Birthday, Christmas, Valentine's Day, Mother's Day, Father's Day, Wedding, Anniversary, Graduation, Housewarming, Thank You, Get Well, Baby Shower, Retirement, Just Because, Sympathy.
 
 ---
 
-## Schema Setup (Cypher)
+## GiftRelationship Nodes (18)
 
-### Constraints
+Partner/Spouse, Parent, Child, Sibling, Friend, Best Friend, Grandparent, Aunt/Uncle, Cousin, Colleague, Boss, Teacher, Mentor, Neighbor, In-Law, Godparent, Pet Owner, Acquaintance.
 
-```cypher
-CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE
-CREATE CONSTRAINT product_id IF NOT EXISTS FOR (p:Product) REQUIRE p.id IS UNIQUE
-CREATE CONSTRAINT interest_id IF NOT EXISTS FOR (i:Interest) REQUIRE i.id IS UNIQUE
-CREATE CONSTRAINT recipient_id IF NOT EXISTS FOR (r:Recipient) REQUIRE r.id IS UNIQUE
-CREATE CONSTRAINT occasion_id IF NOT EXISTS FOR (o:Occasion) REQUIRE o.id IS UNIQUE
-CREATE CONSTRAINT category_name IF NOT EXISTS FOR (c:Category) REQUIRE c.name IS UNIQUE
-```
+---
 
-### Property Indexes
+## Indexes
 
-```cypher
-CREATE INDEX product_price IF NOT EXISTS FOR (p:Product) ON (p.price)
-CREATE INDEX product_available IF NOT EXISTS FOR (p:Product) ON (p.available)
-CREATE INDEX interest_name IF NOT EXISTS FOR (i:Interest) ON (i.name)
-CREATE INDEX conversation_timestamp IF NOT EXISTS FOR (c:ConversationTurn) ON (c.timestamp)
-```
-
-### Vector Index Example
-
+### Vector Index
 ```cypher
 CREATE VECTOR INDEX product_embedding IF NOT EXISTS
-FOR (n:Product) ON (n.product_embedding)
+FOR (n:Product) ON (n.embedding)
 OPTIONS {
   indexConfig: {
     `vector.dimensions`: 1536,
@@ -123,26 +140,55 @@ OPTIONS {
 ```
 
 ### Fulltext Index
-
 ```cypher
-CREATE FULLTEXT INDEX productSearchIndex IF NOT EXISTS
-FOR (p:Product) ON EACH [p.name, p.description]
+CREATE FULLTEXT INDEX product_search IF NOT EXISTS
+FOR (p:Product) ON EACH [p.title, p.description, p.brand_url]
 ```
 
-Note: Fulltext indexes are available on local Docker Neo4j (not on Aura Free tier).
+### Unique Constraint
+```cypher
+CREATE CONSTRAINT product_url_unique IF NOT EXISTS
+FOR (p:Product) REQUIRE p.product_url IS UNIQUE
+```
 
 ---
 
 ## Hybrid Search Strategy
 
 ```
-Query → Graph Search (70% weight) + Vector Search (30% weight) → Combined ranking
-         ↓ if < 5 results
-       Text Fallback (fulltext index)
+Query interests → Embed interests via OpenAI
+  ↓
+3 search paths (parallel):
+  1. Interest graph walk: MATCHES_INTEREST + IN_CATEGORY + occasion/relationship context
+  2. Vector similarity: product_embedding index (cosine, top N)
+  3. Interest-first graph: Start from Interest nodes, walk to Products
+  ↓
+Score: vector 35% × zero-match-penalty + interest 25% + quality 15% + price 15% + context 10%
+  + archetype attribute boost (up to 8%)
+  ↓
+Brand diversity enforcement → Top recommendations
 ```
+
+**Zero-match penalty:** When a product matches zero stated interests but the user has stated interests, the vector score contribution is halved (×0.5). Prevents high-vector-similarity but irrelevant products from dominating.
 
 See `src/services/agents/explorer.ts` for implementation.
 
 ---
 
-*Last updated: 2026-02-17*
+## Key Statistics (February 19, 2026)
+
+| Metric | Value |
+|--------|-------|
+| Total products | 67,739 |
+| Total brands | 367 |
+| Products with embeddings | 67,739 (100%) |
+| Products with attribute flags | 48,973 (72.3%) |
+| Products with Shopify tags | 11,062 (16.3%) |
+| Products with reviews | 665 (1.0%) |
+| Bestseller products | 1,113 (1.6%) |
+| Products from iCloud CSV | 2,775 (4.1%) |
+| Interest nodes | 110 |
+| Category nodes | 59 |
+| GiftOccasion nodes | 15 |
+| GiftRelationship nodes | 18 |
+| GiftPersona nodes | 4 |

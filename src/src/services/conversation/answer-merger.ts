@@ -153,25 +153,20 @@ function applyAnswer(
     return;
   }
 
-  // Interests answer
+  // Interests answer — handle both string and array
   if (questionId === 'interests') {
-    const newInterest = {
-      interest: value,
-      level: 'enthusiast' as const, // User explicitly mentioned
-      context: 'user clarification',
-    };
-
-    context.enhancedInterests = {
-      ...context.enhancedInterests,
-      explicit: [
-        ...(context.enhancedInterests?.explicit || []),
-        newInterest,
-      ],
-    };
-
-    // Also add to simple interests array
-    if (!context.interests.includes(value)) {
-      context.interests.push(value);
+    const values = Array.isArray(value) ? value : [value];
+    for (const v of values) {
+      if (!context.interests.includes(v)) {
+        context.interests.push(v);
+      }
+      context.enhancedInterests = {
+        ...context.enhancedInterests,
+        explicit: [
+          ...(context.enhancedInterests?.explicit || []),
+          { interest: v, level: 'enthusiast' as const, context: 'user clarification' },
+        ],
+      };
     }
     return;
   }
@@ -185,9 +180,13 @@ function applyAnswer(
     return;
   }
 
-  // Occasion answer
+  // Occasion answer — normalize string to object format
   if (questionId === 'occasion') {
-    context.occasion = value;
+    if (typeof value === 'string') {
+      context.occasion = { name: value, urgency: 'planned' };
+    } else {
+      context.occasion = value;
+    }
     return;
   }
 
@@ -284,6 +283,20 @@ function applyAnswer(
     return;
   }
 
+  // Recipient age — multiple key formats
+  if (questionId === 'recipientAge' || questionId === 'age') {
+    if (!context.recipient) context.recipient = {};
+    context.recipient.age = value;
+    return;
+  }
+
+  // Recipient gender — multiple key formats
+  if (questionId === 'recipientGender' || questionId === 'gender') {
+    if (!context.recipient) context.recipient = {};
+    context.recipient.gender = value;
+    return;
+  }
+
   logger.warn('Unknown question ID, skipping answer application', {
     questionId,
     value,
@@ -303,6 +316,10 @@ const CONFIDENCE_BOOST_VALUES = {
   relationship: 0.12, // Medium-high impact
   occasion: 0.1, // Medium impact
   recipient_age: 0.08,
+  recipientAge: 0.05,
+  age: 0.05,
+  recipientGender: 0.05,
+  gender: 0.05,
   intent_priority: 0.08,
   gift_philosophy: 0.09,
   space_constraint: 0.05,
@@ -327,6 +344,10 @@ export function calculateConfidenceBoost(answers: Record<string, any>): number {
       boost += CONFIDENCE_BOOST_VALUES.occasion;
     } else if (key === 'recipient_age') {
       boost += CONFIDENCE_BOOST_VALUES.recipient_age;
+    } else if (key === 'recipientAge' || key === 'age') {
+      boost += CONFIDENCE_BOOST_VALUES.recipientAge;
+    } else if (key === 'recipientGender' || key === 'gender') {
+      boost += CONFIDENCE_BOOST_VALUES.recipientGender;
     } else if (key === 'intent_priority') {
       boost += CONFIDENCE_BOOST_VALUES.intent_priority;
     } else if (key === 'gift_philosophy') {
@@ -362,14 +383,18 @@ export function buildNaturalQuery(
     query += `, budget $${answers.budget.min}-$${answers.budget.max}`;
   }
 
-  // Append interests
+  // Append interests — handle both string and array
   if (answers.interests) {
-    query += `, interested in ${answers.interests}`;
+    const interestList = Array.isArray(answers.interests) ? answers.interests.join(', ') : answers.interests;
+    query += `, interested in ${interestList}`;
   }
 
-  // Append occasion
-  if (answers.occasion && answers.occasion.name) {
-    query += `, for ${answers.occasion.name}`;
+  // Append occasion — handle both string and object
+  if (answers.occasion) {
+    const occasionName = typeof answers.occasion === 'string' ? answers.occasion : answers.occasion.name;
+    if (occasionName) {
+      query += `, for ${occasionName}`;
+    }
   }
 
   // Append relationship
@@ -377,9 +402,20 @@ export function buildNaturalQuery(
     query += `, ${answers.relationship}`;
   }
 
-  // Append age
+  // Append age — multiple key formats
   if (answers.recipient_age) {
     query += `, age ${answers.recipient_age}`;
+  } else if (answers.recipientAge) {
+    query += `, age ${answers.recipientAge}`;
+  } else if (answers.age) {
+    query += `, age ${answers.age}`;
+  }
+
+  // Append gender
+  if (answers.recipientGender) {
+    query += `, ${answers.recipientGender}`;
+  } else if (answers.gender) {
+    query += `, ${answers.gender}`;
   }
 
   // Append refinements
