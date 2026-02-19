@@ -1,0 +1,766 @@
+{
+  "mode": "clarifying",
+  "questions": [
+    {
+      "id": "interests",
+      "type": "essential",
+      "field": "interests",
+      "question": "What are they passionate about or interested in?",
+      "suggestedAnswers": [
+        {
+          "label": "Food & cooking",
+          "value": "cooking",
+          "description": "Loves culinary experiences"
+        },
+        {
+          "label": "Outdoor & nature",
+          "value": "outdoors",
+          "description": "Enjoys hiking, camping, etc."
+        },
+        {
+          "label": "Arts & crafts",
+          "value": "arts",
+          "description": "Creative and artistic"
+        },
+        {
+          "label": "Tech & gaming",
+          "value": "tech",
+          "description": "Gadgets and games"
+        },
+        {
+          "label": "Sports & fitness",
+          "value": "sports",
+          "description": "Active and athletic"
+        },
+        {
+          "label": "Music & entertainment",
+          "value": "music",
+          "description": "Music lover"
+        }
+      ],
+      "priority": 2,
+      "impactOnConfidence": 0.2,
+      "rationale": "Interests are critical for product matching"
+    },
+    {
+      "id": "relationship",
+      "type": "essential",
+      "field": "recipient.relationshipType",
+      "question": "What's your relationship to this person?",
+      "suggestedAnswers": [
+        {
+          "label": "Parent",
+          "value": "parent"
+        },
+        {
+          "label": "Partner/Spouse",
+          "value": "partner"
+        },
+        {
+          "label": "Sibling",
+          "value": "sibling"
+        },
+        {
+          "label": "Friend",
+          "value": "friend"
+        },
+        {
+          "label": "Coworker",
+          "value": "coworker"
+        },
+        {
+          "label": "Other family",
+          "value": "family"
+        }
+      ],
+      "priority": 3,
+      "impactOnConfidence": 0.12,
+      "rationale": "Relationship type affects gift appropriateness"
+    },
+    {
+      "id": "recipient_age",
+      "type": "essential",
+      "field": "recipient.age",
+      "question": "How old are they?",
+      "suggestedAnswers": [
+        {
+          "label": "Child (under 13)",
+          "value": 10
+        },
+        {
+          "label": "Teen (13-17)",
+          "value": 15
+        },
+        {
+          "label": "Young adult (18-25)",
+          "value": 22
+        },
+        {
+          "label": "Adult (26-40)",
+          "value": 33
+        },
+        {
+          "label": "Middle-aged (41-60)",
+          "value": 50
+        },
+        {
+          "label": "Senior (60+)",
+          "value": 65
+        }
+      ],
+      "priority": 5,
+      "impactOnConfidence": 0.1,
+      "rationale": "Age helps narrow down appropriate gift types"
+    }
+  ],
+  "naturalLanguage": "I'd love to help you find the perfect gift!\n\nTo find the most thoughtful options within your budget, I'd love to know:\n\n1. What are they passionate about or interested in?\n   This ensures recommendations match their personality.\n   \ud83c\udfaf Food & cooking | \ud83c\udfaf Outdoor & nature | \ud83c\udfaf Arts & crafts | \ud83c\udfaf Tech & gaming | \ud83c\udfaf Sports & fitness | \ud83c\udfaf Music & entertainment\n\n2. What's your relationship to this person?\n   This helps me suggest appropriate gift types.\n   \ud83d\udc65 Parent | \ud83d\udc65 Partner/Spouse | \ud83d\udc65 Sibling | \ud83d\udc65 Friend | \ud83d\udc65 Coworker | \ud83d\udc65 Other family\n\n3. How old are they?\n   \ud83d\udc64 Child (under 13) | \ud83d\udc64 Teen (13-17) | \ud83d\udc64 Young adult (18-25) | \ud83d\udc64 Adult (26-40) | \ud83d\udc64 Middle-aged (41-60) | \ud83d\udc64 Senior (60+)\n\nLet's find something they'll love!",
+  "encouragement": "Remember: Thoughtful gifts come in all budgets!",
+  "showEscapeHatch": true,
+  "partialContext": {
+    "recipient": {
+      "name": null,
+      "relationshipType": null,
+      "age": null,
+      "gender": null,
+      "count": 1
+    },
+    "occasion": {
+      "name": null,
+      "date": null,
+      "urgency": "unspecified",
+      "significance": null
+    },
+    "budget": {
+      "min": null,
+      "max": null,
+      "flexibility": "unspecified"
+    },
+    "interests": [],
+    "values": [],
+    "constraints": [],
+    "enhancedConstraints": {
+      "excluded": [],
+      "required": [],
+      "size": null,
+      "timing": null,
+      "space": null
+    },
+    "lifeContext": {
+      "recentEvents": [],
+      "lifeStage": null,
+      "livingSituation": null,
+      "timeAvailability": null
+    },
+    "relationshipDepth": {
+      "type": null,
+      "closeness": null,
+      "duration": null,
+      "appropriateness": {
+        "personalGifts": null,
+        "expensiveGifts": null,
+        "intimateGifts": null,
+        "humorousGifts": null
+      }
+    },
+    "intentSignals": {
+      "showThought": false,
+      "impress": false,
+      "safe": false,
+      "unique": false,
+      "lastMinute": false,
+      "sentimental": false,
+      "practical": false
+    },
+    "enhancedInterests": {
+      "explicit": [],
+      "inferred": [],
+      "antiInterests": []
+    },
+    "giftPhilosophy": {
+      "valuesMeaning": false,
+      "valuesPracticality": false,
+      "valuesExperience": false,
+      "valuesQuality": false,
+      "valuesUniqueness": false,
+      "valuesSustainability": false
+    },
+    "ambiguities": [
+      {
+        "field": "recipient",
+        "issue": "no recipient specified",
+        "suggestedClarification": "Who is the gift for?"
+      },
+      {
+        "field": "occasion",
+        "issue": "no occasion specified",
+        "suggestedClarification": "What is the occasion for the gift?"
+      },
+      {
+        "field": "budget",
+        "issue": "no budget specified",
+        "suggestedClarification": "What's your budget range for this gift?"
+      }
+    ],
+    "userQuery": "I need a gift for someone",
+    "extractedAt": "2026-02-19T16:20:47.931Z",
+    "confidence": 0.2636363636363636
+  },
+  "reasoning": "Low confidence (0.26) or insufficient critical fields (1/4)",
+  "sessionId": "test-vague-gift-1771518030",
+  "timestamp": "2026-02-19T16:20:48.338Z",
+  "performance": {
+    "totalExecutionTimeMs": 15444,
+    "agentTimings": {
+      "listener": 15036,
+      "memory": 43,
+      "dialogueManager": 4,
+      "dialoguePresenter": 0
+    }
+  },
+  "executionTrace": {
+    "listener": {
+      "recipient": {
+        "name": null,
+        "relationshipType": null,
+        "age": null,
+        "gender": null,
+        "count": 1
+      },
+      "occasion": {
+        "name": null,
+        "date": null,
+        "urgency": "unspecified",
+        "significance": null
+      },
+      "budget": {
+        "min": null,
+        "max": null,
+        "flexibility": "unspecified"
+      },
+      "interests": [],
+      "values": [],
+      "constraints": [],
+      "enhancedConstraints": {
+        "excluded": [],
+        "required": [],
+        "size": null,
+        "timing": null,
+        "space": null
+      },
+      "lifeContext": {
+        "recentEvents": [],
+        "lifeStage": null,
+        "livingSituation": null,
+        "timeAvailability": null
+      },
+      "relationshipDepth": {
+        "type": null,
+        "closeness": null,
+        "duration": null,
+        "appropriateness": {
+          "personalGifts": null,
+          "expensiveGifts": null,
+          "intimateGifts": null,
+          "humorousGifts": null
+        }
+      },
+      "intentSignals": {
+        "showThought": false,
+        "impress": false,
+        "safe": false,
+        "unique": false,
+        "lastMinute": false,
+        "sentimental": false,
+        "practical": false
+      },
+      "enhancedInterests": {
+        "explicit": [],
+        "inferred": [],
+        "antiInterests": []
+      },
+      "giftPhilosophy": {
+        "valuesMeaning": false,
+        "valuesPracticality": false,
+        "valuesExperience": false,
+        "valuesQuality": false,
+        "valuesUniqueness": false,
+        "valuesSustainability": false
+      },
+      "ambiguities": [
+        {
+          "field": "recipient",
+          "issue": "no recipient specified",
+          "suggestedClarification": "Who is the gift for?"
+        },
+        {
+          "field": "occasion",
+          "issue": "no occasion specified",
+          "suggestedClarification": "What is the occasion for the gift?"
+        },
+        {
+          "field": "budget",
+          "issue": "no budget specified",
+          "suggestedClarification": "What's your budget range for this gift?"
+        }
+      ],
+      "userQuery": "I need a gift for someone",
+      "extractedAt": "2026-02-19T16:20:47.931Z",
+      "confidence": 0.2636363636363636
+    },
+    "memory": {
+      "listenerContext": {
+        "recipient": {
+          "name": null,
+          "relationshipType": null,
+          "age": null,
+          "gender": null,
+          "count": 1
+        },
+        "occasion": {
+          "name": null,
+          "date": null,
+          "urgency": "unspecified",
+          "significance": null
+        },
+        "budget": {
+          "min": null,
+          "max": null,
+          "flexibility": "unspecified"
+        },
+        "interests": [],
+        "values": [],
+        "constraints": [],
+        "enhancedConstraints": {
+          "excluded": [],
+          "required": [],
+          "size": null,
+          "timing": null,
+          "space": null
+        },
+        "lifeContext": {
+          "recentEvents": [],
+          "lifeStage": null,
+          "livingSituation": null,
+          "timeAvailability": null
+        },
+        "relationshipDepth": {
+          "type": null,
+          "closeness": null,
+          "duration": null,
+          "appropriateness": {
+            "personalGifts": null,
+            "expensiveGifts": null,
+            "intimateGifts": null,
+            "humorousGifts": null
+          }
+        },
+        "intentSignals": {
+          "showThought": false,
+          "impress": false,
+          "safe": false,
+          "unique": false,
+          "lastMinute": false,
+          "sentimental": false,
+          "practical": false
+        },
+        "enhancedInterests": {
+          "explicit": [],
+          "inferred": [],
+          "antiInterests": []
+        },
+        "giftPhilosophy": {
+          "valuesMeaning": false,
+          "valuesPracticality": false,
+          "valuesExperience": false,
+          "valuesQuality": false,
+          "valuesUniqueness": false,
+          "valuesSustainability": false
+        },
+        "ambiguities": [
+          {
+            "field": "recipient",
+            "issue": "no recipient specified",
+            "suggestedClarification": "Who is the gift for?"
+          },
+          {
+            "field": "occasion",
+            "issue": "no occasion specified",
+            "suggestedClarification": "What is the occasion for the gift?"
+          },
+          {
+            "field": "budget",
+            "issue": "no budget specified",
+            "suggestedClarification": "What's your budget range for this gift?"
+          }
+        ],
+        "userQuery": "I need a gift for someone",
+        "extractedAt": "2026-02-19T16:20:47.931Z",
+        "confidence": 0.2636363636363636
+      },
+      "pastConversations": [],
+      "pastRecipients": [],
+      "recognizedPatterns": [
+        {
+          "pattern": "Default pattern: general for recipients",
+          "confidence": 0.3,
+          "source": "defaults"
+        }
+      ],
+      "recipientKnowledgeDepth": 0,
+      "recipientKnowledgeGaps": [
+        "No recipient identified"
+      ],
+      "giverProfile": {
+        "userId": "test-vague-gift",
+        "shoppingStyle": {
+          "typical_timing": "unknown",
+          "timing_confidence": 0.3,
+          "budget_patterns": {
+            "by_occasion": {},
+            "by_relationship": {},
+            "overall_range": {
+              "min": 0,
+              "max": 1000,
+              "avg": 100,
+              "sample_size": 0
+            }
+          },
+          "price_sensitivity": "unknown",
+          "price_sensitivity_confidence": 0.3
+        },
+        "givingPhilosophy": {
+          "primary_values": [],
+          "personalization_importance": 0,
+          "sentimentality_score": 0.5,
+          "risk_tolerance": "moderate",
+          "gift_type_preferences": {
+            "physical": 0.5,
+            "experiential": 0.5,
+            "consumable": 0.5,
+            "digital": 0.5
+          },
+          "important_attributes": []
+        },
+        "preferences": {
+          "preferred_vendors": [],
+          "avoided_vendors": [],
+          "preferred_categories": [],
+          "avoided_categories": [],
+          "brand_conscious": false,
+          "brand_importance": 0.3,
+          "quality_over_quantity": true
+        },
+        "successPatterns": {
+          "most_successful_types": [],
+          "most_successful_attributes": [],
+          "highest_rated_gifts": [],
+          "avoided_patterns": []
+        },
+        "confidence": {
+          "data_quality": 0.3,
+          "prediction_confidence": 0.27,
+          "total_conversations": 0,
+          "total_purchases": 0,
+          "total_feedback_signals": 0,
+          "last_updated": "2026-02-19T16:20:47.973Z",
+          "profile_age_days": 0
+        }
+      },
+      "giverInsights": [],
+      "giverConfidence": 0.3,
+      "coldStartContext": {
+        "source": "defaults",
+        "confidence": 0.3,
+        "patterns": [
+          {
+            "productIds": [],
+            "archetypes": [
+              "general"
+            ],
+            "avgRating": 4
+          }
+        ],
+        "sessionProfile": {
+          "sessionId": "test-vague-gift-1771518030",
+          "interests": [],
+          "values": [],
+          "recipientContext": {
+            "name": null,
+            "relationshipType": null,
+            "age": null,
+            "gender": null
+          },
+          "budget": {
+            "min": null,
+            "max": null
+          },
+          "occasion": null,
+          "confidence": 0.2636363636363636,
+          "timestamp": "2026-02-19T16:20:47.968Z"
+        },
+        "explanation": "Using default patterns for this gift scenario, building profile from session"
+      },
+      "recalledAt": "2026-02-19T16:20:47.974Z"
+    },
+    "dialogueManager": {
+      "mode": "ask",
+      "questions": [
+        {
+          "id": "interests",
+          "type": "essential",
+          "field": "interests",
+          "question": "What are they passionate about or interested in?",
+          "suggestedAnswers": [
+            {
+              "label": "Food & cooking",
+              "value": "cooking",
+              "description": "Loves culinary experiences"
+            },
+            {
+              "label": "Outdoor & nature",
+              "value": "outdoors",
+              "description": "Enjoys hiking, camping, etc."
+            },
+            {
+              "label": "Arts & crafts",
+              "value": "arts",
+              "description": "Creative and artistic"
+            },
+            {
+              "label": "Tech & gaming",
+              "value": "tech",
+              "description": "Gadgets and games"
+            },
+            {
+              "label": "Sports & fitness",
+              "value": "sports",
+              "description": "Active and athletic"
+            },
+            {
+              "label": "Music & entertainment",
+              "value": "music",
+              "description": "Music lover"
+            }
+          ],
+          "priority": 2,
+          "impactOnConfidence": 0.2,
+          "rationale": "Interests are critical for product matching"
+        },
+        {
+          "id": "relationship",
+          "type": "essential",
+          "field": "recipient.relationshipType",
+          "question": "What's your relationship to this person?",
+          "suggestedAnswers": [
+            {
+              "label": "Parent",
+              "value": "parent"
+            },
+            {
+              "label": "Partner/Spouse",
+              "value": "partner"
+            },
+            {
+              "label": "Sibling",
+              "value": "sibling"
+            },
+            {
+              "label": "Friend",
+              "value": "friend"
+            },
+            {
+              "label": "Coworker",
+              "value": "coworker"
+            },
+            {
+              "label": "Other family",
+              "value": "family"
+            }
+          ],
+          "priority": 3,
+          "impactOnConfidence": 0.12,
+          "rationale": "Relationship type affects gift appropriateness"
+        },
+        {
+          "id": "recipient_age",
+          "type": "essential",
+          "field": "recipient.age",
+          "question": "How old are they?",
+          "suggestedAnswers": [
+            {
+              "label": "Child (under 13)",
+              "value": 10
+            },
+            {
+              "label": "Teen (13-17)",
+              "value": 15
+            },
+            {
+              "label": "Young adult (18-25)",
+              "value": 22
+            },
+            {
+              "label": "Adult (26-40)",
+              "value": 33
+            },
+            {
+              "label": "Middle-aged (41-60)",
+              "value": 50
+            },
+            {
+              "label": "Senior (60+)",
+              "value": 65
+            }
+          ],
+          "priority": 5,
+          "impactOnConfidence": 0.1,
+          "rationale": "Age helps narrow down appropriate gift types"
+        }
+      ],
+      "proceedWithRecommendations": false,
+      "reasoning": "Low confidence (0.26) or insufficient critical fields (1/4)",
+      "confidenceAssessment": {
+        "overallConfidence": 0.2636363636363636,
+        "criticalFieldsCovered": [
+          "occasion"
+        ],
+        "criticalFieldsMissing": [
+          "relationshipType",
+          "interests",
+          "budget"
+        ],
+        "highImpactAmbiguities": [
+          "budget"
+        ],
+        "criticalFieldCount": 1
+      },
+      "decisionTimeMs": 1,
+      "processedAt": "2026-02-19T16:20:47.977Z"
+    },
+    "dialoguePresenter": {
+      "type": "questions",
+      "naturalLanguage": "I'd love to help you find the perfect gift!\n\nTo find the most thoughtful options within your budget, I'd love to know:\n\n1. What are they passionate about or interested in?\n   This ensures recommendations match their personality.\n   \ud83c\udfaf Food & cooking | \ud83c\udfaf Outdoor & nature | \ud83c\udfaf Arts & crafts | \ud83c\udfaf Tech & gaming | \ud83c\udfaf Sports & fitness | \ud83c\udfaf Music & entertainment\n\n2. What's your relationship to this person?\n   This helps me suggest appropriate gift types.\n   \ud83d\udc65 Parent | \ud83d\udc65 Partner/Spouse | \ud83d\udc65 Sibling | \ud83d\udc65 Friend | \ud83d\udc65 Coworker | \ud83d\udc65 Other family\n\n3. How old are they?\n   \ud83d\udc64 Child (under 13) | \ud83d\udc64 Teen (13-17) | \ud83d\udc64 Young adult (18-25) | \ud83d\udc64 Adult (26-40) | \ud83d\udc64 Middle-aged (41-60) | \ud83d\udc64 Senior (60+)\n\nLet's find something they'll love!",
+      "questions": [
+        {
+          "id": "interests",
+          "type": "essential",
+          "field": "interests",
+          "question": "What are they passionate about or interested in?",
+          "suggestedAnswers": [
+            {
+              "label": "Food & cooking",
+              "value": "cooking",
+              "description": "Loves culinary experiences"
+            },
+            {
+              "label": "Outdoor & nature",
+              "value": "outdoors",
+              "description": "Enjoys hiking, camping, etc."
+            },
+            {
+              "label": "Arts & crafts",
+              "value": "arts",
+              "description": "Creative and artistic"
+            },
+            {
+              "label": "Tech & gaming",
+              "value": "tech",
+              "description": "Gadgets and games"
+            },
+            {
+              "label": "Sports & fitness",
+              "value": "sports",
+              "description": "Active and athletic"
+            },
+            {
+              "label": "Music & entertainment",
+              "value": "music",
+              "description": "Music lover"
+            }
+          ],
+          "priority": 2,
+          "impactOnConfidence": 0.2,
+          "rationale": "Interests are critical for product matching"
+        },
+        {
+          "id": "relationship",
+          "type": "essential",
+          "field": "recipient.relationshipType",
+          "question": "What's your relationship to this person?",
+          "suggestedAnswers": [
+            {
+              "label": "Parent",
+              "value": "parent"
+            },
+            {
+              "label": "Partner/Spouse",
+              "value": "partner"
+            },
+            {
+              "label": "Sibling",
+              "value": "sibling"
+            },
+            {
+              "label": "Friend",
+              "value": "friend"
+            },
+            {
+              "label": "Coworker",
+              "value": "coworker"
+            },
+            {
+              "label": "Other family",
+              "value": "family"
+            }
+          ],
+          "priority": 3,
+          "impactOnConfidence": 0.12,
+          "rationale": "Relationship type affects gift appropriateness"
+        },
+        {
+          "id": "recipient_age",
+          "type": "essential",
+          "field": "recipient.age",
+          "question": "How old are they?",
+          "suggestedAnswers": [
+            {
+              "label": "Child (under 13)",
+              "value": 10
+            },
+            {
+              "label": "Teen (13-17)",
+              "value": 15
+            },
+            {
+              "label": "Young adult (18-25)",
+              "value": 22
+            },
+            {
+              "label": "Adult (26-40)",
+              "value": 33
+            },
+            {
+              "label": "Middle-aged (41-60)",
+              "value": 50
+            },
+            {
+              "label": "Senior (60+)",
+              "value": 65
+            }
+          ],
+          "priority": 5,
+          "impactOnConfidence": 0.1,
+          "rationale": "Age helps narrow down appropriate gift types"
+        }
+      ],
+      "encouragement": "Remember: Thoughtful gifts come in all budgets!",
+      "showEscapeHatch": true
+    }
+  },
+  "_wall_time": 17.370532035827637,
+  "_request": {
+    "userQuery": "I need a gift for someone",
+    "userId": "test-vague-gift",
+    "sessionId": "test-vague-gift-1771518030"
+  }
+}

@@ -53,8 +53,16 @@ export class StorytellerAgent extends BaseAgent<StorytellerInput, StorytellerOut
       : [];
     const occasion = memoryContext?.listenerContext?.occasion;
 
-    // NEW: Extract giver profile
-    const giverProfile = memoryContext?.giverProfile;
+    // NEW: Extract giver profile — but only if it has meaningful data
+    // The giver-profiler always returns a profile object, even for first-time users
+    // with default/placeholder values. We treat low-confidence profiles as absent
+    // to avoid "As an unknown shopper" leakage in the reasoning.
+    const rawGiverProfile = memoryContext?.giverProfile;
+    const giverProfile = rawGiverProfile &&
+      rawGiverProfile.confidence?.data_quality > 0 &&
+      rawGiverProfile.shoppingStyle?.typical_timing !== 'unknown'
+        ? rawGiverProfile
+        : null;
     const enrichedRecipient = memoryContext?.enrichedRecipient;
 
     // Build rich recipient context for personalization
@@ -339,27 +347,46 @@ Return JSON format:
   private stripGiverReferences(reasoning: string): string {
     // Patterns that reference the giver when there's no giver context
     // Each pattern captures the unwanted prefix so we can remove it cleanly
-    const patterns: [RegExp, string][] = [
-      // "As an unknown shopper, you'll appreciate how..." → "The..."
-      [/^As an unknown shopper[^,]*,\s*you'?ll appreciate (how |that |the )?/i, ''],
-      // "As an unknown shopper who..." → ""
-      [/^As an unknown shopper[^,]*,\s*/i, ''],
+    // Applied in order — first match wins for prefix patterns, all mid-sentence patterns run
+    const prefixPatterns: [RegExp, string][] = [
+      // "As an unknown shopper who values sentimentality, this..." → "This..."
+      [/^As an? (?:unknown |new |first-time )?shopper[^,]*,\s*/i, ''],
+      // "As a thoughtful friend who..., " → ""
+      [/^As a (?:thoughtful |caring |considerate )?(?:friend|gift[- ]?giver|person)[^,]*,\s*/i, ''],
       // "As someone who appreciates thoughtful gifts, " → ""
       [/^As someone who [^,]+,\s*/i, ''],
-      // "As a thoughtful friend who..., " → ""
-      [/^As a thoughtful friend[^,]*,\s*/i, ''],
       // "As you're still exploring your shopping style, " → ""
-      [/^As you'?re still exploring[^,]*,\s*/i, ''],
-      // "As you're building your gift-giving relationship, " → ""
-      [/^As you'?re building[^,]*,\s*/i, ''],
-      // Mid-sentence: "...especially since you're an unknown shopper..."
-      [/,?\s*especially since you'?re an unknown shopper[^.]*\./i, '.'],
-      // "you'll appreciate" at sentence start
+      [/^As you'?re (?:still )?(?:exploring|building|developing)[^,]*,\s*/i, ''],
+      // "You'll appreciate that/how/the..." at sentence start
       [/^You'?ll appreciate (that |how |the )?/i, ''],
+      // "For you as a new shopper, ..." → ""
+      [/^For you as a[^,]*,\s*/i, ''],
+    ];
+
+    // Mid-sentence patterns (applied globally via replace, not just first match)
+    const midPatterns: [RegExp, string][] = [
+      // "...especially since you're an unknown shopper..."
+      [/,?\s*especially since you'?re an? (?:unknown |new )?shopper[^.]*\./ig, '.'],
+      // "...which aligns with your sentimental giving style"
+      [/,?\s*(?:which |that |and it )(?:aligns|reflects|matches|connects) with your (?:sentimental |thoughtful |practical )?(?:giving |shopping )?(?:style|approach|values?|preference)[^.]*\./ig, '.'],
+      // "...making it a meaningful addition to your/their..."  referencing "your" (the giver)
+      // Only strip if it's clearly addressing the giver, not the recipient
+      [/,?\s*(?:reflecting|showing|demonstrating) your (?:shared |mutual )?(?:appreciation|sentimentality|thoughtfulness)[^.]*\./ig, '.'],
     ];
 
     let cleaned = reasoning;
-    for (const [pattern, replacement] of patterns) {
+
+    // Apply first matching prefix pattern
+    for (const [pattern, replacement] of prefixPatterns) {
+      const result = cleaned.replace(pattern, replacement);
+      if (result !== cleaned) {
+        cleaned = result;
+        break; // Only apply first matching prefix
+      }
+    }
+
+    // Apply all mid-sentence patterns
+    for (const [pattern, replacement] of midPatterns) {
       cleaned = cleaned.replace(pattern, replacement);
     }
 

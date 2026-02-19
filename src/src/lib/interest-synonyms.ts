@@ -958,7 +958,7 @@ export function expandInterests(interests: string[]): string[] {
  * // => ['camping', 'outdoors', 'climbing', 'cycling']
  *
  * getRelatedInterests('coffee')
- * // => ['tea', 'cooking', 'foodie']
+ * // => ['cooking', 'foodie', 'baking']
  */
 export function getRelatedInterests(interest: string): string[] {
   const canonical = normalizeInterest(interest);
@@ -989,8 +989,8 @@ export function getRelatedInterests(interest: string): string[] {
     // Food & drink cluster
     'cooking': ['baking', 'foodie', 'bbq', 'coffee', 'wine'],
     'baking': ['cooking', 'foodie', 'coffee', 'tea'],
-    'coffee': ['tea', 'cooking', 'foodie'],
-    'tea': ['coffee', 'wellness', 'foodie'],
+    'coffee': ['cooking', 'foodie', 'baking'],
+    'tea': ['wellness', 'foodie', 'meditation'],
     'wine': ['foodie', 'cooking', 'craft-beer', 'cocktails'],
     'craft-beer': ['wine', 'cocktails', 'foodie'],
     'cocktails': ['wine', 'craft-beer', 'foodie'],

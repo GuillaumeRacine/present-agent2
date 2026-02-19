@@ -112,6 +112,17 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       let budget = constraintsBudget || listenerBudget || meaningListenerBudget || { min: 0, max: 1000 };
       this.log(`Budget source: ${constraintsBudget ? 'constraints' : listenerBudget ? 'listener-via-constraints' : meaningListenerBudget ? 'listener-via-meaning' : 'default'} ($${budget.min}-$${budget.max})`);
 
+      // Normalize "up to X" budgets: when min is very low relative to max,
+      // the user is saying "I can spend up to X" — not "I want something free."
+      // Raise effective min for SCORING (not filtering) to bias toward upper range.
+      // Examples: "up to $120" → effective scoring range $48-$120 (midpoint ~$84)
+      //           "$50-80" → unchanged (midpoint $65)
+      if (budget.min < budget.max * 0.25 && budget.max > 20) {
+        const effectiveMin = Math.round(budget.max * 0.4);
+        this.log(`Budget normalization: "up to $${budget.max}" → scoring range $${effectiveMin}-$${budget.max} (was $${budget.min}-$${budget.max})`);
+        budget = { ...budget, min: effectiveMin };
+      }
+
       // Apply strict budget enforcement from Bar Raiser if provided
       if (input.barRaiserFeedback?.budgetEnforcement) {
         budget = {
@@ -361,6 +372,32 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         candidate.scores.hybridScore += 0.08 * attrScore;
       }
       this.log(`Archetype boost applied: ${archetype} (${desiredAttrs.length} attributes)`);
+    }
+
+    // Apply competing interest penalty — penalize products that match a
+    // competing interest but NOT the user's stated interest in their title.
+    // Example: coffee user gets tea products → tea products penalized if
+    // their title contains "tea" but not "coffee".
+    const competingInterests: Record<string, string[]> = {
+      coffee: ['tea', 'herbal'],
+      tea: ['coffee', 'espresso'],
+    };
+    const statedInterests = params.discoveryHints.interestPathways || [];
+    for (const stated of statedInterests) {
+      const competitors = competingInterests[stated.toLowerCase()];
+      if (!competitors) continue;
+
+      for (const candidate of finalCandidates) {
+        const titleLower = (candidate.product.title || '').toLowerCase();
+        const hasStated = titleLower.includes(stated.toLowerCase());
+        const hasCompeting = competitors.some(c => titleLower.includes(c));
+
+        if (hasCompeting && !hasStated) {
+          // Product matches a competing interest but NOT the stated one
+          candidate.scores.hybridScore *= 0.5; // 50% penalty
+          this.log(`Competing interest penalty: "${candidate.product.title}" matches [${competitors.filter(c => titleLower.includes(c)).join(',')}] but not "${stated}"`);
+        }
+      }
     }
 
     // Sort by hybrid score
