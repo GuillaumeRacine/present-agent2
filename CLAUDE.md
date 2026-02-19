@@ -81,6 +81,44 @@ User Query → Listener → Memory → Relationship → Constraints → Meaning
 | **[src/.claude/PROJECT_STATUS.md](src/.claude/PROJECT_STATUS.md)** | Detailed version history, enrichment stats |
 | **[src/.claude/CODEBASE_SUMMARY.md](src/.claude/CODEBASE_SUMMARY.md)** | Code patterns, agent flow, key files |
 | **[src/.claude/RECOMMENDATION_AGENT_WORKFLOW.md](src/.claude/RECOMMENDATION_AGENT_WORKFLOW.md)** | Deep-dive into multi-agent philosophy |
+| **[data/quality_tests/latest.md](data/quality_tests/latest.md)** | Latest quality test report (human/LLM-readable) |
+| **[data/quality_tests/latest.json](data/quality_tests/latest.json)** | Latest quality test data (structured, for analysis) |
+
+---
+
+## Quality Test Trail
+
+All quality test runs are saved to `data/quality_tests/` with timestamped files:
+
+```
+data/quality_tests/
+├── latest.md                        # Symlink to most recent report
+├── latest.json                      # Symlink to most recent data
+├── run_YYYYMMDD_HHMMSS.md          # Human/LLM-readable report per run
+├── run_YYYYMMDD_HHMMSS.json        # Structured data per run (scores, recs, timings)
+└── run_YYYYMMDD_HHMMSS_raw/        # Full API responses per persona/turn
+    ├── vague-gift_turn1.json
+    ├── vague-gift_turn2.json
+    ├── dad-coffee_turn1.json
+    └── ...
+```
+
+**For agents:** Read `data/quality_tests/latest.md` to understand current recommendation quality. Compare across runs to track progress. Each report includes:
+- Per-persona Bar Raiser scores with dimension breakdowns
+- Full product recommendations with reasoning text
+- Automated evaluation checks (budget respect, keyword avoidance, giver leakage)
+- Agent timing breakdowns per turn
+- Clarification questions asked and answered
+
+**Run tests:** `python3 scripts/test_quality.py` (requires backend on port 3001)
+**Run one persona:** `python3 scripts/test_quality.py --persona dad`
+**List personas:** `python3 scripts/test_quality.py --list`
+
+**Known issues (as of v3.2.0):**
+- "unknown shopper" giver reference leakage in storyteller reasoning (5/5 personas)
+- Budget not respected for yoga wife ($120 budget, gets $53-58 products)
+- Tea products appearing for coffee dad (interest overlap)
+- Bar Raiser avg ~58/100 (target >=60)
 
 ---
 
