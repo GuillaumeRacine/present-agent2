@@ -7,6 +7,9 @@
 ## Quick Links
 
 - **CLAUDE.md** - Complete context for LLM agents
+- **docs/CURRENT_DOCS.md** - Authoritative active documentation index
+- **docs/PRODUCT_INVENTORY_PLAYBOOK.md** - Short-term inventory expansion plan
+- **docs/CANONICAL_PRODUCT_SCHEMA.md** - Connector output contract
 - **GitHub:** `GuillaumeRacine/present-agent2` (private)
 - **Original:** `/Volumes/Crucial/X8/Code/Present/Agent2/`
 - **Vault:** `/Users/gui/Obs_Vault/1_Projects/Present_Agent2/`

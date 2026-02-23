@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "run_id": "20260219_122212",
+    "timestamp": "2026-02-19T12:22:12.076324",
+    "date_human": "February 19, 2026 at 12:22 PM",
+    "version": "3.2.0",
+    "api_url": "http://localhost:3001/api/recommend",
+    "persona_count": 1,
+    "persona_ids": [
+      "dad-coffee"
+    ]
+  },
+  "results": [
+    {
+      "persona_id": "dad-coffee",
+      "persona_name": "Birthday for Coffee-Loving Dad",
+      "persona_description": "Tests interest precision: should return coffee + outdoor products, not tea/furniture.",
+      "session_id": "test-dad-coffee-1771521732",
+      "initial_query": "I need a birthday gift for my dad. He loves coffee and is pretty outdoorsy. Budget around $50-80.",
+      "expected": {
+        "should_clarify": false,
+        "min_bar_raiser": 60,
+        "interests": [
+          "coffee",
+          "outdoors"
+        ],
+        "budget": {
+          "min": 50,
+          "max": 80
+        },
+        "avoid_keywords": [
+          "tea",
+          "yoga",
+          "jewelry"
+        ]
+      },
+      "turns": [
+        {
+          "turn": 1,
+          "error": "Remote end closed connection without response"
+        }
+      ],
+      "recommendations": {},
+      "evaluation": [],
+      "error": "Remote end closed connection without response"
+    }
+  ],
+  "summary": {
+    "bar_raiser_avg": null,
+    "bar_raiser_scores": {
+      "dad-coffee": null
+    },
+    "total_checks": 0,
+    "checks_passed": 0,
+    "avg_response_time_s": 0.0
+  }
+}

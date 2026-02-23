@@ -444,6 +444,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         CALL db.index.vector.queryNodes('product_embedding', $vectorLimit, $queryEmbedding)
         YIELD node AS product, score AS vectorScore
         WHERE product.price >= $budgetMin AND product.price <= $budgetMax
+          AND product.available = true
 
         WITH product, vectorScore
 
@@ -586,6 +587,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         CALL db.index.vector.queryNodes('product_embedding', $vectorLimit, $queryEmbedding)
         YIELD node AS product, score AS vectorScore
         WHERE product.price >= $budgetMin AND product.price <= $budgetMax
+          AND product.available = true
 
         WITH product, vectorScore
 
@@ -694,6 +696,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         UNWIND $interests AS interestName
         MATCH (i:Interest {name: interestName})<-[mi:MATCHES_INTEREST]-(product:Product)
         WHERE product.price >= $budgetMin AND product.price <= $budgetMax
+          AND product.available = true
 
         WITH product,
           COLLECT(DISTINCT i.name) AS matchedInterestNames,
@@ -1219,6 +1222,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         YIELD node AS product, score AS fulltextScore
         WHERE product.price >= $budgetMin
           AND product.price <= $budgetMax
+          AND product.available = true
           AND fulltextScore > 0.5
 
         // Extract matched terms from product text

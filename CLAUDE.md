@@ -64,6 +64,9 @@ User Query → Listener → Memory → Relationship → Constraints → Meaning
 
 | File | Purpose |
 |------|---------|
+| **[docs/CURRENT_DOCS.md](docs/CURRENT_DOCS.md)** | Authoritative list of active docs (use this before any other docs) |
+| **[docs/PRODUCT_INVENTORY_PLAYBOOK.md](docs/PRODUCT_INVENTORY_PLAYBOOK.md)** | Short-term product expansion execution plan |
+| **[docs/CANONICAL_PRODUCT_SCHEMA.md](docs/CANONICAL_PRODUCT_SCHEMA.md)** | Canonical connector schema + validation gates |
 | **[docs/DATA_SOURCES.md](docs/DATA_SOURCES.md)** | Product catalog, enrichment pipeline, data locations |
 | **[docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md)** | Neo4j nodes, relationships, indexes, vector embeddings |
 | **[docs/LOCAL_INFRASTRUCTURE.md](docs/LOCAL_INFRASTRUCTURE.md)** | Docker setup, start-local.sh, enrichment pipeline |
@@ -156,11 +159,12 @@ LOG_LEVEL=info
 ## For LLM Agents
 
 **Reading order:**
-1. This file (project overview + doc index)
-2. `docs/AGENT_REGISTRY.md` (understand the agents)
-3. `src/.claude/CODEBASE_SUMMARY.md` (code patterns)
-4. `docs/DATABASE_SCHEMA.md` (data model)
-5. `docs/CONTEXT_INDEX.md` (Guillaume's full context system)
+1. `docs/CURRENT_DOCS.md` (active docs only)
+2. This file (project overview + doc index)
+3. `docs/AGENT_REGISTRY.md` (understand the agents)
+4. `src/.claude/CODEBASE_SUMMARY.md` (code patterns)
+5. `docs/DATABASE_SCHEMA.md` (data model)
+6. `docs/CONTEXT_INDEX.md` (Guillaume's full context system)
 
 **Key files:** `src/services/orchestrator.ts` (main workflow), `src/services/agents/explorer.ts` (hybrid search), `src/services/agents/storyteller.ts` (reasoning), `src/services/conversation/answer-merger.ts` (clarification flow), `src/server.ts` (API)
 

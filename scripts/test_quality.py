@@ -190,7 +190,7 @@ def extract_full_recommendation(r):
         "price": prod.get('price', r.get('price', '?')),
         "currency": prod.get('currency', r.get('currency', 'USD')),
         "brand_url": prod.get('vendor', r.get('vendor', r.get('brandUrl', '?'))),
-        "product_url": prod.get('productUrl', r.get('productUrl', prod.get('product_url', ''))),
+        "product_url": prod.get('url', prod.get('productUrl', r.get('productUrl', prod.get('product_url', prod.get('id', ''))))),
         "confidence": r.get('confidence', '?'),
         "tags": r.get('tags', []),
         "reasoning": r.get('reasoning', r.get('whyThisGift', '')),
@@ -278,6 +278,18 @@ def evaluate_persona(persona, result):
             "expected": "no 'unknown shopper' in reasoning",
             "actual": "LEAKAGE DETECTED" if has_leakage else "clean",
             "passed": not has_leakage,
+        })
+
+    # Check: Product URLs present (conversion-critical)
+    if recs:
+        urls = [r.get('product_url', '') for r in recs]
+        valid_urls = [u for u in urls if u and u.startswith('http')]
+        all_have_urls = len(valid_urls) == len(recs)
+        checks.append({
+            "check": "product_urls",
+            "expected": f"all {len(recs)} recs have valid URLs",
+            "actual": f"{len(valid_urls)}/{len(recs)} have URLs",
+            "passed": all_have_urls,
         })
 
     return checks
@@ -598,7 +610,9 @@ def generate_markdown_report(results, run_meta):
                 conf = item.get('confidence', '?')
                 conf_str = f"{conf:.2f}" if isinstance(conf, float) else str(conf)
                 tags = ', '.join(item.get('tags', [])[:4])
-                lines.append(f"| {i+1} | {item['title']} | ${item['price']} | {vendor} | {conf_str} | {tags} |")
+                product_url = item.get('product_url', '')
+                title_display = f"[{item['title']}]({product_url})" if product_url else item['title']
+                lines.append(f"| {i+1} | {title_display} | ${item['price']} | {vendor} | {conf_str} | {tags} |")
 
             lines.append("")
 

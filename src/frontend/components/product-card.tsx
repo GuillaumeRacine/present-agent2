@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, ExternalLink } from 'lucide-react';
 
 interface ProductCardProps {
   rank: number;
@@ -12,6 +12,7 @@ interface ProductCardProps {
     price: number;
     vendor: string;
     imageUrl?: string;
+    url?: string;
   };
   reasoning: string;
   confidence: number;
@@ -72,7 +73,18 @@ export function ProductCard({
           <div className="flex items-start gap-2">
             <span className="text-xs text-muted-foreground shrink-0">#{rank}</span>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm sm:text-base font-medium text-foreground line-clamp-2">{product.title}</h3>
+              {(product.url || product.id?.startsWith('http')) ? (
+                <a
+                  href={product.url || product.id}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm sm:text-base font-medium text-foreground hover:text-primary hover:underline line-clamp-2 transition-colors"
+                >
+                  {product.title}
+                </a>
+              ) : (
+                <h3 className="text-sm sm:text-base font-medium text-foreground line-clamp-2">{product.title}</h3>
+              )}
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
                 <span className="truncate">{product.vendor}</span>
                 <span className="hidden sm:inline">·</span>
@@ -101,35 +113,47 @@ export function ProductCard({
             </span>
           </div>
 
-          {/* Feedback actions */}
-          {onFeedback && (
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                disabled={feedbackBusy}
-                onClick={() => onFeedback('like')}
-                className="text-xs px-2 py-1 border border-border hover:border-green-500 hover:text-green-600 transition-colors"
-                aria-label="I like this recommendation"
+          {/* Actions */}
+          <div className="flex items-center gap-2 pt-2 flex-wrap">
+            {(product.url || product.id?.startsWith('http')) && (
+              <a
+                href={product.url || product.id}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs px-3 py-1 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center gap-1"
               >
-                👍 Like
-              </button>
-              <button
-                disabled={feedbackBusy}
-                onClick={() => onFeedback('dislike')}
-                className="text-xs px-2 py-1 border border-border hover:border-red-500 hover:text-red-600 transition-colors"
-                aria-label="I don't like this recommendation"
-              >
-                👎 Dislike
-              </button>
-              <button
-                disabled={feedbackBusy}
-                onClick={() => onFeedback('purchase')}
-                className="text-xs px-2 py-1 border border-border hover:border-primary hover:text-primary transition-colors"
-                aria-label="I purchased this"
-              >
-                🛒 Purchased
-              </button>
-            </div>
-          )}
+                View Product <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            {onFeedback && (
+              <>
+                <button
+                  disabled={feedbackBusy}
+                  onClick={() => onFeedback('like')}
+                  className="text-xs px-2 py-1 border border-border hover:border-green-500 hover:text-green-600 transition-colors"
+                  aria-label="I like this recommendation"
+                >
+                  👍 Like
+                </button>
+                <button
+                  disabled={feedbackBusy}
+                  onClick={() => onFeedback('dislike')}
+                  className="text-xs px-2 py-1 border border-border hover:border-red-500 hover:text-red-600 transition-colors"
+                  aria-label="I don't like this recommendation"
+                >
+                  👎 Dislike
+                </button>
+                <button
+                  disabled={feedbackBusy}
+                  onClick={() => onFeedback('purchase')}
+                  className="text-xs px-2 py-1 border border-border hover:border-primary hover:text-primary transition-colors"
+                  aria-label="I purchased this"
+                >
+                  🛒 Purchased
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

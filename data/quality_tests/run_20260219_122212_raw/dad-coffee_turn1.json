@@ -1,0 +1,9 @@
+{
+  "error": "Remote end closed connection without response",
+  "_wall_time": 0.1208200454711914,
+  "_request": {
+    "userQuery": "I need a birthday gift for my dad. He loves coffee and is pretty outdoorsy. Budget around $50-80.",
+    "userId": "test-dad-coffee",
+    "sessionId": "test-dad-coffee-1771521732"
+  }
+}
