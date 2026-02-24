@@ -181,7 +181,7 @@ if check_stage 5; then
 
     # Must run from src/ directory for imports
     cd "$SRC_DIR"
-    tsx ../scripts/pipeline/load_products.ts $LIVE $EMBED $WIPE --yes \
+    npx tsx scripts/pipeline/load_products.ts $LIVE $EMBED $WIPE --yes \
         || { log_stage 5 "FAILED" "Neo4j Load + Embeddings"; exit 1; }
     cd "$PROJECT_ROOT"
     log_stage 5 "DONE" "Neo4j Load + Embeddings"
@@ -196,19 +196,19 @@ if check_stage 5 && [ -n "$LIVE" ]; then
     cd "$SRC_DIR"
 
     echo "  Running interest expansion..."
-    tsx ../scripts/expand-interests.ts --live 2>&1 | tail -5 || true
+    npx tsx ../scripts/expand-interests.ts --live 2>&1 | tail -5 || true
 
     echo "  Running category expansion..."
-    tsx ../scripts/expand-categories.ts --live 2>&1 | tail -5 || true
+    npx tsx ../scripts/expand-categories.ts --live 2>&1 | tail -5 || true
 
     echo "  Running occasion expansion..."
-    tsx ../scripts/expand-occasions.ts --live 2>&1 | tail -5 || true
+    npx tsx ../scripts/expand-occasions.ts --live 2>&1 | tail -5 || true
 
     echo "  Running relationship expansion..."
-    tsx ../scripts/expand-relationships.ts --live 2>&1 | tail -5 || true
+    npx tsx ../scripts/expand-relationships.ts --live 2>&1 | tail -5 || true
 
     echo "  Running attribute expansion..."
-    tsx ../scripts/expand-attributes.ts --live 2>&1 | tail -5 || true
+    npx tsx ../scripts/expand-attributes.ts --live 2>&1 | tail -5 || true
 
     cd "$PROJECT_ROOT"
     log_stage "5b" "DONE" "Enrichment Pipeline"
