@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-**Version**: 2.2.0 | **Last Updated**: November 26, 2025
+**Version**: 2.5.0 | **Last Updated**: February 24, 2026
 
 ---
 
@@ -11,7 +11,7 @@ Present-Agent2/
 ├── src/
 │   ├── services/
 │   │   ├── agents/           # 10 specialized recommendation agents
-│   │   ├── conversation/     # Conversation state management
+│   │   ├── conversation-persister.ts # Conversation state management
 │   │   └── orchestrator.ts   # Agent coordination
 │   ├── lib/                  # Shared utilities
 │   ├── types/                # TypeScript type definitions
@@ -172,7 +172,7 @@ Agents touched: Listener, Validator
 
 ## Current Status
 
-- **Version**: 2.2.0 (Production Ready)
-- **Products**: 41,704
-- **Attribute Coverage**: 99.7%
+- **Version**: 2.5.0 (Production Ready)
+- **Products**: 88,674
+- **Attribute Coverage**: 74.6%
 - **Tests**: 190/190 passing

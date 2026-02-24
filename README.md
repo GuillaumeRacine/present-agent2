@@ -36,7 +36,7 @@ Present-Agent2 uses a 10-agent architecture to understand context, analyze relat
 - **Backend**: Node.js, TypeScript, Express
 - **Frontend**: Next.js 15, React 19, Tailwind CSS
 - **Database**: Neo4j (graph + vector)
-- **AI**: OpenAI GPT-4, Cohere embeddings
+- **AI**: OpenAI GPT-4o-mini (chat) with Anthropic fallback, plus OpenAI text embeddings
 - **Testing**: Custom persona framework
 
 ## Quick Start
@@ -45,8 +45,8 @@ Present-Agent2 uses a 10-agent architecture to understand context, analyze relat
 
 - Node.js 18+ and npm
 - Neo4j Aura account or local Neo4j instance
-- OpenAI API key
-- Cohere API key (optional, for embeddings)
+- OpenAI API key (required for chat + embeddings)
+- ANTHROPIC_API_KEY (optional fallback model)
 
 ### Installation
 
@@ -225,19 +225,17 @@ See [docs/API.md](docs/API.md) for complete API documentation.
 
 ## Current Status
 
-**✅ Production Ready - v2.4.0 - Enrichment Automation Active**
-**📈 Live enrichment in progress:** see `ENRICHMENT_STATUS.md` for real-time monitoring.
+**✅ Production Ready - v2.5.0 - Multi-LLM Enrichment Complete**
+**📈 Enrichment status:** complete (December 8, 2025). See `docs/reports/MULTI_LLM_ENRICHMENT_FINAL_REPORT.md`.
 
-### Data (December 6, 2025)
+### Data (December 8, 2025)
 - **88,674 products** in Neo4j catalog
 - **Interest coverage**: 99.3% (88,053 products) ✅
 - **Occasion coverage**: 84.6% (75,060 products) ✅
-- **Attribute coverage**: 53.2% (47,139 products) ⚡ **ENRICHING**
-  - **Active enrichment**: 1,660/41,535 products done (4%)
-  - **Target**: 95%+ coverage by December 7, 2025
-  - **ETA**: 5-7 hours (~03:00-05:00 AM PST)
-  - **Cost so far**: $0.048 (estimated total: ~$0.08)
-  - **Monitor**: `./scripts/monitor-enrichment.sh`
+- **Attribute coverage**: 74.6% (66,134 products) ✅ **COMPLETED**
+  - **Enrichment campaign**: 29,124 products enriched with 99.99% success
+  - **Final cost**: $1.12
+  - **Monitor**: no active enrichment run (historical runbooks available in docs)
 
 ### Recommendation System
 - **10-agent architecture** fully operational
@@ -287,7 +285,7 @@ See [docs/API.md](docs/API.md) for complete API documentation.
 - [Runbooks](docs/runbooks/) - Operational procedures
 - [Data Status](docs/reports/DATA_STATUS_CURRENT.md) - Current metrics
 - [Monitoring Guide](docs/guides/MONITORING.md) - System monitoring
-- [Enrichment Status](ENRICHMENT_STATUS.md) - Live enrichment tracking
+- [Enrichment Status](ENRICHMENT_STATUS.md) - Historical enrichment status
 
 #### For Product/QA
 - [Testing Executive Summary](docs/reports/TESTING_EXECUTIVE_SUMMARY.md) - Quality overview
@@ -334,7 +332,7 @@ npm run build            # Build for production
 
 ### Enrichment Monitoring
 
-Monitor the active enrichment process:
+Monitor historical enrichment artifacts (no active enrichment run is currently in progress):
 
 ```bash
 # Real-time progress monitoring
@@ -429,7 +427,7 @@ For questions or issues, please open a GitHub issue.
 
 ---
 
-**Version**: 2.4.0 - Enrichment Automation
+**Version**: 2.5.0 - Multi-LLM Enrichment Complete
 **Last Updated**: December 6, 2025
-**Status**: Production Ready - Active Enrichment (53.2% → 95%+ target), 190/190 Tests Passing
-**Enrichment Monitoring**: `./scripts/monitor-enrichment.sh` | See `ENRICHMENT_STATUS.md` for details
+**Status**: Production Ready - enrichment complete (74.6% attributes), 190/190 Tests Passing
+**Enrichment Monitoring**: `docs/reports/MULTI_LLM_ENRICHMENT_FINAL_REPORT.md` (historical)

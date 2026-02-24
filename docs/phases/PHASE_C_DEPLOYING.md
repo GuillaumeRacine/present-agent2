@@ -1,6 +1,8 @@
-# Phase C: LLM Interest Extraction - DEPLOYING 🚀
+# Phase C: LLM Interest Extraction (Historical)
 
-**Status**: In Progress (Batch 1/42)
+> Historical record: this deployment run is complete and retained for provenance/replay reference.
+
+**Status**: Archived (historical runbook snapshot)
 **Started**: October 29, 2025, 17:30
 **Est. Completion**: November 1, 2025, 11:30
 **Background Process**: 38d96e

@@ -54,12 +54,12 @@ Implementation complete:
 **Core Architecture:**
 - Neo4j graph database for all data (products, facets, categories, users, relationships, occasions)
 - Vector embeddings (OpenAI) for semantic product search
-- Cohere for re-ranking recommendations
+- Graph- and vector-based reranking with production-calibrated weights
 - Node.js/TypeScript backend
 - Conversational interface to extract user preferences
 
 **Data Available:**
-- 41,686 products with rich metadata
+- 88,674 products with rich metadata
 - 105,731 facets (price_band, interest, material, occasion) with confidence scores
 - 27 canonical categories
 - Products from 9 different vendor sources
@@ -143,7 +143,7 @@ try {
 
 ## Remember
 
-This is a prototype to test core product assumptions. Focus on:
+This is production-ready. Focus on:
 ✅ Recommendation quality and relevance
 ✅ Observable, debuggable system
 ✅ Fast iteration and testing

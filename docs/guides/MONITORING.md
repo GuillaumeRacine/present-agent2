@@ -2,11 +2,14 @@
 
 **Last Updated**: October 29, 2025
 
+> Historical reference: this document captures the legacy Phase C deployment/runbook; it is used for re-runs only and is currently not running.
+> Legacy scripts below assume the historical 41,686-product Phase C dataset; current operational runs use the live 88,674-product catalog.
+
 ---
 
 ## Quick Reference
 
-### Phase C Deployment Monitoring
+### Historical Phase C Deployment Monitoring
 
 ```bash
 # Check if process is running
@@ -66,7 +69,7 @@ ps aux | grep "next dev"
 
 ## Deployment Monitoring
 
-### Phase C Progress
+### Historical Phase C Progress
 
 **Real-time monitoring**:
 ```bash
@@ -358,7 +361,7 @@ else
   echo "✅ Errors: $ERROR_COUNT (normal)"
 fi
 
-# Phase C deployment
+# Historical Phase C deployment
 if [ -f "data/interest-rebuild-state.json" ]; then
   PROCESSED=$(cat data/interest-rebuild-state.json | python3 -c "import json,sys; print(json.load(sys.stdin).get('processedProducts', 0))" 2>/dev/null || echo 0)
   echo "🚀 Phase C: $PROCESSED/41686 products"

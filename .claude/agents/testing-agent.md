@@ -195,7 +195,7 @@ grep "conversation_id:12345" bug-reproduction.log
 ### 3. Isolate Root Cause
 - Is it data-related? (bad product data, missing facets)
 - Is it logic-related? (wrong algorithm, bad threshold)
-- Is it integration-related? (Neo4j, OpenAI, Cohere)
+- Is it integration-related? (Neo4j, OpenAI, Anthropic)
 - Is it environment-related? (config, dependencies)
 
 ### 4. Create Minimal Test Case
@@ -307,7 +307,7 @@ logger.debug('DEBUG: recommendation_score', {
   productId: product.id,
   graphScore: scores.graph,
   vectorScore: scores.vector,
-  cohereScore: scores.cohere,
+  llmScore: scores.llm,
   finalScore: scores.final,
   // Include all variables that might be relevant
 });
@@ -411,7 +411,7 @@ When you find a bug, create GitHub issue with:
 **Test Environment:**
 - Neo4j test database (separate from prod data)
 - OpenAI API (with caching to avoid cost)
-- Cohere API (with caching)
+- OpenAI and Anthropic LLM APIs (with caching)
 - Local development setup
 
 ## Example Workflow

@@ -431,7 +431,7 @@ Status: needs-review
 
 ### Technical Approach
 Use Cypher for graph traversal, cosine similarity for vectors,
-weighted scoring: 0.4 * graph + 0.4 * vector + 0.2 * cohere
+weighted scoring: 0.7 * graph + 0.3 * vector (+ text fallback when needed)
 
 ### Interfaces
 ```typescript
@@ -480,8 +480,8 @@ Status: done ✅
 
 ## Current Project Phase
 
-**Phase:** Core recommendation engine prototype
-**Focus:** Validate product assumptions
-**Priority:** Recommendation quality > everything else
+**Phase:** Production optimization
+**Focus:** Strengthen recommendation quality, reliability, and UX
+**Priority:** Quality > reliability > experimentation
 
-Use this workflow to build and validate the recommendation engine systematically!
+Use this workflow to ship and harden user-facing recommendation features.

@@ -50,7 +50,7 @@ Every decision must map back to `product_vision.md`:
 **After Product Manager:**
 - ✅ Does spec address core product assumptions?
 - ✅ Are success metrics tied to product vision?
-- ✅ Is scope appropriate for prototype phase?
+- ✅ Is scope appropriate for production rollout?
 - ❌ Are we solving the right problem?
 - ❌ Are assumptions testable?
 
@@ -73,7 +73,7 @@ Every decision must map back to `product_vision.md`:
 - ✅ Is it observable (can we debug/measure)?
 - ✅ Does it enable product assumption testing?
 - ❌ Are we building beyond requirements?
-- ❌ Is code too complex for prototype phase?
+- ❌ Is code too complex for production rollout?
 
 **After Testing Agent:**
 - ✅ Do tests validate product assumptions?
@@ -159,7 +159,7 @@ Every decision must map back to `product_vision.md`:
 
 3. **Scope Creep Detected**
    - Features beyond product vision scope
-   - Example: Building user auth when vision says "prototype phase, deferred"
+- Example: Building user auth when vision says "deferred" in scope
 
 4. **Conflicting Micro Decisions**
    - Multiple agents propose contradictory approaches
@@ -248,7 +248,7 @@ Ask yourself at each review:
 1. "Does this help us validate that graph + vector > alternatives?"
 2. "Can we measure recommendation quality with this approach?"
 3. "Does this reduce user effort while maintaining relevance?"
-4. "Are we building for prototype validation or production scale?"
+4. "Are we optimizing for user value under production constraints?"
 5. "Does this maintain transparency (rationales) as core feature?"
 
 ### Technical-Centric Questions
@@ -297,7 +297,7 @@ Ask yourself at each review:
 
 **Reasoning:**
 - Adding complexity (Occasion nodes) before validating basic graph approach
-- Vision says "prototype phase" but we're building production-scale schema
+- We are in production rollout, so avoid building outside validated scope
 - Risk: Over-engineering before proving core concept
 
 **Alternative:** Start simple (Product + Facet), add Occasion later if needed
@@ -398,7 +398,7 @@ User Simulation validates UX
 2. **Don't block unnecessarily** - Approve with concerns if not critical
 3. **Don't redesign** - Challenge and escalate, don't dictate solutions
 4. **Don't delay** - Fast feedback, decisive recommendations
-5. **Don't forget context** - This is a prototype, not production
+5. **Don't forget context** - This is production-facing and should not be treated as a disposable internal experiment
 
 ## Remember
 

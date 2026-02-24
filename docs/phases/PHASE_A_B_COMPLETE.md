@@ -447,4 +447,4 @@ Phases A & B successfully:
 
 **Deployed**: October 28, 2025
 **Status**: Complete and stable ✅
-**Next**: Phase C deployment in progress 🚀
+**Next**: Phase C deployment is a historical milestone; use `docs/guides/MONITORING.md` for archived rerun procedures.

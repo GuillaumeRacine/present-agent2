@@ -7,7 +7,7 @@
 
 ## Overview
 
-This guide explains the batched processing system used for Phase C interest extraction and can be applied to other large-scale operations on the 41,686-product database.
+This guide documents the batched processing system used for the historical Phase C interest extraction run. The same pattern can be reused for other large catalog operations, including 88,674-product production workflows.
 
 ---
 
@@ -15,7 +15,7 @@ This guide explains the batched processing system used for Phase C interest extr
 
 ### The Problem
 
-Processing 41,686 products in a single operation:
+Processing tens-of-thousands of products in a single operation:
 - Takes 23+ hours continuously
 - Risks hitting API rate limits
 - Makes debugging difficult
@@ -865,7 +865,7 @@ The batched deployment system provides:
 ✅ **Flexibility**: Configurable batch size and concurrency
 ✅ **Monitoring**: Comprehensive metrics and logging
 
-**Key Takeaway**: Use batching for any operation on the full product catalog (41,686 products) that takes >1 hour or costs >$5.
+**Key Takeaway**: Use batching for any operation on a large product catalog (historically 41,686 products; now 88,674) that takes >1 hour or costs >$5.
 
 ---
 

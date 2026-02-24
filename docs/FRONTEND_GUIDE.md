@@ -106,7 +106,7 @@ FRONTEND_URL=http://localhost:3001
 ### 📦 Products Explorer
 
 **What it does:**
-- Browse all 41,686 products in the database
+- Browse all 88,674 products in the database
 - Understand product relationships
 - See facets and interests
 - Filter and search
@@ -161,7 +161,7 @@ FRONTEND_URL=http://localhost:3001
                       │
 ┌─────────────────────▼────────────────────────────────┐
 │                  Neo4j Database                       │
-│  - 41,686 Products                                    │
+│  - 88,674 Products                                   │
 │  - 105,731 Facets                                     │
 │  - 27 Categories                                      │
 │  - Vector embeddings                                  │

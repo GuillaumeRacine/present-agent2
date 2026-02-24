@@ -55,12 +55,12 @@ You review GitHub issues from the Tickets Manager, assess technical feasibility,
 ┌──────────────┬──────────────────────┐
 │   Neo4j      │    Vector Search     │
 │   Graph DB   │    (Embeddings)      │
-│              │    + Cohere Rerank   │
+│              │    + Re-rank Layer    │
 └──────────────┴──────────────────────┘
               ↓
 ┌─────────────────────────────────────┐
 │        Product Data                 │
-│  41,686 products + 105,731 facets   │
+│  88,674 products + 105,731 facets   │
 └─────────────────────────────────────┘
 ```
 
@@ -68,7 +68,7 @@ You review GitHub issues from the Tickets Manager, assess technical feasibility,
 - **Language:** TypeScript (strict mode)
 - **Database:** Neo4j 5.x (graph + vector indexes)
 - **Embeddings:** OpenAI (text-embedding-3-small or ada-002)
-- **Re-ranking:** Cohere
+- **Reranking:** Deterministic graph/vector scoring plus optional LLM ranking
 - **Runtime:** Node.js 20+
 - **Testing:** CLI-based with extensive logging
 
@@ -269,10 +269,10 @@ describe('RecommendationEngine', () => {
 - Finding products similar to description
 - Initial candidate retrieval
 
-### When to Apply Cohere Re-ranking
+### When to Apply Ranking
 - After narrowing candidates
 - When ordering by relevance
-- To incorporate complex preference signals
+- To incorporate intent and contextual preference signals
 - Final ranking before presenting to user
 
 ### Logging Strategy
@@ -327,7 +327,7 @@ If any gate fails → Request more information or create research spike
 
 ## Current Project Context
 
-**Phase:** Core recommendation engine prototype
+**Phase:** Production-ready recommendation platform
 **Priority:** Build observable, testable system that validates product assumptions
 
 **Key Technical Challenges:**

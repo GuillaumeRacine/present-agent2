@@ -1,7 +1,7 @@
 # Architecture Overview - Present-Agent2
 
-**Last Updated**: October 29, 2025
-**Version**: 2.1.0
+**Last Updated**: February 24, 2026
+**Version**: 2.5.0
 
 ---
 
@@ -73,9 +73,9 @@ Present-Agent2 is a sophisticated multi-agent AI system that provides personaliz
 │  ┌──────────────────────┐      ┌──────────────────────┐        │
 │  │    Neo4j Database    │      │    External APIs     │        │
 │  │                      │      │                      │        │
-│  │  • Products (~88k, see DATA_STATUS_CURRENT) │      │  • OpenAI (GPT-4)   │        │
-│  │  • Interests (710+)  │      │  • Cohere (embeds)  │        │
-│  │  • Recipients        │      │  • Anthropic        │        │
+│  │  • Products (~88k, see DATA_STATUS_CURRENT) │      │  • OpenAI (chat)    │        │
+│  │  • Interests (105 canonical + 872 synonyms) │      │  • Anthropic        │        │
+│  │  • Recipients        │      │  (fallback for chat) │        │
 │  │  • Conversations     │      │                      │        │
 │  │  • Relationships     │      │                      │        │
 │  │  • Vector indexes    │      │                      │        │
@@ -216,7 +216,7 @@ User Query: "Gift for my wine-loving mom, budget $50"
 **Recent Changes**:
 - Phase A: Expanded vector window 30→100 products
 - Phase A: Added intelligent text fallback
-- Phase C: Rebuilding interest graph (710→10,000+ interests)
+- Interest graph now uses 105 canonical interests and 872 synonyms
 
 #### 7. Validator Agent
 **Purpose**: Quality control and appropriateness
@@ -307,7 +307,7 @@ User Query: "Gift for my wine-loving mom, budget $50"
 | Node Type | Count | Status |
 |-----------|-------|--------|
 | Products | ~88k (see DATA_STATUS_CURRENT) | ✅ Complete |
-| Interests | 710 (growing) | 🚀 Phase C |
+| Interests | 105 canonical + 872 synonyms | ✅ Expanded |
 | Recipients | Variable | 📈 Growing |
 | Users | Variable | 📈 Growing |
 | Conversations | Variable | 📈 Growing |
@@ -352,7 +352,7 @@ RETURN p, graphScore
 
 **Weight**: 70% of final score
 **Advantages**: Precise, explainable, fast
-**Limitation**: Requires good interest graph (Phase C addresses this)
+**Limitation**: Requires metadata quality for long-tail products
 
 #### Tier 2: Vector Search (Secondary)
 ```cypher
@@ -407,7 +407,7 @@ const finalScore = (
 
 ---
 
-## Interest Extraction (Phase C)
+## Interest Extraction
 
 ### LLM-Based Extraction
 
@@ -559,7 +559,7 @@ Development Environment:
 ├─ Backend: localhost:3000
 ├─ Frontend: localhost:3001
 ├─ Neo4j: Aura (cloud)
-└─ APIs: External (OpenAI, Cohere)
+└─ APIs: OpenAI (primary), Anthropic (fallback)
 
 Production (Planned):
 ├─ Backend: Docker container
@@ -645,14 +645,14 @@ Production (Planned):
 - **Reasoning**: Complex relationship analysis
 - **Context window**: Handles long conversations
 
-### Why GPT-4o-mini for Phase C?
+### Why GPT-4o-mini for Meaning extraction?
 - **Cost**: 60% cheaper than GPT-4
 - **Speed**: 2x faster
 - **Quality**: Sufficient for interest extraction
-- **Scale**: Affordable for 41,686 products
+- **Scale**: Affordable across 88,674 products
 
-### Why Cohere for Embeddings?
-- **Quality**: High-quality semantic embeddings
+### Why OpenAI for Embeddings?
+- **Quality**: High-quality semantic embeddings from text-embedding-3-small
 - **Cost**: Competitive pricing
 - **Specialized**: Built for search/retrieval
 
@@ -698,10 +698,10 @@ Present-Agent2 uses a **layered, modular architecture** with:
 - Resilience (text fallback)
 - Scalability (batched processing)
 
-**Current Focus**: Phase C deployment (interest extraction)
+**Current Focus**: Quality, reliability, and UX hardening
 **Next Focus**: Performance optimization, production hardening
 
 ---
 
-**Last Updated**: October 29, 2025
-**Version**: 2.1.0 (Phase C deploying)
+**Last Updated**: February 24, 2026
+**Version**: 2.5.0

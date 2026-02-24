@@ -128,16 +128,16 @@ For enriching existing products:
 
 ## Current Status
 
-- **Version**: 2.4.0 (Enrichment Automation)
+- **Version**: 2.5.0 (Multi-LLM Enrichment Complete)
 - **Products in DB**: 88,674
 - **Interest Coverage**: 99.3% (88,053 products) ✅
 - **Occasion Coverage**: 84.6% (75,060 products) ✅
-- **Attribute Coverage**: 53.2% (47,139 products) - **ENRICHING** ⚡
-  - **Active**: 1,660/41,535 done (4%)
-  - **Target**: 95%+ by December 7, 2025
+- **Attribute Coverage**: 74.6% (66,134 products) ✅
+  - **Campaign complete**: Multi-LLM run (Dec 8, 2025)
+  - **Success rate**: 99.99% (3 failed enrichments)
 - **Tests**: 190/190 passing
 
-See `PROJECT_STATUS.md` for detailed status and active enrichment monitoring.
+See `PROJECT_STATUS.md` for detailed status and historical test results.
 
 ---
 

@@ -2,6 +2,8 @@
 **Generated**: 2025-11-03T20:26:00Z
 **Scope**: Interest taxonomy normalization & recommendation quality assessment
 
+> Historical snapshot: this report is archived and reflects the state at generation time. It is retained for trend/progress reference only.
+
 ---
 
 ## Executive Summary
@@ -9,7 +11,7 @@
 ### Work Completed
 1. ✅ Interest taxonomy normalized: 14,807 → 12,370 interests (merged 2,437 duplicates)
 2. ✅ Comprehensive testing completed (6 basic tests + 3 persona tests)
-3. 🔄 Orphaned products fix in progress (70/4,002 complete, ~3 hours remaining)
+3. 🔄 Orphaned products fix was in progress (70/4,002 complete, ~3 hours remaining)
 
 ### Overall System Status: **🔴 CRITICAL ISSUES**
 
@@ -93,7 +95,7 @@
 1. **Data Integrity** ❌
    - Issue: 4,012 products (9.6%) have no interest relationships
    - Impact: These products won't appear in recommendations
-   - Status: Fix in progress (70/4,002 complete)
+   - Status: Fix was in progress (70/4,002 complete)
 
 ---
 
@@ -188,7 +190,7 @@
   - Interest may not exist in taxonomy
   - Products not tagged with grilling/bbq interests
   - 4,012 orphaned products may include grilling items
-- **Fix**: Orphaned products extraction (in progress) + taxonomy audit
+- **Fix**: Orphaned products extraction (then in progress) + taxonomy audit
 
 #### 2. **No Value/Attribute-Based Matching** 🔴
 - **Problem**: Can't match "experiential," "sentimental," "personalized" attributes

@@ -53,7 +53,7 @@ Enrich existing products with attributes, interests, and occasions using the hyb
 
 **Quick start:**
 ```bash
-# Monitor active enrichment
+# Monitor enrichment status (if a run is active)
 ./scripts/monitor-enrichment.sh
 
 # Run enrichment with retry

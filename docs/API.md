@@ -22,7 +22,12 @@ Generate personalized gift recommendations.
 {
   "userQuery": "Gift for my mom who loves gardening, budget $50-100",
   "userId": "user-123",
-  "sessionId": "session-abc-456"
+  "sessionId": "session-abc-456",
+  "clarifications": {
+    "giftOccasion": "birthday"
+  },
+  "skipQuestions": false,
+  "originalQuery": "Gift for my mom who loves gardening, budget $50-100"
 }
 ```
 
@@ -30,11 +35,15 @@ Generate personalized gift recommendations.
 - `userQuery` (string, required): Natural language query describing gift need
 - `userId` (string, optional): User identifier for history tracking (defaults to "anonymous")
 - `sessionId` (string, optional): Session identifier for conversation tracking (auto-generated if omitted)
+- `clarifications` (object, optional): Additional answers returned from prior clarification turns
+- `skipQuestions` (boolean, optional): Skip clarification questions and continue with best-effort recommendations
+- `originalQuery` (string, optional): Previous query value used when continuing a clarification flow
 
 **Response** (200 OK):
 ```json
 {
-  "finalRecommendations": {
+  "mode": "recommendations",
+  "recommendations": {
     "conversationalIntro": "I see you're looking for a thoughtful gift...",
     "conversationalOutro": "Let me know if you need more options!",
     "recommendations": [
@@ -48,16 +57,13 @@ Generate personalized gift recommendations.
           "vendor": "Garden Pro"
         },
         "reasoning": "This set would be perfect because...",
-        "confidenceScore": 0.92,
+        "confidence": 0.92,
         "tags": ["practical", "high-quality", "outdoor"]
       }
     ]
   },
-  "contextExtraction": {
-    "recipient": {...},
-    "occasion": "...",
-    "budget": {...}
-  },
+  "sessionId": "session-abc-456",
+  "timestamp": "2025-10-29T14:04:53.793Z",
   "performance": {
     "totalExecutionTimeMs": 25340,
     "agentTimings": {
@@ -69,6 +75,14 @@ Generate personalized gift recommendations.
   }
 }
 ```
+
+When clarification is required, `mode` may be `"clarifying"` and the payload includes:
+
+- `questions` or `naturalLanguage` questions for the UI to ask
+- `sessionId` for follow-up requests
+- `partialContext` for resumed context
+
+The response may also include `finalRecommendations` for backward compatibility.
 
 **Error Response** (400):
 ```json
@@ -85,6 +99,95 @@ Generate personalized gift recommendations.
 ```
 
 ---
+---
+
+### Authentication Endpoints
+
+The API supports optional email-based session authentication.
+
+#### POST `/api/auth/send-magic-link`
+
+Send a login link to an email address.
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "Magic link sent to your email",
+  "previewUrl": "http://localhost:3000/dev/preview"
+}
+```
+
+**Error Response** (400):
+```json
+{
+  "error": "Valid email is required"
+}
+```
+
+#### POST `/api/auth/verify-magic-link`
+
+Exchange a magic-link token for a short-lived session token.
+
+**Request Body**:
+```json
+{
+  "token": "eyJhbGciOiJI..."
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "sessionToken": "eyJhbGciOiJI...",
+  "userId": "user-123",
+  "email": "user@example.com"
+}
+```
+
+**Error Response** (401):
+```json
+{
+  "error": "Invalid or expired token"
+}
+```
+
+#### POST `/api/auth/verify-session`
+
+Validate a session token and return the linked user.
+
+**Request Body**:
+```json
+{
+  "sessionToken": "eyJhbGciOiJI..."
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "userId": "user-123",
+  "email": "user@example.com"
+}
+```
+
+Authenticated endpoints require an `Authorization: Bearer <sessionToken>` header when `AUTH_REQUIRED=true`.
+
+**Error Response** (401):
+```json
+{
+  "error": "Unauthorized"
+}
+```
 
 ### Conversation History Endpoints
 
@@ -211,10 +314,10 @@ Get product database statistics.
 **Response** (200 OK):
 ```json
 {
-  "totalProducts": 41686,
+  "totalProducts": 88674,
   "totalFacets": 105731,
   "totalCategories": 27,
-  "totalInterests": 156,
+  "totalInterests": 105,
   "topCategories": [],
   "topInterests": []
 }

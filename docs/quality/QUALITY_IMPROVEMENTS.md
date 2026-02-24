@@ -2,6 +2,8 @@
 **Date**: 2025-11-03
 **Status**: ✅ COMPLETE - Comprehensive Enhancement
 
+> Historical snapshot: this report documents the Nov 3, 2025 status and is kept for reference. Notes marked as "in progress" are time-bound to this report.
+
 ## Overview
 
 Implemented comprehensive quality improvements to address the **0% persona success rate** and dramatically improve recommendation personalization. Started with three critical quick-win fixes, then implemented a complete dual-profiling system using sub-agents.
@@ -318,7 +320,7 @@ RECIPIENT CONTEXT (THE PERSON RECEIVING THE GIFT):
 
 **Note**: Full success rate (80%+) will require:
 - Value-based matching (experiential, sentimental attributes)
-- Interest coverage (grilling gadgets, niche interests) - *in progress*
+- Interest coverage (grilling gadgets, niche interests) - *then in progress*
 
 ---
 
@@ -354,7 +356,7 @@ RECIPIENT CONTEXT (THE PERSON RECEIVING THE GIFT):
 
 ## Known Limitations
 
-These fixes address **Priority 2** issues from the quality report. **Priority 1** issue still in progress:
+These fixes address **Priority 2** issues from the quality report. **Priority 1** issue remained in progress at the time of this report:
 
 ### Not Yet Addressed (Future Work)
 

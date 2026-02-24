@@ -146,7 +146,7 @@ Interactive gift recommendation chat
 View all past conversations and performance metrics
 
 ### 3. Products - `/products`
-Explore the 41,704 products in the database
+Explore the 88,674 products in the database
 
 ---
 

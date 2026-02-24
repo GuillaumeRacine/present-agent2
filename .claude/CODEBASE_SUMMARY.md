@@ -1,7 +1,7 @@
 # Codebase Summary - Quick Reference
 
-**Last Updated**: October 29, 2025
-**Version**: 2.1.0
+**Last Updated**: February 24, 2026
+**Version**: 2.5.0
 
 ---
 
@@ -13,7 +13,7 @@ Present-Agent2/
 │   ├── services/
 │   │   ├── agents/          # 10 specialized agents
 │   │   ├── orchestrator.ts  # Agent coordination
-│   │   ├── interest-extractor.ts  # Phase C: LLM extraction
+│   │   ├── interest-extractor.ts  # LLM extraction
 │   │   ├── conversation-persister.ts  # History storage
 │   │   └── feedback-collector.ts  # Learning system
 │   ├── lib/
@@ -31,8 +31,8 @@ Present-Agent2/
 │   │   └── api/            # API proxy routes
 │   └── ...
 ├── scripts/
-│   ├── rebuild-interests-batched.sh  # Phase C deployment
-│   ├── rebuild-interests.ts  # Phase C worker
+│   ├── rebuild-interests-batched.sh  # Historical Phase C deployment
+│   ├── rebuild-interests.ts  # Phase C worker (historical)
 │   ├── test-personas.ts    # Persona testing
 │   └── ingest-products.ts  # Product data loading
 ├── docs/                   # Documentation
@@ -69,7 +69,7 @@ Present-Agent2/
 - Performance tracking
 
 **Interest Extractor** (`src/services/interest-extractor.ts`)
-- LLM-powered interest extraction (Phase C)
+- LLM-powered interest extraction (historical, completed phase)
 - Uses GPT-4o-mini
 - Extracts 3-10 interests per product
 - Relevance and confidence scoring
@@ -240,7 +240,7 @@ hybridScore(graphResults, vectorResults) {
 
 ---
 
-## Phase C Interest Extraction
+## Multi-LLM Interest Extraction
 
 ```typescript
 // src/services/interest-extractor.ts
@@ -719,7 +719,7 @@ async function executeAgent<T>(
 ### Most Important
 1. **`src/services/orchestrator.ts`** - Agent coordination (main workflow)
 2. **`src/services/agents/explorer.ts`** - Hybrid search logic
-3. **`src/services/interest-extractor.ts`** - Phase C extraction
+3. **`src/services/interest-extractor.ts`** - Interest extraction
 4. **`src/server.ts`** - API endpoints
 
 ### Configuration
@@ -732,7 +732,7 @@ async function executeAgent<T>(
 9. **`.claude/PROJECT_STATUS.md`** - LLM context
 
 ### Deployment
-10. **`scripts/rebuild-interests-batched.sh`** - Phase C deployment
+10. **`scripts/rebuild-interests-batched.sh`** - Historical deployment script
 11. **`data/interest-rebuild-state.json`** - Checkpoint state
 
 ---
@@ -757,7 +757,7 @@ tail -f logs/combined.log
 grep ERROR logs/error.log | tail -20
 ```
 
-### Check Phase C Progress
+### Historical Phase C Progress Check
 ```bash
 cat data/interest-rebuild-state.json | jq '.processedProducts'
 ```
@@ -772,5 +772,5 @@ LIMIT 10
 
 ---
 
-**Last Updated**: October 29, 2025
-**Version**: 2.1.0 (Phase C deploying)
+**Last Updated**: February 24, 2026
+**Version**: 2.5.0

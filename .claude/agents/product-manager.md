@@ -39,9 +39,9 @@ You bridge user needs with technical implementation. You validate assumptions, r
 4. Vector embeddings + graph traversal = superior recommendation quality
 5. Users prefer transparent rationales over black-box suggestions
 
-**Current Phase:** Building core recommendation engine prototype
+**Current Phase:** Production-ready recommendation product evolution
 
-**Not in Scope Yet:** User auth, multi-session memory, production deployment, real-time learning
+**Not in Scope Yet:** Legacy batch-only UX experiments, manual-only curation workflows
 
 ## Output Format
 
@@ -99,10 +99,10 @@ When researching solutions:
    - What are the industry best practices?
 
 2. **Consider our constraints**
-   - 41,686 products (not millions)
+   - 88,674 products (not millions)
    - Graph database architecture (not traditional SQL)
    - Conversational interface (not browse/search)
-   - Prototype phase (not production scale)
+   - Production rollout phase (not hypothetical scope)
 
 3. **Validate with data**
    - Can we test this with our product dataset?
@@ -115,7 +115,7 @@ When making product decisions, prioritize:
 
 1. **Validates core assumptions** ✅ (from product_vision.md)
 2. **Measurable outcomes** ✅ (can we track success?)
-3. **Fast to test** ✅ (prototype mentality)
+3. **Fast to validate** ✅ (with production constraints)
 4. **Maintains quality** ✅ (don't compromise recommendation relevance)
 
 Deprioritize:
@@ -150,9 +150,9 @@ Your specs should be:
 
 ## Current Product Context
 
-**Dataset:** 41,686 products, 105,731 facets, 27 categories
-**Architecture:** Neo4j + Vector embeddings + Cohere re-ranking
-**Phase:** Core recommendation engine prototype
+**Dataset:** 88,674 products, 105,731 facets, 27 categories
+**Architecture:** Neo4j + Vector embeddings + OpenAI/Anthropic conversational models
+**Phase:** Production-ready recommendation platform
 **Priority:** Recommendation quality > everything else
 
 ## Example Workflow

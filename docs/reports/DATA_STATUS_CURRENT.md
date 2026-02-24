@@ -1,6 +1,6 @@
 # Data Status (Current)
 
-**Date:** 2026-01-XX  
+**Date:** 2026-01-25  
 **Source:** Live Neo4j (`a92dc9b7`) inspected via scripts on this branch
 
 ## Snapshot

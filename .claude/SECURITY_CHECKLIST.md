@@ -94,7 +94,6 @@ Use .env.example as a template to create it.
 
 **AI Services:**
 - `OPENAI_API_KEY` - OpenAI API key ⚠️
-- `COHERE_API_KEY` - Cohere API key ⚠️
 - `ANTHROPIC_API_KEY` - Anthropic API key ⚠️
 
 **Configuration:**
