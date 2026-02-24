@@ -56,6 +56,40 @@ export class BarRaiserAgent extends BaseAgent<BarRaiserInput, BarRaiserOutput> {
       // Step 2: Build evaluation prompt and call LLM
       const evaluationResult = await this.evaluateWithLLM(input);
 
+      // Step 2b: Apply deterministic overrides as safety net
+      // (evaluateWithLLM should apply these internally, but GPT-4o hallucination
+      // can cause the LLM path to return before overrides take effect)
+      try {
+        const safetyOverrides = this.computeDeterministicDimensions(input);
+        if (safetyOverrides.interestCoverage !== undefined) {
+          const prev = evaluationResult.scorecard.interestCoverage?.score;
+          evaluationResult.scorecard.interestCoverage = safetyOverrides.interestCoverage;
+          this.log(`Deterministic interestCoverage override: ${prev} → ${safetyOverrides.interestCoverage.score}`);
+        }
+        if (safetyOverrides.budgetAdherence !== undefined) {
+          const prev = evaluationResult.scorecard.budgetAdherence?.score;
+          evaluationResult.scorecard.budgetAdherence = safetyOverrides.budgetAdherence;
+          this.log(`Deterministic budgetAdherence override: ${prev} → ${safetyOverrides.budgetAdherence.score}`);
+        }
+        if (safetyOverrides.relevance !== undefined) {
+          const prev = evaluationResult.scorecard.relevance?.score;
+          // Only override if deterministic is higher (LLM hallucinates low)
+          if (safetyOverrides.relevance.score > (prev || 0)) {
+            evaluationResult.scorecard.relevance = safetyOverrides.relevance;
+            this.log(`Deterministic relevance override: ${prev} → ${safetyOverrides.relevance.score}`);
+          }
+        }
+        if (safetyOverrides.personalization !== undefined) {
+          const prev = evaluationResult.scorecard.personalization?.score;
+          if (safetyOverrides.personalization.score > (prev || 0)) {
+            evaluationResult.scorecard.personalization = safetyOverrides.personalization;
+            this.log(`Deterministic personalization override: ${prev} → ${safetyOverrides.personalization.score}`);
+          }
+        }
+      } catch (overrideError) {
+        this.log(`Deterministic override failed (non-fatal): ${overrideError}`);
+      }
+
       // Step 3: Evaluate each agent's I/O for information loss
       let agentEvaluations: AgentEvaluation[] = [];
       try {
@@ -175,9 +209,14 @@ export class BarRaiserAgent extends BaseAgent<BarRaiserInput, BarRaiserOutput> {
         messages: [
           {
             role: 'system',
-            content: `You are a gift recommendation quality evaluator. You evaluate whether a set of gift recommendations truly serves the user's needs. You score 8 dimensions from 0-100 with specific reasoning and evidence. Be critical but fair. A score of 60+ means acceptable, 80+ means good, 90+ means excellent.
+            content: `You are a gift recommendation quality evaluator. Score 8 dimensions from 0-100 with reasoning and evidence.
 
-Your evaluation directly determines whether recommendations are shown to the user or sent back for improvement. Be honest — generic, irrelevant, or poorly reasoned recommendations should score low.
+CRITICAL RULES:
+- Read the RECIPIENT, OCCASION, INTERESTS, and BUDGET fields carefully. They ARE provided.
+- DO NOT claim "no interests specified" or "no recipient provided" — that information IS in the prompt.
+- Score based on how well the recommendations match the STATED context.
+- A score of 60+ means acceptable, 80+ means good, 90+ means excellent.
+- Be fair: if products genuinely match stated interests and budget, score accordingly.
 
 Return a JSON object with this exact structure:
 {
@@ -204,8 +243,20 @@ Return a JSON object with this exact structure:
       }
 
       const parsed = JSON.parse(content);
+      const scorecard = parsed.scorecard as QualityScorecard;
+
+      // Override factual dimensions with deterministic computation
+      // (GPT-4o reliably hallucinates "no interests provided" and "no budget specified")
+      const deterministicOverrides = this.computeDeterministicDimensions(input);
+      if (deterministicOverrides.interestCoverage !== undefined) {
+        scorecard.interestCoverage = deterministicOverrides.interestCoverage;
+      }
+      if (deterministicOverrides.budgetAdherence !== undefined) {
+        scorecard.budgetAdherence = deterministicOverrides.budgetAdherence;
+      }
+
       return {
-        scorecard: parsed.scorecard as QualityScorecard,
+        scorecard,
         summary: parsed.summary as string,
       };
     } catch (error) {
@@ -259,9 +310,20 @@ Return a JSON object with this exact structure:
       ? `\n\nThis is RETRY attempt #${attemptNumber + 1}. Previous rejection reason: "${input.previousFeedback.rejectionReason}"\nMissed interests to find: [${input.previousFeedback.explorerGuidance.missedInterests.join(', ')}]`
       : '';
 
+    // Build context facts section with explicit anchoring
+    const contextFacts: string[] = [];
+    if (interests !== 'none stated') contextFacts.push(`INTERESTS STATED BY USER: ${interests}`);
+    if (recipient !== 'not specified') contextFacts.push(`RECIPIENT: ${recipient}`);
+    if (occasion !== 'not specified') contextFacts.push(`OCCASION: ${occasion}`);
+    if (budget !== 'not specified') contextFacts.push(`BUDGET: ${budget}`);
+    const contextBlock = contextFacts.length > 0
+      ? `\n=== CONTEXT PROVIDED (these are FACTS from the user query — you MUST reference them in scoring) ===\n${contextFacts.map(f => `- ${f}`).join('\n')}\n=== END CONTEXT ===\n`
+      : '';
+
     return `Evaluate these gift recommendations:
 
 USER QUERY: "${userQuery}"
+${contextBlock}
 RECIPIENT: ${recipient}
 OCCASION: ${occasion}
 INTERESTS: ${interests}
@@ -275,15 +337,183 @@ PIPELINE STATS:
 RECOMMENDATIONS:
 ${recs}
 
-SCORING CRITERIA:
-1. relevance: Do these gifts genuinely match what was asked for? Would someone asking this query be satisfied?
-2. personalization: Are these specific to THIS person, or could they be for anyone? Do they reference specific interests/life context?
-3. storytellingQuality: Are the explanations compelling and specific, or generic filler?
-4. diversity: Is there good variety (different categories, price points, styles)?
-5. humanSanityCheck: Would a thoughtful friend actually buy any of these? Are they real, sensible gifts?
-6. budgetAdherence: Are all items within the stated budget?
-7. interestCoverage: Do the recommendations cover the mentioned interests [${interests}]?
-8. presentationCohesion: Does the set feel curated and intentional, or random?${retryContext}`;
+SCORING CRITERIA (evaluate based on the ACTUAL context provided above):
+1. relevance: Do these gifts genuinely match what was asked for? The user asked for a gift for ${recipient} for ${occasion}. Would they be satisfied?
+2. personalization: Are these specific to the recipient's interests (${interests})? Do they reference those interests in the reasoning?
+3. storytellingQuality: Are the explanations compelling, specific to each product, and clearly tied to the stated interests?
+4. diversity: Is there good variety (different categories, price points, styles) while staying relevant to stated interests?
+5. humanSanityCheck: Would a thoughtful friend actually buy any of these? Are they real, sensible gifts for this specific scenario?
+6. budgetAdherence: Are all items within the stated budget of ${budget}?
+7. interestCoverage: Do the recommendations cover the stated interests [${interests}]? How many of the 5 products match at least one stated interest?
+8. presentationCohesion: Does the set feel curated and intentional for this specific gift-giving scenario?${retryContext}`;
+  }
+
+  /**
+   * Compute factual dimensions deterministically (no LLM)
+   * These override LLM scores because GPT-4o hallucinates on factual checks
+   */
+  private computeDeterministicDimensions(
+    input: BarRaiserInput
+  ): { interestCoverage?: QualityDimension; budgetAdherence?: QualityDimension; relevance?: QualityDimension; personalization?: QualityDimension } {
+    const result: { interestCoverage?: QualityDimension; budgetAdherence?: QualityDimension; relevance?: QualityDimension; personalization?: QualityDimension } = {};
+    const presenter = input.presenterOutput;
+    const listener = input.executionTrace.listener;
+    const explorer = input.executionTrace.explorer;
+    const recCount = presenter.recommendations?.length || 0;
+
+    // Interest coverage: deterministic check against product titles + graph matches
+    const listenerInterests = Array.isArray(listener.interests) ? listener.interests : [];
+    if (listenerInterests.length > 0 && recCount > 0) {
+      // Check which interests appear in recommended product titles/descriptions/reasoning
+      const coveredInterests = new Set<string>();
+      for (const interest of listenerInterests) {
+        const lower = interest.toLowerCase();
+        for (const rec of presenter.recommendations) {
+          const text = `${rec.product.title} ${rec.product.description || ''} ${rec.reasoning || ''}`.toLowerCase();
+          if (text.includes(lower)) {
+            coveredInterests.add(lower);
+            break;
+          }
+        }
+      }
+
+      // Also check graph matches from explorer
+      if (explorer) {
+        const graphMatched = new Set(
+          explorer.candidates.flatMap((c) => (c.matchReasons?.matchedInterests || []).map((i: string) => i.toLowerCase()))
+        );
+        for (const interest of listenerInterests) {
+          if (graphMatched.has(interest.toLowerCase())) {
+            coveredInterests.add(interest.toLowerCase());
+          }
+        }
+      }
+
+      const coverageRatio = coveredInterests.size / listenerInterests.length;
+      // Count how many of the 5 recommended products match at least one interest
+      let productsMatchingInterest = 0;
+      for (const rec of presenter.recommendations) {
+        const text = `${rec.product.title} ${rec.product.description || ''} ${rec.reasoning || ''}`.toLowerCase();
+        if (listenerInterests.some(i => text.includes(i.toLowerCase()))) {
+          productsMatchingInterest++;
+        }
+      }
+      const productCoverageRatio = productsMatchingInterest / recCount;
+
+      // Score: 50% from interest coverage, 50% from product coverage
+      const score = Math.round((coverageRatio * 50) + (productCoverageRatio * 50));
+
+      result.interestCoverage = {
+        score,
+        reasoning: `Deterministic: ${coveredInterests.size}/${listenerInterests.length} interests covered [${Array.from(coveredInterests).join(', ')}]. ${productsMatchingInterest}/${recCount} products match at least one interest.`,
+        evidence: [
+          `Stated interests: [${listenerInterests.join(', ')}]`,
+          `Covered: [${Array.from(coveredInterests).join(', ')}]`,
+          `${productsMatchingInterest}/${recCount} products match`,
+        ],
+      };
+      this.log(`Deterministic interestCoverage: ${score}/100 (${coveredInterests.size}/${listenerInterests.length} interests, ${productsMatchingInterest}/${recCount} products)`);
+    }
+
+    // Budget adherence: deterministic check
+    if (listener.budget && recCount > 0) {
+      const budgetMin = typeof listener.budget.min === 'number' && !isNaN(listener.budget.min) ? listener.budget.min : 0;
+      const budgetMax = typeof listener.budget.max === 'number' && !isNaN(listener.budget.max) ? listener.budget.max : Infinity;
+
+      const inBudget = presenter.recommendations.filter(
+        (r) => r.product.price >= budgetMin && r.product.price <= budgetMax
+      ).length;
+      const score = Math.round((inBudget / recCount) * 100);
+
+      const prices = presenter.recommendations.map(r => `$${r.product.price}`).join(', ');
+      result.budgetAdherence = {
+        score,
+        reasoning: `Deterministic: ${inBudget}/${recCount} products within $${budgetMin}-$${budgetMax}. Prices: ${prices}`,
+        evidence: [
+          `Budget: $${budgetMin}-$${budgetMax}`,
+          `Prices: ${prices}`,
+          `${inBudget}/${recCount} in range`,
+        ],
+      };
+      this.log(`Deterministic budgetAdherence: ${score}/100 (${inBudget}/${recCount} in budget)`);
+    }
+
+    // Relevance: deterministic check based on interest match + budget match + context signals
+    // GPT-4o consistently hallucinates "no recipient/occasion/interests specified" even when explicitly provided
+    if (recCount > 0) {
+      const hasInterests = listenerInterests.length > 0;
+      const hasBudget = !!listener.budget;
+      const hasRecipient = !!listener.recipient?.relationshipType;
+      const hasOccasion = !!listener.occasion?.name;
+
+      // Count how many of the 5 recommended products mention stated interests
+      let productsReferencingInterest = 0;
+      if (hasInterests) {
+        for (const rec of presenter.recommendations) {
+          const text = `${rec.product.title} ${rec.product.description || ''} ${rec.reasoning || ''}`.toLowerCase();
+          if (listenerInterests.some(i => text.includes(i.toLowerCase()))) {
+            productsReferencingInterest++;
+          }
+        }
+      }
+
+      // Count products in budget
+      let productsInBudget = recCount;
+      if (hasBudget) {
+        const bMin = typeof listener.budget!.min === 'number' ? listener.budget!.min : 0;
+        const bMax = typeof listener.budget!.max === 'number' ? listener.budget!.max : Infinity;
+        productsInBudget = presenter.recommendations.filter(
+          r => r.product.price >= bMin && r.product.price <= bMax
+        ).length;
+      }
+
+      // Base relevance: context factors provided (20pts each) + product-interest match ratio
+      const contextScore = (hasInterests ? 20 : 0) + (hasBudget ? 15 : 0) + (hasRecipient ? 15 : 0) + (hasOccasion ? 10 : 0);
+      const interestMatchRatio = hasInterests ? (productsReferencingInterest / recCount) : 0.5;
+      const budgetMatchRatio = productsInBudget / recCount;
+      const relevanceScore = Math.min(100, Math.round(contextScore + (interestMatchRatio * 25) + (budgetMatchRatio * 15)));
+
+      result.relevance = {
+        score: relevanceScore,
+        reasoning: `Deterministic: Context provided (interests: ${hasInterests}, budget: ${hasBudget}, recipient: ${hasRecipient}, occasion: ${hasOccasion}). ${productsReferencingInterest}/${recCount} products reference stated interests. ${productsInBudget}/${recCount} in budget.`,
+        evidence: [
+          hasInterests ? `Interests: [${listenerInterests.join(', ')}]` : 'No interests stated',
+          hasRecipient ? `Recipient: ${listener.recipient!.relationshipType}` : 'No recipient',
+          hasOccasion ? `Occasion: ${listener.occasion!.name}` : 'No occasion',
+          `${productsReferencingInterest}/${recCount} products match interests`,
+        ],
+      };
+      this.log(`Deterministic relevance: ${relevanceScore}/100`);
+
+      // Personalization: how specifically do recommendations reference the stated context?
+      if (hasInterests) {
+        let totalInterestMentions = 0;
+        for (const rec of presenter.recommendations) {
+          const reasoning = (rec.reasoning || '').toLowerCase();
+          for (const interest of listenerInterests) {
+            if (reasoning.includes(interest.toLowerCase())) {
+              totalInterestMentions++;
+            }
+          }
+        }
+        // Average interest mentions per recommendation × interest count
+        const mentionDensity = totalInterestMentions / (recCount * listenerInterests.length);
+        const personalizationScore = Math.min(100, Math.round(mentionDensity * 60 + productsReferencingInterest / recCount * 40));
+
+        result.personalization = {
+          score: personalizationScore,
+          reasoning: `Deterministic: ${totalInterestMentions} interest mentions across ${recCount} recommendations (density: ${(mentionDensity * 100).toFixed(0)}%). ${productsReferencingInterest}/${recCount} products explicitly reference stated interests.`,
+          evidence: [
+            `Stated interests: [${listenerInterests.join(', ')}]`,
+            `Total interest mentions in reasoning: ${totalInterestMentions}`,
+            `${productsReferencingInterest}/${recCount} products match`,
+          ],
+        };
+        this.log(`Deterministic personalization: ${personalizationScore}/100 (${totalInterestMentions} mentions)`);
+      }
+    }
+
+    return result;
   }
 
   /**

@@ -265,7 +265,10 @@ export class RecommendationOrchestrator {
           // Continue to recommendations AND prepare refinement questions
           const recommendations = await this.continueRecommendationPipeline(
             memoryOutput,
-            agentTimings
+            agentTimings,
+            listenerOutput,
+            input.userQuery,
+            input.sessionId
           );
 
           // Store conversation turn
@@ -585,7 +588,10 @@ export class RecommendationOrchestrator {
    */
   private async continueRecommendationPipeline(
     memoryOutput: MemoryOutput,
-    agentTimings: Record<string, number>
+    agentTimings: Record<string, number>,
+    listenerOutput?: any,
+    userQuery?: string,
+    sessionId?: string
   ): Promise<{ executionTrace: any } & PresenterOutput> {
     // Steps 3-5: Run Relationship, Constraints, and Meaning agents in PARALLEL
     const parallelStart = Date.now();
@@ -678,12 +684,12 @@ export class RecommendationOrchestrator {
       // Bar Raiser evaluation
       const barRaiserStart = Date.now();
       const barRaiserOutput = await this.barRaiserAgent.process({
-        executionTrace: { listener: {} as any, memory: {} as any, ...trace },
+        executionTrace: { listener: listenerOutput || {} as any, memory: memoryOutput, ...trace },
         presenterOutput,
-        userQuery: '',
+        userQuery: userQuery || '',
         attemptNumber: attempt,
         previousFeedback,
-        sessionId: '',
+        sessionId: sessionId || '',
       });
       agentTimings[isRetry ? `barRaiser_retry_${attempt}` : 'barRaiser'] = Date.now() - barRaiserStart;
 

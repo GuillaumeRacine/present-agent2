@@ -12,6 +12,7 @@ If a doc is not listed here, treat it as historical context and verify before us
 
 ## 2) Product Inventory Expansion (Active)
 
+- `docs/PRODUCT_ACQUISITION_PIPELINE.md` - 8-stage pipeline: filter → vet → scrape → normalize → load → enrich → learn → validate.
 - `docs/PRODUCT_INVENTORY_PLAYBOOK.md` - Source strategy, connector plan, and execution order.
 - `docs/CANONICAL_PRODUCT_SCHEMA.md` - Canonical ingestion schema and quality gates.
 - `docs/PRODUCT_EXPANSION_WAVES.md` - Medium-term source expansion waves.

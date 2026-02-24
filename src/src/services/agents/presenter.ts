@@ -108,6 +108,7 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
     const selected: any[] = [];
     const selectedIds = new Set<string>();
     const titleSeen = new Set<string>();
+    const storeSeen = new Set<string>(); // Store-level dedup: max 1 product per domain
 
     const normalizeTitle = (t: string) => t.toLowerCase()
       .replace(/\b(original|go|sub|kit|set|plus|pro|mini|classic|deluxe)\b/gi, '')
@@ -115,36 +116,81 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
       .replace(/\s+/g, ' ')
       .trim();
 
+    const extractDomain = (url: string): string => {
+      try {
+        return new URL(url).hostname.replace(/^www\./, '');
+      } catch { return url; }
+    };
+
     const addCandidate = (c: any): boolean => {
       if (selectedIds.has(c.product.id)) return false;
       const norm = normalizeTitle(c.product.title);
       if (titleSeen.has(norm)) return false;
+      // Store-level dedup: only 1 product per store domain
+      const domain = extractDomain(c.product.id || '');
+      if (domain && domain !== '' && storeSeen.has(domain)) return false;
       selected.push(c);
       selectedIds.add(c.product.id);
       titleSeen.add(norm);
+      if (domain) storeSeen.add(domain);
       return true;
     };
 
     // Phase 1: One product per stated interest
+    // Prefer graph-matched products (strength >= 0.9) over text-only matches
     for (const interest of listenerInterests) {
       if (selected.length >= 5) break;
       const interestLower = interest.toLowerCase();
-      const match = sorted.find((c: any) => {
+
+      // First pass: find products with strong graph interest match (strength >= 0.9)
+      let match = sorted.find((c: any) => {
         if (selectedIds.has(c.product.id)) return false;
         if (titleSeen.has(normalizeTitle(c.product.title))) return false;
-        const candidateInterests = (c.matchReasons?.matchedInterests || []).map((i: string) => i.toLowerCase());
-        // Direct match or text match in title
-        return candidateInterests.includes(interestLower) ||
-          c.product.title.toLowerCase().includes(interestLower);
+        const matchedInterestDetails = c.matchReasons?.matchedInterestDetails || c.matchReasons?.matchedInterests || [];
+        // Check for graph match with high strength
+        return matchedInterestDetails.some((mi: any) =>
+          (typeof mi === 'object' ? mi.name?.toLowerCase() === interestLower && (mi.strength || 0) >= 0.9 : false)
+        );
       });
+
+      // Second pass: any interest match (graph, category, or text)
+      if (!match) {
+        match = sorted.find((c: any) => {
+          if (selectedIds.has(c.product.id)) return false;
+          if (titleSeen.has(normalizeTitle(c.product.title))) return false;
+          const candidateInterests = (c.matchReasons?.matchedInterests || []).map((i: any) =>
+            (typeof i === 'object' ? i.name || i : i).toLowerCase()
+          );
+          return candidateInterests.includes(interestLower) ||
+            c.product.title.toLowerCase().includes(interestLower);
+        });
+      }
+
       if (match) {
         addCandidate(match);
         this.log(`Phase 1: Selected "${match.product.title}" for interest "${interest}"`);
       }
     }
 
-    // Phase 2: Fill remaining slots by score with title dedup
-    for (const c of sorted) {
+    // Phase 2: Fill remaining slots, preferring products matching stated interests
+    const interestSet = new Set(listenerInterests.map((i: string) => i.toLowerCase()));
+    const remaining = sorted.filter((c: any) => !selectedIds.has(c.product.id));
+    const withInterestCount = remaining.map((c: any) => {
+      const candidateInterests = (c.matchReasons?.matchedInterests || []).map((i: any) =>
+        (typeof i === 'object' ? i.name || i : i).toLowerCase()
+      );
+      // Check both graph interest matches AND title keyword matches
+      const graphMatchCount = candidateInterests.filter((ci: string) => interestSet.has(ci)).length;
+      const titleLower = (c.product.title || '').toLowerCase();
+      const titleMatchCount = listenerInterests.filter((i: string) => titleLower.includes(i.toLowerCase())).length;
+      const matchCount = Math.max(graphMatchCount, titleMatchCount);
+      return { ...c, _matchCount: matchCount };
+    });
+    // Sort: products matching stated interests first, then by score
+    withInterestCount.sort((a: any, b: any) =>
+      b._matchCount - a._matchCount || b.scores.hybridScore - a.scores.hybridScore
+    );
+    for (const c of withInterestCount) {
       if (selected.length >= 5) break;
       addCandidate(c);
     }

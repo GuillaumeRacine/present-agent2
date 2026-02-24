@@ -18,7 +18,7 @@ import sys
 import time
 from datetime import datetime
 
-API_URL = "http://localhost:3001/api/recommend"
+API_URL = "http://localhost:3000/api/recommend"
 
 # ============================================================
 # Test Personas

@@ -312,6 +312,6 @@ export const DEFAULT_BAR_RAISER_CONFIG: BarRaiserConfig = {
   passThreshold: 60,
   blockOnThresholdLowering: true,
   evaluationModel: 'gpt-4o',
-  evaluationTemperature: 0.2,
+  evaluationTemperature: 0,
   enabled: true,
 };

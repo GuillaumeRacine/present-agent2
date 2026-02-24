@@ -66,6 +66,30 @@ function mapToGiftRelationships(relationshipType: string): string[] {
     teacher: ['teacher'],
     mentor: ['teacher', 'boss'],
     neighbor: ['neighbor'],
+    // Common aliases (from listener natural language)
+    mom: ['mother'],
+    dad: ['father'],
+    mama: ['mother'],
+    papa: ['father'],
+    mum: ['mother'],
+    boyfriend: ['partner'],
+    girlfriend: ['partner'],
+    bf: ['partner'],
+    gf: ['partner'],
+    fiancé: ['partner'],
+    fiance: ['partner'],
+    fiancee: ['partner'],
+    uncle: ['aunt_uncle'],
+    aunt: ['aunt_uncle'],
+    nephew: ['niece_nephew'],
+    niece: ['niece_nephew'],
+    cousin: ['friend'],
+    grandma: ['grandparent'],
+    grandpa: ['grandparent'],
+    grandmother: ['grandparent'],
+    grandfather: ['grandparent'],
+    supervisor: ['boss'],
+    manager: ['boss'],
     // Direct matches (if listener already returns the DB name)
     mother: ['mother'],
     father: ['father'],
@@ -110,6 +134,12 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       const listenerBudget = (input.meaningContext?.constraintsContext as any)?.relationshipContext?.memoryContext?.listenerContext?.budget;
       const meaningListenerBudget = (input.meaningContext as any)?.listenerContext?.budget;
       let budget = constraintsBudget || listenerBudget || meaningListenerBudget || { min: 0, max: 1000 };
+      // Guard against null/undefined min/max values in budget objects
+      budget = {
+        ...budget,
+        min: typeof budget.min === 'number' && !isNaN(budget.min) ? budget.min : 0,
+        max: typeof budget.max === 'number' && !isNaN(budget.max) && budget.max > 0 ? budget.max : 1000,
+      };
       this.log(`Budget source: ${constraintsBudget ? 'constraints' : listenerBudget ? 'listener-via-constraints' : meaningListenerBudget ? 'listener-via-meaning' : 'default'} ($${budget.min}-$${budget.max})`);
 
       // Normalize "up to X" budgets: when min is very low relative to max,
@@ -319,11 +349,30 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
     const searchResults = await Promise.all(searchPromises);
 
     // Merge all results, keeping highest score per product
-    for (const candidates of searchResults) {
+    // Track which products were found by vector search (have semantic confirmation)
+    const vectorConfirmed = new Set<string>();
+    for (let si = 0; si < searchResults.length - 1; si++) { // all except last (graph-only)
+      for (const candidate of searchResults[si]) {
+        if (candidate.scores.vectorScore > 0.1) {
+          vectorConfirmed.add(candidate.product.id);
+        }
+      }
+    }
+
+    for (let si = 0; si < searchResults.length; si++) {
+      const candidates = searchResults[si];
+      const isGraphPath = si === searchResults.length - 1;
       for (const candidate of candidates) {
         const key = candidate.product.id;
+        // Graph-only products with zero vector score get penalized (no semantic confirmation)
+        // Products found by both graph and vector paths keep their natural score
+        let effectiveScore = candidate.scores.hybridScore;
+        if (isGraphPath && !vectorConfirmed.has(key) && candidate.scores.vectorScore < 0.1) {
+          effectiveScore *= 0.7; // 30% penalty for graph-only, no semantic match
+        }
         const existing = allCandidateMaps.get(key);
-        if (!existing || candidate.scores.hybridScore > existing.scores.hybridScore) {
+        if (!existing || effectiveScore > (existing as any)._effectiveScore || effectiveScore > existing.scores.hybridScore) {
+          (candidate as any)._effectiveScore = effectiveScore;
           allCandidateMaps.set(key, candidate);
         }
       }
@@ -337,9 +386,38 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       this.log(`  ${interests[i]}: ${searchResults[i].length} candidates`);
     }
 
+    // STAGE 2b: Filter out zero-interest products when user stated interests
+    // Products with no interest graph matches are vector-only noise (e.g., flute sheet music for "music")
+    let interestFiltered = mergedCandidates;
+    if (interests.length > 0) {
+      const withInterests = mergedCandidates.filter(c => c.matchReasons.matchedInterests.length > 0);
+      if (withInterests.length >= 5) {
+        const removed = mergedCandidates.length - withInterests.length;
+        if (removed > 0) {
+          this.log(`Filtered ${removed} zero-interest-match products (keeping ${withInterests.length} with graph matches)`);
+        }
+        interestFiltered = withInterests;
+      } else {
+        this.log(`Only ${withInterests.length} products have interest matches — keeping all ${mergedCandidates.length} to avoid empty results`);
+      }
+    }
+
+    // STAGE 2c: Interest coverage boost — products matching more stated interests rank higher
+    if (interests.length > 1) {
+      const interestSet = new Set(interests.map(i => i.toLowerCase()));
+      for (const candidate of interestFiltered) {
+        const matchedNames = candidate.matchReasons.matchedInterests
+          .map((i: any) => (typeof i === 'object' ? i.name || i : i).toLowerCase());
+        const coverage = matchedNames.filter((n: string) => interestSet.has(n)).length / interests.length;
+        // Boost hybridScore by up to 15% for full coverage
+        candidate.scores.hybridScore *= (1.0 + 0.15 * coverage);
+      }
+      this.log(`Applied interest coverage boost (${interests.length} interests)`);
+    }
+
     // STAGE 3: Title deduplication — same product from different vendors
-    const deduplicated = this.deduplicateByTitle(mergedCandidates);
-    this.log(`After title dedup: ${deduplicated.length} candidates (removed ${mergedCandidates.length - deduplicated.length} duplicates)`);
+    const deduplicated = this.deduplicateByTitle(interestFiltered);
+    this.log(`After title dedup: ${deduplicated.length} candidates (removed ${interestFiltered.length - deduplicated.length} duplicates)`);
 
     // STAGE 4: Fulltext fallback if sparse
     let finalCandidates = deduplicated;
@@ -634,10 +712,10 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
           CASE WHEN occ IS NOT NULL THEN 1.0 ELSE 0.0 END AS occasionMatch,
           CASE WHEN rel IS NOT NULL THEN 1.0 ELSE 0.0 END AS relationshipMatch,
           CASE WHEN persona IS NOT NULL THEN 0.5 ELSE 0.0 END AS personaMatch,
-          // Vector penalty: halve vector contribution when zero interests matched but user stated interests
-          (0.35 * vectorScore *
-            CASE WHEN SIZE(matchedInterests) = 0 AND SIZE($allInterests) > 0 THEN 0.5 ELSE 1.0 END +
-           0.25 * CASE WHEN interestScore > 1.0 THEN 1.0 ELSE interestScore END +
+          // Vector penalty: reduce vector when zero interests matched but user stated interests
+          (0.25 * vectorScore *
+            CASE WHEN SIZE(matchedInterests) = 0 AND SIZE($allInterests) > 0 THEN 0.3 ELSE 1.0 END +
+           0.35 * CASE WHEN interestScore > 1.0 THEN 1.0 ELSE interestScore END +
            0.15 * CASE
              WHEN (giftQualityScore + popularityScore) / 2.0 + giftProvenBonus + bestsellerBonus + socialProofBonus > 1.0 THEN 1.0
              ELSE (giftQualityScore + popularityScore) / 2.0 + giftProvenBonus + bestsellerBonus + socialProofBonus
@@ -818,6 +896,7 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       },
       matchReasons: {
         matchedInterests: matchedInterests.map((m: any) => m.name || m).filter(Boolean),
+        matchedInterestDetails: matchedInterests.map((m: any) => typeof m === 'object' ? { name: m.name, strength: m.strength || 0.8 } : { name: m, strength: 0.8 }),
         matchedValues: [],
         matchedArchetype: primaryArchetype,
         matchedAttributes: Object.keys(giftAttributes).filter(k => (giftAttributes as any)[k] === true),
@@ -1151,10 +1230,10 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         UNWIND allHops AS hop
         WHERE hop.name IS NOT NULL
         WITH hop.name AS relatedInterest, SUM(hop.strength) AS connectionStrength
-        WHERE connectionStrength >= 2
+        WHERE connectionStrength >= 50
         RETURN relatedInterest, connectionStrength
         ORDER BY connectionStrength DESC
-        LIMIT 5
+        LIMIT 3
       `;
 
       const result = await session.run(cypher, {

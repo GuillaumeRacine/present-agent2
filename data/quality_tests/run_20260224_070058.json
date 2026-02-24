@@ -1,0 +1,2389 @@
+{
+  "meta": {
+    "run_id": "20260224_070058",
+    "timestamp": "2026-02-24T07:00:58.751343",
+    "date_human": "February 24, 2026 at 07:00 AM",
+    "version": "3.2.0",
+    "api_url": "http://localhost:3000/api/recommend",
+    "persona_count": 5,
+    "persona_ids": [
+      "vague-gift",
+      "dad-coffee",
+      "wife-yoga",
+      "nephew-teen",
+      "boss-thankyou"
+    ]
+  },
+  "results": [
+    {
+      "persona_id": "vague-gift",
+      "persona_name": "Vague Query (should trigger questions)",
+      "persona_description": "Tests clarification flow: minimal info forces Turn 1 questions, Turn 2 answers.",
+      "session_id": "test-vague-gift-1771934458",
+      "initial_query": "I need a gift for someone",
+      "expected": {
+        "should_clarify": true,
+        "min_bar_raiser": 60
+      },
+      "turns": [
+        {
+          "turn": 1,
+          "mode": "clarifying",
+          "exec_time_ms": 13764,
+          "wall_time_s": 13.79,
+          "agent_timings": {
+            "listener": 13500,
+            "memory": 30,
+            "dialogueManager": 3,
+            "dialoguePresenter": 0,
+            "total_ms": 13764
+          },
+          "questions": [
+            {
+              "id": "interests",
+              "type": "essential",
+              "field": "interests",
+              "question": "What are they passionate about or interested in?",
+              "suggestedAnswers": [
+                {
+                  "label": "Food & cooking",
+                  "value": "cooking",
+                  "description": "Loves culinary experiences"
+                },
+                {
+                  "label": "Outdoor & nature",
+                  "value": "outdoors",
+                  "description": "Enjoys hiking, camping, etc."
+                },
+                {
+                  "label": "Arts & crafts",
+                  "value": "arts",
+                  "description": "Creative and artistic"
+                },
+                {
+                  "label": "Tech & gaming",
+                  "value": "tech",
+                  "description": "Gadgets and games"
+                },
+                {
+                  "label": "Sports & fitness",
+                  "value": "sports",
+                  "description": "Active and athletic"
+                },
+                {
+                  "label": "Music & entertainment",
+                  "value": "music",
+                  "description": "Music lover"
+                }
+              ],
+              "priority": 2,
+              "impactOnConfidence": 0.2,
+              "rationale": "Interests are critical for product matching"
+            },
+            {
+              "id": "relationship",
+              "type": "essential",
+              "field": "recipient.relationshipType",
+              "question": "What's your relationship to this person?",
+              "suggestedAnswers": [
+                {
+                  "label": "Parent",
+                  "value": "parent"
+                },
+                {
+                  "label": "Partner/Spouse",
+                  "value": "partner"
+                },
+                {
+                  "label": "Sibling",
+                  "value": "sibling"
+                },
+                {
+                  "label": "Friend",
+                  "value": "friend"
+                },
+                {
+                  "label": "Coworker",
+                  "value": "coworker"
+                },
+                {
+                  "label": "Other family",
+                  "value": "family"
+                }
+              ],
+              "priority": 3,
+              "impactOnConfidence": 0.12,
+              "rationale": "Relationship type affects gift appropriateness"
+            },
+            {
+              "id": "recipient_age",
+              "type": "essential",
+              "field": "recipient.age",
+              "question": "How old are they?",
+              "suggestedAnswers": [
+                {
+                  "label": "Child (under 13)",
+                  "value": 10
+                },
+                {
+                  "label": "Teen (13-17)",
+                  "value": 15
+                },
+                {
+                  "label": "Young adult (18-25)",
+                  "value": 22
+                },
+                {
+                  "label": "Adult (26-40)",
+                  "value": 33
+                },
+                {
+                  "label": "Middle-aged (41-60)",
+                  "value": 50
+                },
+                {
+                  "label": "Senior (60+)",
+                  "value": 65
+                }
+              ],
+              "priority": 5,
+              "impactOnConfidence": 0.1,
+              "rationale": "Age helps narrow down appropriate gift types"
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "mode": "recommendations",
+          "input_text": "It's for my friend Sarah's birthday. She's in her 30s and loves cooking and traveling. Budget around $40-80.",
+          "clarifications_sent": {
+            "budget": {
+              "min": 40,
+              "max": 80
+            },
+            "occasion": {
+              "name": "birthday"
+            },
+            "relationship": "friend",
+            "interests": [
+              "cooking",
+              "travel"
+            ],
+            "recipientAge": "30s",
+            "recipientGender": "female"
+          },
+          "exec_time_ms": 29349,
+          "wall_time_s": 29.35,
+          "agent_timings": {
+            "explorer": 7,
+            "answer_merge": 0,
+            "memory": 24,
+            "dialogueManager": 3,
+            "constraints": 0,
+            "meaning": 7277,
+            "relationship": 7349,
+            "parallel_total": 7349,
+            "validator": 0,
+            "storyteller": 4892,
+            "presenter": 1624,
+            "barRaiser": 15445,
+            "total_ms": 29349
+          }
+        }
+      ],
+      "recommendations": {
+        "count": 5,
+        "items": [
+          {
+            "title": "BBQ GRILL MAT - 10 PIECES",
+            "price": 59.99,
+            "currency": "USD",
+            "brand_url": "https://www.zgrills.com",
+            "product_url": "https://www.zgrills.com/products/bbq-grill-mat-10-pieces",
+            "confidence": 0.8428859087667445,
+            "tags": [
+              "Best Match",
+              "Practical",
+              "Experiential",
+              "Shared Experience",
+              "Consumable",
+              "Eco-Friendly"
+            ],
+            "reasoning": "This BBQ grill mat set is an ideal gift for someone who enjoys cooking, especially if they love to grill outdoors. It allows for healthier cooking without the hassle of excess oil, making it perfect for experimenting with various dishes while traveling or hosting friends for a backyard BBQ.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "The Essentials Travel Collection",
+            "price": 54.99,
+            "currency": "USD",
+            "brand_url": "https://themaneattraction.com",
+            "product_url": "https://themaneattraction.com/products/tma-travel-collection",
+            "confidence": 0.7601208084455315,
+            "tags": [
+              "Practical"
+            ],
+            "reasoning": "The Essentials Travel Collection is ideal for someone who loves both cooking and travel, as it combines practical items that enhance culinary experiences on the go. This thoughtful set ensures that every adventure can be paired with delicious meals, making it a meaningful addition to their trips.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Cooking Large Canvas Tote",
+            "price": 60,
+            "currency": "USD",
+            "brand_url": "https://store.nytimes.com",
+            "product_url": "https://store.nytimes.com/products/cooking-canvas-tote-bag",
+            "confidence": 0.8336920897165934,
+            "tags": [
+              "Practical",
+              "Shared Experience",
+              "Artistic"
+            ],
+            "reasoning": "This Cooking Large Canvas Tote is perfect for someone who loves cooking and enjoys exploring local markets. Its spacious design makes it ideal for carrying fresh ingredients on culinary adventures, while the stylish branding from NYT Cooking reflects a passion for quality recipes and cooking culture.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Snacking Cakes Bundle",
+            "price": 58.99,
+            "currency": "USD",
+            "brand_url": "https://worldspice.com",
+            "product_url": "https://worldspice.com/products/snacking-cakes-bundle",
+            "confidence": 0.8144188484549026,
+            "tags": [
+              "Practical",
+              "Shared Experience",
+              "Consumable"
+            ],
+            "reasoning": "This Snacking Cakes Bundle is a delightful gift that aligns perfectly with their passion for cooking, offering a variety of easy-to-follow recipes that can be whipped up quickly, making it ideal for someone who enjoys culinary experimentation. The versatility of the recipes allows them to use up leftover fruits or pantry staples, adding a touch of creativity to their kitchen adventures. Plus, it provides a sweet treat without the temptation of a large cake hanging around, making it a thoughtful addition to their culinary repertoire.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Ultimate Rub Collection - 12 Mini Rub Jars",
+            "price": 64.95,
+            "currency": "USD",
+            "brand_url": "https://spiceology.com",
+            "product_url": "https://spiceology.com/products/ultimate-rub-collection-12-mini-rub-jars",
+            "confidence": 0.730620825950661,
+            "tags": [
+              "Practical",
+              "Shared Experience",
+              "Consumable"
+            ],
+            "reasoning": "For someone who loves cooking and travel, this Ultimate Rub Collection is a delightful way to explore global flavors right from their kitchen. Each mini jar opens up a new culinary adventure, allowing them to experiment with different cuisines and spices, which will surely inspire their next cooking session or BBQ gathering.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          }
+        ],
+        "intro": "I know you're looking for the perfect birthday gift for your friend in her 30s, and I'm here to help! Finding something special can be a fun adventure, and I\u2019ve gathered some thoughtful recommendations that I think she\u2019ll really appreciate.",
+        "outro": "If you have any questions or want to explore more options, just let me know! I'm here to help you find the ideal gift.",
+        "prices": [
+          59.99,
+          54.99,
+          60.0,
+          58.99,
+          64.95
+        ],
+        "price_avg": 59.78,
+        "price_min": 54.99,
+        "price_max": 64.95,
+        "unique_brands": [
+          "spiceology.com",
+          "store.nytimes.com",
+          "themaneattraction.com",
+          "worldspice.com",
+          "zgrills.com"
+        ],
+        "brand_count": 5,
+        "bar_raiser": {
+          "score": 91,
+          "dimensions": {},
+          "feedback": "",
+          "raw": {
+            "verdict": "APPROVED",
+            "scorecard": {
+              "relevance": {
+                "score": 100,
+                "reasoning": "Deterministic: Context provided (interests: true, budget: true, recipient: true, occasion: true). 5/5 products reference stated interests. 5/5 in budget.",
+                "evidence": [
+                  "Interests: [cooking, travel]",
+                  "Recipient: friend",
+                  "Occasion: birthday",
+                  "5/5 products match interests"
+                ]
+              },
+              "personalization": {
+                "score": 88,
+                "reasoning": "Deterministic: 8 interest mentions across 5 recommendations (density: 80%). 5/5 products explicitly reference stated interests.",
+                "evidence": [
+                  "Stated interests: [cooking, travel]",
+                  "Total interest mentions in reasoning: 8",
+                  "5/5 products match"
+                ]
+              },
+              "storytellingQuality": {
+                "score": 80,
+                "reasoning": "The explanations for each product are compelling and connect well to the interests, though some could be more vivid.",
+                "evidence": [
+                  "BBQ Grill Mat's health benefits are highlighted.",
+                  "Essentials Travel Collection emphasizes enhancing travel meals.",
+                  "Snacking Cakes Bundle encourages culinary creativity."
+                ]
+              },
+              "diversity": {
+                "score": 75,
+                "reasoning": "There is a good variety of products, including practical cooking items and travel-related gifts, though they all lean towards cooking.",
+                "evidence": [
+                  "BBQ Grill Mat and Ultimate Rub Collection focus on cooking.",
+                  "Essentials Travel Collection and Cooking Tote cater to travel."
+                ]
+              },
+              "humanSanityCheck": {
+                "score": 90,
+                "reasoning": "These gifts are thoughtful and practical, making them sensible choices for a birthday gift.",
+                "evidence": [
+                  "BBQ Grill Mat is practical for outdoor cooking.",
+                  "Essentials Travel Collection is useful for travel.",
+                  "Cooking Tote is stylish and functional."
+                ]
+              },
+              "budgetAdherence": {
+                "score": 100,
+                "reasoning": "Deterministic: 5/5 products within $40-$80. Prices: $59.99, $54.99, $60, $58.99, $64.95",
+                "evidence": [
+                  "Budget: $40-$80",
+                  "Prices: $59.99, $54.99, $60, $58.99, $64.95",
+                  "5/5 in range"
+                ]
+              },
+              "interestCoverage": {
+                "score": 100,
+                "reasoning": "Deterministic: 2/2 interests covered [cooking, travel]. 5/5 products match at least one interest.",
+                "evidence": [
+                  "Stated interests: [cooking, travel]",
+                  "Covered: [cooking, travel]",
+                  "5/5 products match"
+                ]
+              },
+              "presentationCohesion": {
+                "score": 85,
+                "reasoning": "The set feels curated for a friend who enjoys cooking and traveling, creating a cohesive gift-giving experience.",
+                "evidence": [
+                  "All items are practical and enhance cooking and travel experiences.",
+                  "The thoughtful nature of each gift aligns with the occasion."
+                ]
+              }
+            },
+            "agentEvaluations": [
+              {
+                "agentName": "Listener",
+                "rating": 80,
+                "inputSignals": [
+                  "It's for my friend Sarah's birthday. She's in her 30s and loves cooking and traveling. Budget around $40-80."
+                ],
+                "outputSignals": [
+                  "interest:cooking",
+                  "interest:travel",
+                  "budget:$40-$80",
+                  "recipient:friend"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 0.9,
+                "issues": []
+              },
+              {
+                "agentName": "Explorer",
+                "rating": 100,
+                "inputSignals": [
+                  "interest:cooking",
+                  "interest:travel"
+                ],
+                "outputSignals": [
+                  "matched:wine",
+                  "matched:bbq",
+                  "matched:cooking",
+                  "matched:coffee",
+                  "matched:foodie",
+                  "matched:travel",
+                  "matched:photography",
+                  "matched:baking"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              },
+              {
+                "agentName": "Validator",
+                "rating": 80,
+                "inputSignals": [
+                  "15 candidates"
+                ],
+                "outputSignals": [
+                  "15 passed"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              },
+              {
+                "agentName": "Storyteller",
+                "rating": 100,
+                "inputSignals": [
+                  "15 products to narrate"
+                ],
+                "outputSignals": [
+                  "15 meaningful stories"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              }
+            ],
+            "overallScore": 91,
+            "summary": "The gift recommendations for Sarah's birthday are well-aligned with her interests in cooking and travel, staying within budget and offering a thoughtful selection. Each item is relevant and personalized, making the overall presentation cohesive and appealing for the occasion.",
+            "criticalFailures": [],
+            "attemptNumber": 0,
+            "evaluatedAt": "2026-02-24T12:01:41.922Z"
+          }
+        }
+      },
+      "evaluation": [
+        {
+          "check": "clarification_flow",
+          "expected": true,
+          "actual": true,
+          "passed": true
+        },
+        {
+          "check": "bar_raiser_score",
+          "expected": ">= 60",
+          "actual": 91,
+          "passed": true
+        },
+        {
+          "check": "giver_reference_leakage",
+          "expected": "no 'unknown shopper' in reasoning",
+          "actual": "clean",
+          "passed": true
+        },
+        {
+          "check": "product_urls",
+          "expected": "all 5 recs have valid URLs",
+          "actual": "5/5 have URLs",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "persona_id": "dad-coffee",
+      "persona_name": "Birthday for Coffee-Loving Dad",
+      "persona_description": "Tests interest precision: should return coffee + outdoor products, not tea/furniture.",
+      "session_id": "test-dad-coffee-1771934501",
+      "initial_query": "I need a birthday gift for my dad. He loves coffee and is pretty outdoorsy. Budget around $50-80.",
+      "expected": {
+        "should_clarify": false,
+        "min_bar_raiser": 60,
+        "interests": [
+          "coffee",
+          "outdoors"
+        ],
+        "budget": {
+          "min": 50,
+          "max": 80
+        },
+        "avoid_keywords": [
+          "tea",
+          "yoga",
+          "jewelry"
+        ]
+      },
+      "turns": [
+        {
+          "turn": 1,
+          "mode": "recommendations_with_refinement",
+          "exec_time_ms": 43387,
+          "wall_time_s": 43.4,
+          "agent_timings": {
+            "explorer": 6,
+            "listener": 12414,
+            "memory": 46,
+            "dialogueManager": 1,
+            "dialoguePresenter": 0,
+            "constraints": 0,
+            "relationship": 4950,
+            "meaning": 8021,
+            "parallel_total": 8022,
+            "validator": 1,
+            "storyteller": 4418,
+            "presenter": 5069,
+            "barRaiser": 13320,
+            "total_ms": 43387
+          },
+          "questions": [
+            {
+              "id": "recipient_age",
+              "type": "essential",
+              "field": "recipient.age",
+              "question": "How old are they?",
+              "suggestedAnswers": [
+                {
+                  "label": "Child (under 13)",
+                  "value": 10
+                },
+                {
+                  "label": "Teen (13-17)",
+                  "value": 15
+                },
+                {
+                  "label": "Young adult (18-25)",
+                  "value": 22
+                },
+                {
+                  "label": "Adult (26-40)",
+                  "value": 33
+                },
+                {
+                  "label": "Middle-aged (41-60)",
+                  "value": 50
+                },
+                {
+                  "label": "Senior (60+)",
+                  "value": 65
+                }
+              ],
+              "priority": 5,
+              "impactOnConfidence": 0.1,
+              "rationale": "Age helps narrow down appropriate gift types"
+            },
+            {
+              "id": "refine_coffee",
+              "type": "refinement",
+              "field": "interests",
+              "question": "You mentioned coffee - can you be more specific?",
+              "suggestedAnswers": [
+                {
+                  "label": "Casual drinker",
+                  "value": "casual-coffee",
+                  "description": "Morning coffee routine"
+                },
+                {
+                  "label": "Coffee enthusiast",
+                  "value": "coffee-enthusiast",
+                  "description": "Specialty beans, brewing methods"
+                },
+                {
+                  "label": "Espresso lover",
+                  "value": "espresso-lover",
+                  "description": "Espresso-focused"
+                }
+              ],
+              "priority": 6,
+              "impactOnConfidence": 0.12,
+              "rationale": "\"coffee\" is broad - refinement will improve product matching"
+            }
+          ]
+        }
+      ],
+      "recommendations": {
+        "count": 5,
+        "items": [
+          {
+            "title": "30 Servings of Coffee + FREE Starter Kit + 5 Free To-Go Packs",
+            "price": 65,
+            "currency": "USD",
+            "brand_url": "https://www.everydaydose.com",
+            "product_url": "https://www.everydaydose.com/products/gut-health",
+            "confidence": 0.8313809394836426,
+            "tags": [
+              "Best Match",
+              "Practical",
+              "Consumable"
+            ],
+            "reasoning": "This unique coffee blend combines functional mushrooms, collagen protein, and nootropics, making it a great match for someone who loves coffee and values energy and focus. It\u2019s perfect for enjoying a cup while grilling outdoors or tackling any adventure, adding a boost to his routine while enhancing his coffee experience.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Dragonfly Monogram",
+            "price": 69.99,
+            "currency": "USD",
+            "brand_url": "https://www.realsteelcenter.com",
+            "product_url": "https://www.realsteelcenter.com/products/dragonfly-monogram",
+            "confidence": 0.7260348616465976,
+            "tags": [
+              "Handcrafted",
+              "Sentimental",
+              "Personalized",
+              "Artistic",
+              "Eco-Friendly"
+            ],
+            "reasoning": "This Dragonfly Monogram beautifully merges dad's love for the outdoors with a personal touch, making it a striking addition to his grilling space or garden. Its handcrafted nature and customization options allow it to reflect his unique personality, while serving as a lasting reminder of cherished memories spent outside. Plus, it\u2019s a practical piece that not only enhances his outdoor living area but also sparks conversation among family and friends.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "30oz DUAL CHAMBER TRAVEL MUGS FOR COFFEE & WATER (PROMO)",
+            "price": 69.5,
+            "currency": "USD",
+            "brand_url": "https://www.splitflask.com",
+            "product_url": "https://www.splitflask.com/products/30oz-dual-chamber-travel-mugs-for-coffee-water-promo",
+            "confidence": 0.7316684962854421,
+            "tags": [
+              "Practical",
+              "Shared Experience",
+              "Artistic",
+              "Consumable",
+              "Eco-Friendly"
+            ],
+            "reasoning": "This dual-chamber travel mug is perfect for someone who loves coffee and enjoys spending time outdoors. With the ability to carry both hot coffee and cold water simultaneously, it caters to his passion for grilling and adventure while providing a practical solution for hydration on the go.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Ultimate Rub Collection - 12 Mini Rub Jars",
+            "price": 64.95,
+            "currency": "USD",
+            "brand_url": "https://spiceology.com",
+            "product_url": "https://spiceology.com/products/ultimate-rub-collection-12-mini-rub-jars",
+            "confidence": 0.7545003331112592,
+            "tags": [
+              "Practical",
+              "Shared Experience",
+              "Consumable"
+            ],
+            "reasoning": "This Ultimate Rub Collection is perfect for a dad who loves grilling and cooking, offering a range of flavors to elevate his outdoor cooking adventures. Each mini jar allows him to experiment with new blends, making it a fun and practical way to enhance his meals and impress family and friends.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "All\u2011Day Coffee Delight",
+            "price": 69.8,
+            "currency": "USD",
+            "brand_url": "https://www.cafebritt.com",
+            "product_url": "https://www.cafebritt.com/products/all-day-coffee-delight",
+            "confidence": 0.7257502960147472,
+            "tags": [
+              "Shared Experience",
+              "Consumable"
+            ],
+            "reasoning": "This curated All-Day Coffee Delight set is a fantastic match for someone who truly loves coffee, offering a blend of smooth breakfast and afternoon options along with delectable treats. It\u2019s perfect for enhancing those outdoor grilling sessions or simply enjoying a cozy moment at home, making every sip a celebration of his passion for great coffee.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          }
+        ],
+        "intro": "I see you're on the hunt for the perfect birthday gift for your dad! It's such a special occasion to celebrate him and show your love, and I'm here to help you find something that he'll truly cherish. Let\u2019s explore some thoughtful gift ideas together!",
+        "outro": "If you have any questions or need further suggestions, feel free to ask! I'm here to help you make this birthday memorable for your dad.",
+        "prices": [
+          65.0,
+          69.99,
+          69.5,
+          64.95,
+          69.8
+        ],
+        "price_avg": 67.85,
+        "price_min": 64.95,
+        "price_max": 69.99,
+        "unique_brands": [
+          "cafebritt.com",
+          "everydaydose.com",
+          "realsteelcenter.com",
+          "spiceology.com",
+          "splitflask.com"
+        ],
+        "brand_count": 5,
+        "bar_raiser": {
+          "score": 89,
+          "dimensions": {},
+          "feedback": "",
+          "raw": {
+            "verdict": "APPROVED",
+            "scorecard": {
+              "relevance": {
+                "score": 95,
+                "reasoning": "Deterministic: Context provided (interests: true, budget: true, recipient: true, occasion: true). 4/5 products reference stated interests. 5/5 in budget.",
+                "evidence": [
+                  "Interests: [coffee, outdoors]",
+                  "Recipient: parent",
+                  "Occasion: birthday",
+                  "4/5 products match interests"
+                ]
+              },
+              "personalization": {
+                "score": 85,
+                "reasoning": "Most gifts directly reference the recipient's interests in coffee and the outdoors, making them feel personalized.",
+                "evidence": [
+                  "The coffee blend and travel mug specifically cater to coffee lovers, while the monogram and rub collection appeal to outdoor grilling."
+                ]
+              },
+              "storytellingQuality": {
+                "score": 80,
+                "reasoning": "The explanations provide a narrative that connects the gifts to the recipient's lifestyle, enhancing their appeal.",
+                "evidence": [
+                  "Descriptions highlight how each gift enhances outdoor experiences or coffee enjoyment, making them relatable."
+                ]
+              },
+              "diversity": {
+                "score": 75,
+                "reasoning": "There is a good mix of consumables, personalized items, and practical tools, offering variety while remaining relevant.",
+                "evidence": [
+                  "Gifts range from coffee products to grilling accessories, showcasing different aspects of the recipient's interests."
+                ]
+              },
+              "humanSanityCheck": {
+                "score": 90,
+                "reasoning": "All gifts are practical and sensible choices that a thoughtful friend would consider for a dad who loves coffee and the outdoors.",
+                "evidence": [
+                  "Items like the travel mug and rub collection are common gifts for outdoor enthusiasts and coffee lovers."
+                ]
+              },
+              "budgetAdherence": {
+                "score": 100,
+                "reasoning": "Deterministic: 5/5 products within $50-$80. Prices: $65, $69.99, $69.5, $64.95, $69.8",
+                "evidence": [
+                  "Budget: $50-$80",
+                  "Prices: $65, $69.99, $69.5, $64.95, $69.8",
+                  "5/5 in range"
+                ]
+              },
+              "interestCoverage": {
+                "score": 90,
+                "reasoning": "Deterministic: 2/2 interests covered [coffee, outdoors]. 4/5 products match at least one interest.",
+                "evidence": [
+                  "Stated interests: [coffee, outdoors]",
+                  "Covered: [coffee, outdoors]",
+                  "4/5 products match"
+                ]
+              },
+              "presentationCohesion": {
+                "score": 85,
+                "reasoning": "The collection feels curated and intentional, with each item complementing the others in terms of the recipient's interests.",
+                "evidence": [
+                  "The combination of coffee and outdoor-themed gifts creates a cohesive gift set that aligns with the dad's lifestyle."
+                ]
+              }
+            },
+            "agentEvaluations": [
+              {
+                "agentName": "Listener",
+                "rating": 80,
+                "inputSignals": [
+                  "I need a birthday gift for my dad. He loves coffee and is pretty outdoorsy. Budget around $50-80."
+                ],
+                "outputSignals": [
+                  "interest:coffee",
+                  "interest:outdoors",
+                  "budget:$50-$80",
+                  "recipient:parent"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 0.9,
+                "issues": []
+              },
+              {
+                "agentName": "Explorer",
+                "rating": 100,
+                "inputSignals": [
+                  "interest:coffee",
+                  "interest:outdoors"
+                ],
+                "outputSignals": [
+                  "matched:coffee",
+                  "matched:cooking",
+                  "matched:foodie",
+                  "matched:fishing",
+                  "matched:hiking",
+                  "matched:cycling",
+                  "matched:baking",
+                  "matched:outdoors"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              },
+              {
+                "agentName": "Validator",
+                "rating": 80,
+                "inputSignals": [
+                  "14 candidates"
+                ],
+                "outputSignals": [
+                  "14 passed"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              },
+              {
+                "agentName": "Storyteller",
+                "rating": 100,
+                "inputSignals": [
+                  "14 products to narrate"
+                ],
+                "outputSignals": [
+                  "14 meaningful stories"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              }
+            ],
+            "overallScore": 89,
+            "summary": "The gift recommendations are well-aligned with the recipient's interests in coffee and the outdoors, making them suitable for a birthday gift. They are diverse, practical, and within budget, demonstrating a thoughtful curation that would likely resonate with the dad.",
+            "criticalFailures": [],
+            "attemptNumber": 0,
+            "evaluatedAt": "2026-02-24T12:02:25.225Z"
+          }
+        }
+      },
+      "evaluation": [
+        {
+          "check": "clarification_flow",
+          "expected": false,
+          "actual": false,
+          "passed": true
+        },
+        {
+          "check": "bar_raiser_score",
+          "expected": ">= 60",
+          "actual": 89,
+          "passed": true
+        },
+        {
+          "check": "budget_respect",
+          "expected": "$50-$80 (with 30% tolerance)",
+          "actual": "prices: ['$65', '$70', '$70', '$65', '$70']",
+          "out_of_range": 0,
+          "passed": true
+        },
+        {
+          "check": "avoid_keywords",
+          "expected": "no: ['tea', 'yoga', 'jewelry']",
+          "actual": "none found (good)",
+          "passed": true
+        },
+        {
+          "check": "giver_reference_leakage",
+          "expected": "no 'unknown shopper' in reasoning",
+          "actual": "clean",
+          "passed": true
+        },
+        {
+          "check": "product_urls",
+          "expected": "all 5 recs have valid URLs",
+          "actual": "5/5 have URLs",
+          "passed": true
+        }
+      ],
+      "refinement_questions": [
+        {
+          "id": "recipient_age",
+          "type": "essential",
+          "field": "recipient.age",
+          "question": "How old are they?",
+          "suggestedAnswers": [
+            {
+              "label": "Child (under 13)",
+              "value": 10
+            },
+            {
+              "label": "Teen (13-17)",
+              "value": 15
+            },
+            {
+              "label": "Young adult (18-25)",
+              "value": 22
+            },
+            {
+              "label": "Adult (26-40)",
+              "value": 33
+            },
+            {
+              "label": "Middle-aged (41-60)",
+              "value": 50
+            },
+            {
+              "label": "Senior (60+)",
+              "value": 65
+            }
+          ],
+          "priority": 5,
+          "impactOnConfidence": 0.1,
+          "rationale": "Age helps narrow down appropriate gift types"
+        },
+        {
+          "id": "refine_coffee",
+          "type": "refinement",
+          "field": "interests",
+          "question": "You mentioned coffee - can you be more specific?",
+          "suggestedAnswers": [
+            {
+              "label": "Casual drinker",
+              "value": "casual-coffee",
+              "description": "Morning coffee routine"
+            },
+            {
+              "label": "Coffee enthusiast",
+              "value": "coffee-enthusiast",
+              "description": "Specialty beans, brewing methods"
+            },
+            {
+              "label": "Espresso lover",
+              "value": "espresso-lover",
+              "description": "Espresso-focused"
+            }
+          ],
+          "priority": 6,
+          "impactOnConfidence": 0.12,
+          "rationale": "\"coffee\" is broad - refinement will improve product matching"
+        }
+      ]
+    },
+    {
+      "persona_id": "wife-yoga",
+      "persona_name": "Anniversary for Yoga Wife",
+      "persona_description": "Tests wellness category + budget respect ($120 cap) + anniversary occasion context.",
+      "session_id": "test-wife-yoga-1771934545",
+      "initial_query": "Looking for an anniversary gift for my wife. She's really into yoga and wellness, loves natural and organic products. Can spend up to $120.",
+      "expected": {
+        "should_clarify": false,
+        "min_bar_raiser": 60,
+        "interests": [
+          "yoga",
+          "wellness"
+        ],
+        "budget": {
+          "min": 50,
+          "max": 120
+        }
+      },
+      "turns": [
+        {
+          "turn": 1,
+          "mode": "recommendations_with_refinement",
+          "exec_time_ms": 40824,
+          "wall_time_s": 40.84,
+          "agent_timings": {
+            "explorer": 492,
+            "listener": 10442,
+            "memory": 415,
+            "dialogueManager": 2,
+            "dialoguePresenter": 0,
+            "constraints": 0,
+            "relationship": 3910,
+            "meaning": 8804,
+            "parallel_total": 8804,
+            "validator": 1,
+            "storyteller": 6021,
+            "presenter": 2131,
+            "barRaiser": 12419,
+            "total_ms": 40824
+          },
+          "questions": [
+            {
+              "id": "intent_priority",
+              "type": "intent",
+              "field": "intentSignals",
+              "question": "I see you want both practical and sentimental. Which is more important?",
+              "suggestedAnswers": [
+                {
+                  "label": "practical first",
+                  "value": "practical",
+                  "description": "Prioritize practical qualities"
+                },
+                {
+                  "label": "sentimental first",
+                  "value": "sentimental",
+                  "description": "Prioritize sentimental qualities"
+                },
+                {
+                  "label": "Both equally",
+                  "value": "both",
+                  "description": "Balance both qualities"
+                }
+              ],
+              "priority": 7,
+              "impactOnConfidence": 0.1,
+              "rationale": "Conflicting intent signals need clarification"
+            },
+            {
+              "id": "urgency",
+              "type": "constraint",
+              "field": "occasion.urgency",
+              "question": "When do you need this gift?",
+              "suggestedAnswers": [
+                {
+                  "label": "Immediately (1-2 days)",
+                  "value": "immediate",
+                  "description": "Fast shipping required"
+                },
+                {
+                  "label": "This week",
+                  "value": "urgent",
+                  "description": "Within 5-7 days"
+                },
+                {
+                  "label": "In the next 2 weeks",
+                  "value": "planned",
+                  "description": "Standard shipping ok"
+                },
+                {
+                  "label": "No rush",
+                  "value": "flexible",
+                  "description": "Take your time"
+                }
+              ],
+              "priority": 10,
+              "impactOnConfidence": 0.07,
+              "rationale": "Urgency affects shipping and availability filtering"
+            }
+          ]
+        }
+      ],
+      "recommendations": {
+        "count": 5,
+        "items": [
+          {
+            "title": "Active Leggings",
+            "price": 86,
+            "currency": "USD",
+            "brand_url": "https://organicbasics.com",
+            "product_url": "https://organicbasics.com/products/womens-active-leggings-walnut",
+            "confidence": 0.8285330947279919,
+            "tags": [
+              "Best Match",
+              "Practical",
+              "Experiential",
+              "Wellness"
+            ],
+            "reasoning": "These Active Leggings are an ideal match for her yoga practice and commitment to wellness, combining comfort and style for every session. Made from organic materials, they reflect her values of quality and sustainability, making each wear a thoughtful choice that supports her lifestyle.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Wellbeing Essential Oil Blends Collection (Worth \u00a3100)",
+            "price": 82,
+            "currency": "USD",
+            "brand_url": "https://neomwellbeing.com",
+            "product_url": "https://neomwellbeing.com/products/wellbeing-essential-oil-blends-collection",
+            "confidence": 0.832694144252935,
+            "tags": [
+              "Luxury",
+              "Consumable",
+              "Wellness"
+            ],
+            "reasoning": "This Wellbeing Essential Oil Blends Collection is a perfect match for someone who is deeply invested in their wellness journey and enjoys natural products. Each blend is thoughtfully crafted to enhance relaxation, energize, or uplift, making it a luxurious yet practical addition to her daily self-care routine.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Gift: Facial Skin Care Set",
+            "price": 62,
+            "currency": "USD",
+            "brand_url": "https://www.chagrinvalleysoapandsalve.com",
+            "product_url": "https://www.chagrinvalleysoapandsalve.com/products/gift-test-2",
+            "confidence": 0.3995280377507089,
+            "tags": [
+              "Consumable",
+              "Eco-Friendly",
+              "Wellness"
+            ],
+            "reasoning": "This facial skin care set beautifully aligns with her passion for organic products and wellness, offering a luxurious way to nurture her skin while staying true to her values. Each item in the set is crafted with USDA-certified organic ingredients, making it a thoughtful gift that reflects her commitment to natural living and self-care.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Wellness Puppy Yoga | Lower Manhattan",
+            "price": 70,
+            "currency": "USD",
+            "brand_url": "https://thepuppysphere.com",
+            "product_url": "https://thepuppysphere.com/products/puppy-yoga-lower-manhattan",
+            "confidence": 0.7055589310606244,
+            "tags": [
+              "Experiential",
+              "Shared Experience",
+              "Sentimental",
+              "Consumable",
+              "Wellness"
+            ],
+            "reasoning": "This unique Puppy Yoga experience perfectly aligns with a love for wellness and yoga, offering a joyful blend of relaxation and puppy cuddles. It's a delightful way to unwind while embracing a commitment to self-care, making it a thoughtful gesture that celebrates her wellness journey.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Self-Care Gift Box",
+            "price": 99,
+            "currency": "USD",
+            "brand_url": "https://passionplanner.com",
+            "product_url": "https://passionplanner.com/products/self-care-gift-box",
+            "confidence": 0.7233165781001167,
+            "tags": [
+              "Practical",
+              "Experiential",
+              "Shared Experience",
+              "Wellness"
+            ],
+            "reasoning": "This Self-Care Gift Box is a wonderful way to support your wife's commitment to wellness and self-care. Filled with thoughtfully designed items that encourage reflection and relaxation, it aligns perfectly with her love for yoga and natural products, offering her a luxurious yet practical experience to unwind and reconnect with herself.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          }
+        ],
+        "intro": "I know how special your anniversary is, and it\u2019s the perfect time to show your wife just how much she means to you. I've put together some thoughtful gift ideas that I believe will make this occasion even more memorable. You've got this!",
+        "outro": "If you have any questions or want to explore more options, just let me know. I'm here to help you find the perfect gift!",
+        "prices": [
+          86.0,
+          82.0,
+          62.0,
+          70.0,
+          99.0
+        ],
+        "price_avg": 79.8,
+        "price_min": 62.0,
+        "price_max": 99.0,
+        "unique_brands": [
+          "chagrinvalleysoapandsalve.com",
+          "neomwellbeing.com",
+          "organicbasics.com",
+          "passionplanner.com",
+          "thepuppysphere.com"
+        ],
+        "brand_count": 5,
+        "bar_raiser": {
+          "score": 93,
+          "dimensions": {},
+          "feedback": "",
+          "raw": {
+            "verdict": "APPROVED",
+            "scorecard": {
+              "relevance": {
+                "score": 100,
+                "reasoning": "Deterministic: Context provided (interests: true, budget: true, recipient: true, occasion: true). 5/5 products reference stated interests. 5/5 in budget.",
+                "evidence": [
+                  "Interests: [yoga, wellness, natural products, organic products]",
+                  "Recipient: partner",
+                  "Occasion: anniversary",
+                  "5/5 products match interests"
+                ]
+              },
+              "personalization": {
+                "score": 90,
+                "reasoning": "Each gift is tailored to her specific interests in yoga, wellness, and natural products, demonstrating a strong understanding of her preferences.",
+                "evidence": [
+                  "Active Leggings made from organic materials",
+                  "Essential Oil Blends crafted for relaxation",
+                  "Facial Skin Care Set with USDA-certified organic ingredients"
+                ]
+              },
+              "storytellingQuality": {
+                "score": 85,
+                "reasoning": "The explanations provide a clear connection between the gifts and the recipient's interests, making them compelling.",
+                "evidence": [
+                  "Active Leggings support her yoga practice",
+                  "Essential Oil Blends enhance her wellness journey",
+                  "Puppy Yoga combines relaxation with joy"
+                ]
+              },
+              "diversity": {
+                "score": 80,
+                "reasoning": "There is a good variety of gift types, including clothing, consumables, experiences, and self-care products, while remaining relevant to her interests.",
+                "evidence": [
+                  "Active Leggings (apparel)",
+                  "Essential Oil Blends (consumable)",
+                  "Puppy Yoga (experience)",
+                  "Self-Care Gift Box (curated items)"
+                ]
+              },
+              "humanSanityCheck": {
+                "score": 90,
+                "reasoning": "All gifts are practical and thoughtful choices that a friend would likely consider for an anniversary gift.",
+                "evidence": [
+                  "Facial Skin Care Set for self-care",
+                  "Self-Care Gift Box for relaxation",
+                  "Puppy Yoga for a unique experience"
+                ]
+              },
+              "budgetAdherence": {
+                "score": 100,
+                "reasoning": "Deterministic: 5/5 products within $0-$120. Prices: $86, $82, $62, $70, $99",
+                "evidence": [
+                  "Budget: $0-$120",
+                  "Prices: $86, $82, $62, $70, $99",
+                  "5/5 in range"
+                ]
+              },
+              "interestCoverage": {
+                "score": 100,
+                "reasoning": "Deterministic: 4/4 interests covered [yoga, wellness, natural products, organic products]. 5/5 products match at least one interest.",
+                "evidence": [
+                  "Stated interests: [yoga, wellness, natural products, organic products]",
+                  "Covered: [yoga, wellness, natural products, organic products]",
+                  "5/5 products match"
+                ]
+              },
+              "presentationCohesion": {
+                "score": 85,
+                "reasoning": "The recommendations feel curated and intentional, creating a cohesive gift-giving experience that aligns with the occasion and recipient's interests.",
+                "evidence": [
+                  "All gifts focus on wellness and self-care",
+                  "Variety in types but unity in theme",
+                  "Thoughtful combinations like Puppy Yoga and Self-Care Gift Box"
+                ]
+              }
+            },
+            "agentEvaluations": [
+              {
+                "agentName": "Listener",
+                "rating": 80,
+                "inputSignals": [
+                  "Looking for an anniversary gift for my wife. She's really into yoga and wellness, loves natural and organic products. Can spend up to $120."
+                ],
+                "outputSignals": [
+                  "interest:yoga",
+                  "interest:wellness",
+                  "interest:natural products",
+                  "interest:organic products",
+                  "budget:$0-$120",
+                  "recipient:partner"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 0.9,
+                "issues": []
+              },
+              {
+                "agentName": "Explorer",
+                "rating": 75,
+                "inputSignals": [
+                  "interest:yoga",
+                  "interest:wellness",
+                  "interest:natural products",
+                  "interest:organic products"
+                ],
+                "outputSignals": [
+                  "matched:meditation",
+                  "matched:wellness",
+                  "matched:natural",
+                  "matched:organic",
+                  "matched:yoga",
+                  "matched:fitness",
+                  "matched:pilates",
+                  "matched:spirituality",
+                  "matched:organic products"
+                ],
+                "lostSignals": [
+                  "LOST interest:natural products"
+                ],
+                "informationPreservation": 0.75,
+                "issues": [
+                  "Lost 1 interests: [natural products]"
+                ]
+              },
+              {
+                "agentName": "Validator",
+                "rating": 80,
+                "inputSignals": [
+                  "15 candidates"
+                ],
+                "outputSignals": [
+                  "11 passed"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 0.7333333333333333,
+                "issues": []
+              },
+              {
+                "agentName": "Storyteller",
+                "rating": 100,
+                "inputSignals": [
+                  "11 products to narrate"
+                ],
+                "outputSignals": [
+                  "11 meaningful stories"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              }
+            ],
+            "overallScore": 93,
+            "summary": "The gift recommendations are well-aligned with the recipient's interests and the occasion, showcasing a thoughtful and personalized approach. They cover a diverse range of products while adhering to the budget, making them excellent choices for an anniversary gift.",
+            "criticalFailures": [],
+            "attemptNumber": 0,
+            "evaluatedAt": "2026-02-24T12:03:06.052Z"
+          }
+        }
+      },
+      "evaluation": [
+        {
+          "check": "clarification_flow",
+          "expected": false,
+          "actual": false,
+          "passed": true
+        },
+        {
+          "check": "bar_raiser_score",
+          "expected": ">= 60",
+          "actual": 93,
+          "passed": true
+        },
+        {
+          "check": "budget_respect",
+          "expected": "$50-$120 (with 30% tolerance)",
+          "actual": "prices: ['$86', '$82', '$62', '$70', '$99']",
+          "out_of_range": 0,
+          "passed": true
+        },
+        {
+          "check": "giver_reference_leakage",
+          "expected": "no 'unknown shopper' in reasoning",
+          "actual": "clean",
+          "passed": true
+        },
+        {
+          "check": "product_urls",
+          "expected": "all 5 recs have valid URLs",
+          "actual": "5/5 have URLs",
+          "passed": true
+        }
+      ],
+      "refinement_questions": [
+        {
+          "id": "intent_priority",
+          "type": "intent",
+          "field": "intentSignals",
+          "question": "I see you want both practical and sentimental. Which is more important?",
+          "suggestedAnswers": [
+            {
+              "label": "practical first",
+              "value": "practical",
+              "description": "Prioritize practical qualities"
+            },
+            {
+              "label": "sentimental first",
+              "value": "sentimental",
+              "description": "Prioritize sentimental qualities"
+            },
+            {
+              "label": "Both equally",
+              "value": "both",
+              "description": "Balance both qualities"
+            }
+          ],
+          "priority": 7,
+          "impactOnConfidence": 0.1,
+          "rationale": "Conflicting intent signals need clarification"
+        },
+        {
+          "id": "urgency",
+          "type": "constraint",
+          "field": "occasion.urgency",
+          "question": "When do you need this gift?",
+          "suggestedAnswers": [
+            {
+              "label": "Immediately (1-2 days)",
+              "value": "immediate",
+              "description": "Fast shipping required"
+            },
+            {
+              "label": "This week",
+              "value": "urgent",
+              "description": "Within 5-7 days"
+            },
+            {
+              "label": "In the next 2 weeks",
+              "value": "planned",
+              "description": "Standard shipping ok"
+            },
+            {
+              "label": "No rush",
+              "value": "flexible",
+              "description": "Take your time"
+            }
+          ],
+          "priority": 10,
+          "impactOnConfidence": 0.07,
+          "rationale": "Urgency affects shipping and availability filtering"
+        }
+      ]
+    },
+    {
+      "persona_id": "nephew-teen",
+      "persona_name": "Christmas for Teen Nephew",
+      "persona_description": "Tests teen/niche interests (skateboarding, music) + age-appropriate recs for 16yo male.",
+      "session_id": "test-nephew-teen-1771934586",
+      "initial_query": "Christmas gift for my 16 year old nephew. He's into skateboarding and music. Budget $30-50.",
+      "expected": {
+        "should_clarify": false,
+        "min_bar_raiser": 60,
+        "interests": [
+          "skateboarding",
+          "music"
+        ],
+        "budget": {
+          "min": 30,
+          "max": 50
+        },
+        "avoid_keywords": [
+          "jewelry",
+          "earring",
+          "necklace",
+          "bracelet"
+        ]
+      },
+      "turns": [
+        {
+          "turn": 1,
+          "mode": "recommendations_with_refinement",
+          "exec_time_ms": 32122,
+          "wall_time_s": 32.13,
+          "agent_timings": {
+            "explorer": 3,
+            "listener": 7107,
+            "memory": 48,
+            "dialogueManager": 14,
+            "dialoguePresenter": 0,
+            "constraints": 0,
+            "relationship": 3849,
+            "meaning": 6742,
+            "parallel_total": 6742,
+            "validator": 1,
+            "storyteller": 3971,
+            "presenter": 1460,
+            "barRaiser": 12687,
+            "total_ms": 32122
+          },
+          "questions": [
+            {
+              "id": "refine_music",
+              "type": "refinement",
+              "field": "interests",
+              "question": "You mentioned music - can you be more specific?",
+              "suggestedAnswers": [
+                {
+                  "label": "Plays an instrument",
+                  "value": "musician",
+                  "description": "Musical instruments, accessories"
+                },
+                {
+                  "label": "Listens/collects",
+                  "value": "music-collector",
+                  "description": "Vinyl, merch, concerts"
+                },
+                {
+                  "label": "Makes music (production)",
+                  "value": "music-producer",
+                  "description": "Production software, equipment"
+                },
+                {
+                  "label": "All of the above",
+                  "value": "music-enthusiast"
+                }
+              ],
+              "priority": 6,
+              "impactOnConfidence": 0.12,
+              "rationale": "\"music\" is broad - refinement will improve product matching"
+            },
+            {
+              "id": "gift_philosophy",
+              "type": "intent",
+              "field": "giftPhilosophy",
+              "question": "What matters most for this gift?",
+              "suggestedAnswers": [
+                {
+                  "label": "Something they will use daily",
+                  "value": "practical",
+                  "description": "Focus on utility and function"
+                },
+                {
+                  "label": "Something unique and special",
+                  "value": "unique",
+                  "description": "One-of-a-kind finds"
+                },
+                {
+                  "label": "Something meaningful and personal",
+                  "value": "meaningful",
+                  "description": "Emotional connection"
+                },
+                {
+                  "label": "High quality and well-made",
+                  "value": "quality",
+                  "description": "Premium materials and craftsmanship"
+                }
+              ],
+              "priority": 8,
+              "impactOnConfidence": 0.09,
+              "rationale": "Gift philosophy guides recommendation direction"
+            }
+          ]
+        }
+      ],
+      "recommendations": {
+        "count": 5,
+        "items": [
+          {
+            "title": "Protective Shirt l/s Tahoe Pro A 2.0",
+            "price": 39.99,
+            "currency": "USD",
+            "brand_url": "https://www.titus.de",
+            "product_url": "https://www.titus.de/products/tsg-rueckenprotektor-protective-shirt-l-s-tahoe-pro-a-2-0-black-0259014",
+            "confidence": 0.7339215784215785,
+            "tags": [
+              "Best Match",
+              "Budget Friendly"
+            ],
+            "reasoning": "This protective shirt is perfect for someone who loves skateboarding, as it provides essential safety while allowing for freedom of movement during rides. Designed with comfort and ventilation in mind, it supports their passion for outdoor activities and ensures they stay protected on their adventures.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Custom Shop Logo T-Shirt, Vintage Black",
+            "price": 39.99,
+            "currency": "USD",
+            "brand_url": "https://be.fender.com",
+            "product_url": "https://be.fender.com/products/custom-shop-logo-t-shirt-vintage-black",
+            "confidence": 0.7379215784215785,
+            "tags": [
+              "Budget Friendly",
+              "Practical",
+              "Personalized"
+            ],
+            "reasoning": "This Custom Shop Logo T-Shirt perfectly aligns with their love for music and skateboarding, offering a stylish way to express their passion. The vintage feel and relaxed fit make it an ideal everyday staple that complements their youthful vibe and laid-back style.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Young Americans (50th Anniversary Half Speed Master Edition) - David Bowie [VINYL]",
+            "price": 35,
+            "currency": "USD",
+            "brand_url": "https://goldendiscs.ie",
+            "product_url": "https://goldendiscs.ie/products/young-americans-david-bowie-vinyl-limited-edition",
+            "confidence": 0.6892892107892109,
+            "tags": [
+              "Budget Friendly",
+              "Artistic"
+            ],
+            "reasoning": "This limited edition vinyl of David Bowie's 'Young Americans' is a fantastic gift that perfectly aligns with their love for music and the culture surrounding it. The unique half-speed mastering adds a special touch that any music enthusiast would appreciate, and it's a beautiful way to celebrate Bowie's iconic sound while connecting to their passion for artistic expression.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "PrintYourVinyl Gift Card",
+            "price": 50,
+            "currency": "USD",
+            "brand_url": "https://www.printyourvinyl.com",
+            "product_url": "https://www.printyourvinyl.com/products/gift-card",
+            "confidence": 0.5893940157799812,
+            "tags": [],
+            "reasoning": "This gift card from PrintYourVinyl is a fantastic way for them to explore their passion for music and skateboarding. With it, they can choose their favorite vinyl records or even customize their own, allowing for personal expression that aligns perfectly with their interests.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "The Lord Of The Rings - The Fellowship Of The Ring - 2 Vinyl",
+            "price": 43.99,
+            "currency": "USD",
+            "brand_url": "https://www.impericon.com",
+            "product_url": "https://www.impericon.com/products/the-lord-of-the-rings-the-fellowship-of-the-ring-2-vinyl",
+            "confidence": 0.6296026473526473,
+            "tags": [
+              "Budget Friendly"
+            ],
+            "reasoning": "This special edition vinyl of 'The Fellowship of the Ring' is a perfect blend of music and cinematic magic that resonates with their love for both skateboarding and music. It offers a unique way to experience the iconic soundtrack while adding a touch of nostalgia and artistry to their collection.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          }
+        ],
+        "intro": "It's wonderful that you're looking for the perfect Christmas gift for your 16-year-old nephew! Finding something that resonates with his interests can really make the occasion special. I'm here to help you spark some ideas that he'll love!",
+        "outro": "If you have any questions or want to explore more options, feel free to ask! I'm here to help you find that perfect gift.",
+        "prices": [
+          39.99,
+          39.99,
+          35.0,
+          50.0,
+          43.99
+        ],
+        "price_avg": 41.79,
+        "price_min": 35.0,
+        "price_max": 50.0,
+        "unique_brands": [
+          "be.fender.com",
+          "goldendiscs.ie",
+          "impericon.com",
+          "printyourvinyl.com",
+          "titus.de"
+        ],
+        "brand_count": 5,
+        "bar_raiser": {
+          "score": 91,
+          "dimensions": {},
+          "feedback": "",
+          "raw": {
+            "verdict": "APPROVED",
+            "scorecard": {
+              "relevance": {
+                "score": 100,
+                "reasoning": "Deterministic: Context provided (interests: true, budget: true, recipient: true, occasion: true). 5/5 products reference stated interests. 5/5 in budget.",
+                "evidence": [
+                  "Interests: [skateboarding, music]",
+                  "Recipient: nephew",
+                  "Occasion: Christmas",
+                  "5/5 products match interests"
+                ]
+              },
+              "personalization": {
+                "score": 88,
+                "reasoning": "Deterministic: 8 interest mentions across 5 recommendations (density: 80%). 5/5 products explicitly reference stated interests.",
+                "evidence": [
+                  "Stated interests: [skateboarding, music]",
+                  "Total interest mentions in reasoning: 8",
+                  "5/5 products match"
+                ]
+              },
+              "storytellingQuality": {
+                "score": 80,
+                "reasoning": "The explanations for each gift are compelling and connect well to the recipient's interests, although some could be more vivid in storytelling.",
+                "evidence": [
+                  "Descriptions highlight the benefits of the protective shirt and the uniqueness of the vinyl records."
+                ]
+              },
+              "diversity": {
+                "score": 75,
+                "reasoning": "There is a good variety of gifts ranging from clothing to music collectibles, but they primarily focus on music and skateboarding without venturing into other related categories.",
+                "evidence": [
+                  "Includes clothing, vinyl records, and a gift card, but all are centered around the same themes."
+                ]
+              },
+              "humanSanityCheck": {
+                "score": 90,
+                "reasoning": "All gifts are practical and sensible for a 16-year-old boy who enjoys skateboarding and music, making them thoughtful choices.",
+                "evidence": [
+                  "Protective gear for skateboarding is a sensible gift.",
+                  "Vinyl records appeal to music lovers."
+                ]
+              },
+              "budgetAdherence": {
+                "score": 100,
+                "reasoning": "Deterministic: 5/5 products within $30-$50. Prices: $39.99, $39.99, $35, $50, $43.99",
+                "evidence": [
+                  "Budget: $30-$50",
+                  "Prices: $39.99, $39.99, $35, $50, $43.99",
+                  "5/5 in range"
+                ]
+              },
+              "interestCoverage": {
+                "score": 100,
+                "reasoning": "Deterministic: 2/2 interests covered [skateboarding, music]. 5/5 products match at least one interest.",
+                "evidence": [
+                  "Stated interests: [skateboarding, music]",
+                  "Covered: [skateboarding, music]",
+                  "5/5 products match"
+                ]
+              },
+              "presentationCohesion": {
+                "score": 85,
+                "reasoning": "The set feels curated and intentional, focusing on the recipient's interests and the occasion, though it could benefit from a more cohesive theme.",
+                "evidence": [
+                  "Gifts are all relevant to the interests and occasion, creating a thoughtful gift set."
+                ]
+              }
+            },
+            "agentEvaluations": [
+              {
+                "agentName": "Listener",
+                "rating": 80,
+                "inputSignals": [
+                  "Christmas gift for my 16 year old nephew. He's into skateboarding and music. Budget $30-50."
+                ],
+                "outputSignals": [
+                  "interest:skateboarding",
+                  "interest:music",
+                  "budget:$30-$50",
+                  "recipient:nephew"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 0.9,
+                "issues": []
+              },
+              {
+                "agentName": "Explorer",
+                "rating": 100,
+                "inputSignals": [
+                  "interest:skateboarding",
+                  "interest:music"
+                ],
+                "outputSignals": [
+                  "matched:music",
+                  "matched:guitar",
+                  "matched:vinyl",
+                  "matched:skateboarding",
+                  "matched:concerts",
+                  "matched:piano"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              },
+              {
+                "agentName": "Validator",
+                "rating": 80,
+                "inputSignals": [
+                  "9 candidates"
+                ],
+                "outputSignals": [
+                  "9 passed"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              },
+              {
+                "agentName": "Storyteller",
+                "rating": 100,
+                "inputSignals": [
+                  "9 products to narrate"
+                ],
+                "outputSignals": [
+                  "9 meaningful stories"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              }
+            ],
+            "overallScore": 91,
+            "summary": "The gift recommendations effectively align with the recipient's interests in skateboarding and music, while adhering to the budget. They present a thoughtful and varied selection suitable for a Christmas gift, although there is room for improvement in storytelling and thematic cohesion.",
+            "criticalFailures": [],
+            "attemptNumber": 0,
+            "evaluatedAt": "2026-02-24T12:03:38.196Z"
+          }
+        }
+      },
+      "evaluation": [
+        {
+          "check": "clarification_flow",
+          "expected": false,
+          "actual": false,
+          "passed": true
+        },
+        {
+          "check": "bar_raiser_score",
+          "expected": ">= 60",
+          "actual": 91,
+          "passed": true
+        },
+        {
+          "check": "budget_respect",
+          "expected": "$30-$50 (with 30% tolerance)",
+          "actual": "prices: ['$40', '$40', '$35', '$50', '$44']",
+          "out_of_range": 0,
+          "passed": true
+        },
+        {
+          "check": "avoid_keywords",
+          "expected": "no: ['jewelry', 'earring', 'necklace', 'bracelet']",
+          "actual": "none found (good)",
+          "passed": true
+        },
+        {
+          "check": "giver_reference_leakage",
+          "expected": "no 'unknown shopper' in reasoning",
+          "actual": "clean",
+          "passed": true
+        },
+        {
+          "check": "product_urls",
+          "expected": "all 5 recs have valid URLs",
+          "actual": "5/5 have URLs",
+          "passed": true
+        }
+      ],
+      "refinement_questions": [
+        {
+          "id": "refine_music",
+          "type": "refinement",
+          "field": "interests",
+          "question": "You mentioned music - can you be more specific?",
+          "suggestedAnswers": [
+            {
+              "label": "Plays an instrument",
+              "value": "musician",
+              "description": "Musical instruments, accessories"
+            },
+            {
+              "label": "Listens/collects",
+              "value": "music-collector",
+              "description": "Vinyl, merch, concerts"
+            },
+            {
+              "label": "Makes music (production)",
+              "value": "music-producer",
+              "description": "Production software, equipment"
+            },
+            {
+              "label": "All of the above",
+              "value": "music-enthusiast"
+            }
+          ],
+          "priority": 6,
+          "impactOnConfidence": 0.12,
+          "rationale": "\"music\" is broad - refinement will improve product matching"
+        },
+        {
+          "id": "gift_philosophy",
+          "type": "intent",
+          "field": "giftPhilosophy",
+          "question": "What matters most for this gift?",
+          "suggestedAnswers": [
+            {
+              "label": "Something they will use daily",
+              "value": "practical",
+              "description": "Focus on utility and function"
+            },
+            {
+              "label": "Something unique and special",
+              "value": "unique",
+              "description": "One-of-a-kind finds"
+            },
+            {
+              "label": "Something meaningful and personal",
+              "value": "meaningful",
+              "description": "Emotional connection"
+            },
+            {
+              "label": "High quality and well-made",
+              "value": "quality",
+              "description": "Premium materials and craftsmanship"
+            }
+          ],
+          "priority": 8,
+          "impactOnConfidence": 0.09,
+          "rationale": "Gift philosophy guides recommendation direction"
+        }
+      ]
+    },
+    {
+      "persona_id": "boss-thankyou",
+      "persona_name": "Thank You for Boss",
+      "persona_description": "Tests occasion (thank you) + relationship (boss) context. Should be tasteful/professional.",
+      "session_id": "test-boss-thankyou-1771934618",
+      "initial_query": "Thank you gift for my boss who helped me get a promotion. She likes tea and reading. Something tasteful and professional, around $60.",
+      "expected": {
+        "should_clarify": false,
+        "min_bar_raiser": 60,
+        "interests": [
+          "tea",
+          "reading"
+        ],
+        "budget": {
+          "min": 40,
+          "max": 75
+        }
+      },
+      "turns": [
+        {
+          "turn": 1,
+          "mode": "recommendations_with_refinement",
+          "exec_time_ms": 47638,
+          "wall_time_s": 47.64,
+          "agent_timings": {
+            "explorer": 3463,
+            "listener": 14230,
+            "memory": 153,
+            "dialogueManager": 1,
+            "dialoguePresenter": 1,
+            "constraints": 0,
+            "relationship": 4195,
+            "meaning": 6439,
+            "parallel_total": 6439,
+            "validator": 0,
+            "storyteller": 5705,
+            "presenter": 2258,
+            "barRaiser": 15279,
+            "total_ms": 47638
+          },
+          "questions": [
+            {
+              "id": "recipient_age",
+              "type": "essential",
+              "field": "recipient.age",
+              "question": "How old are they?",
+              "suggestedAnswers": [
+                {
+                  "label": "Child (under 13)",
+                  "value": 10
+                },
+                {
+                  "label": "Teen (13-17)",
+                  "value": 15
+                },
+                {
+                  "label": "Young adult (18-25)",
+                  "value": 22
+                },
+                {
+                  "label": "Adult (26-40)",
+                  "value": 33
+                },
+                {
+                  "label": "Middle-aged (41-60)",
+                  "value": 50
+                },
+                {
+                  "label": "Senior (60+)",
+                  "value": 65
+                }
+              ],
+              "priority": 5,
+              "impactOnConfidence": 0.1,
+              "rationale": "Age helps narrow down appropriate gift types"
+            },
+            {
+              "id": "refine_reading",
+              "type": "refinement",
+              "field": "interests",
+              "question": "You mentioned reading - can you be more specific?",
+              "suggestedAnswers": [
+                {
+                  "label": "Fiction",
+                  "value": "fiction-reader",
+                  "description": "Novels, stories"
+                },
+                {
+                  "label": "Non-fiction",
+                  "value": "non-fiction-reader",
+                  "description": "Biography, history, science"
+                },
+                {
+                  "label": "Specific genre",
+                  "value": "genre-reader",
+                  "description": "Mystery, sci-fi, fantasy, etc."
+                },
+                {
+                  "label": "All types",
+                  "value": "avid-reader"
+                }
+              ],
+              "priority": 6,
+              "impactOnConfidence": 0.12,
+              "rationale": "\"reading\" is broad - refinement will improve product matching"
+            }
+          ]
+        }
+      ],
+      "recommendations": {
+        "count": 5,
+        "items": [
+          {
+            "title": "Matcha Moments Box",
+            "price": 54.99,
+            "currency": "USD",
+            "brand_url": "https://bokksumarket.com",
+            "product_url": "https://bokksumarket.com/products/matcha-moments-box",
+            "confidence": 0.6729228210246175,
+            "tags": [
+              "Best Match",
+              "Practical",
+              "Experiential",
+              "Shared Experience",
+              "Consumable",
+              "Eco-Friendly"
+            ],
+            "reasoning": "The Matcha Moments Box is a delightful way to celebrate your boss's love for tea, offering a curated selection of matcha-infused treats that will elevate her tea-drinking experience. This thoughtful gift not only indulges her taste buds but also provides a moment of relaxation, making it a perfect gesture of appreciation for her support in your career.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "The Three Realms set by Am\u00e9lie Wen Zhao (Illumicrate Exclusive)",
+            "price": 55,
+            "currency": "USD",
+            "brand_url": "https://illumicrate.com",
+            "product_url": "https://illumicrate.com/products/the-three-realms-set-amelie-wen-zhao",
+            "confidence": 0.7237222222222223,
+            "tags": [
+              "Educational",
+              "Artistic"
+            ],
+            "reasoning": "This exclusive set of 'The Three Realms' by Am\u00e9lie Wen Zhao is a beautiful addition to any reading collection, perfect for someone who values both literature and aesthetics. The stunning artwork and thoughtful design not only enhance the reading experience but also showcase sophistication and taste, making it a fitting tribute to her support and mentorship.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Viva Isabella Porcelain Teapot",
+            "price": 52,
+            "currency": "USD",
+            "brand_url": "https://looseleafteamarket.com",
+            "product_url": "https://looseleafteamarket.com/products/viva-isabella-porcelain-teapot",
+            "confidence": 0.6855917389045456,
+            "tags": [
+              "Consumable"
+            ],
+            "reasoning": "This elegant Viva Isabella Porcelain Teapot perfectly complements her love for tea, making each brewing session feel like a special occasion. Its minimalist Scandinavian design adds a touch of sophistication to her tea rituals, reflecting her refined taste while also serving as a functional piece for her reading nook.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Ace Metaphor's 5-Book Bundle",
+            "price": 54.97,
+            "currency": "USD",
+            "brand_url": "https://acemetaphor.shop",
+            "product_url": "https://acemetaphor.shop/products/ace-metaphor-s-5-book-bundle",
+            "confidence": 0.6597684630738523,
+            "tags": [
+              "Educational",
+              "Wellness"
+            ],
+            "reasoning": "This 5-book bundle from Ace Metaphor is a fantastic gift for someone who cherishes reading and enjoys a warm cup of tea. Each book offers valuable insights and reflections on love, personal growth, and relationships, making it a thoughtful gesture that aligns perfectly with her interests and sophisticated taste.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          },
+          {
+            "title": "Puppy Sphere Signature Yoga Mat",
+            "price": 55,
+            "currency": "USD",
+            "brand_url": "https://thepuppysphere.com",
+            "product_url": "https://thepuppysphere.com/products/yoga-mat",
+            "confidence": 0.6812222222222223,
+            "tags": [
+              "Practical",
+              "Wellness"
+            ],
+            "reasoning": "This Puppy Sphere Signature Yoga Mat is a wonderful fit for someone who appreciates both wellness and sophistication. The mat's sleek black design and practical features will complement her love for self-care while providing a stylish addition to her space, making it perfect for her moments of relaxation with a good book or a cup of tea.",
+            "interest_matches": [],
+            "occasion_match": "",
+            "relationship_match": "",
+            "attributes": {}
+          }
+        ],
+        "intro": "It\u2019s wonderful that you want to show your appreciation to your boss with a thoughtful thank you gift! A small gesture can really go a long way in expressing your gratitude, and I\u2019m here to help you find the perfect one that suits your boss's taste.",
+        "outro": "If you have any questions or need further ideas, feel free to reach out! I'm here to help you refine your options or explore more gifts.",
+        "prices": [
+          54.99,
+          55.0,
+          52.0,
+          54.97,
+          55.0
+        ],
+        "price_avg": 54.39,
+        "price_min": 52.0,
+        "price_max": 55.0,
+        "unique_brands": [
+          "acemetaphor.shop",
+          "bokksumarket.com",
+          "illumicrate.com",
+          "looseleafteamarket.com",
+          "thepuppysphere.com"
+        ],
+        "brand_count": 5,
+        "bar_raiser": {
+          "score": 92,
+          "dimensions": {},
+          "feedback": "",
+          "raw": {
+            "verdict": "APPROVED",
+            "scorecard": {
+              "relevance": {
+                "score": 100,
+                "reasoning": "Deterministic: Context provided (interests: true, budget: true, recipient: true, occasion: true). 5/5 products reference stated interests. 5/5 in budget.",
+                "evidence": [
+                  "Interests: [tea, reading]",
+                  "Recipient: boss",
+                  "Occasion: thank you gift",
+                  "5/5 products match interests"
+                ]
+              },
+              "personalization": {
+                "score": 90,
+                "reasoning": "Each recommendation specifically references the recipient's interests in tea and reading, making them highly personalized.",
+                "evidence": [
+                  "Matcha Moments Box caters to her love for tea.",
+                  "The Three Realms set appeals to her reading passion.",
+                  "Viva Isabella Porcelain Teapot is designed for tea lovers."
+                ]
+              },
+              "storytellingQuality": {
+                "score": 85,
+                "reasoning": "The explanations are compelling and connect the gifts to the recipient's interests, although some could be more vivid.",
+                "evidence": [
+                  "Matcha Moments Box emphasizes relaxation and indulgence.",
+                  "The Three Realms set highlights aesthetics and sophistication.",
+                  "Viva Isabella Porcelain Teapot adds a special touch to her tea rituals."
+                ]
+              },
+              "diversity": {
+                "score": 80,
+                "reasoning": "There is a good variety of gift types (consumables, books, functional items) while remaining relevant to the interests.",
+                "evidence": [
+                  "Matcha Moments Box (tea), The Three Realms set (reading), Viva Isabella Porcelain Teapot (tea), Ace Metaphor's 5-Book Bundle (reading)."
+                ]
+              },
+              "humanSanityCheck": {
+                "score": 85,
+                "reasoning": "All gifts are sensible and thoughtful, fitting for a professional thank you to a boss.",
+                "evidence": [
+                  "Matcha Moments Box is a unique gift for tea lovers.",
+                  "The Three Realms set is a classy addition to any bookshelf.",
+                  "Viva Isabella Porcelain Teapot is a stylish and practical gift."
+                ]
+              },
+              "budgetAdherence": {
+                "score": 100,
+                "reasoning": "Deterministic: 5/5 products within $50-$60. Prices: $54.99, $55, $52, $54.97, $55",
+                "evidence": [
+                  "Budget: $50-$60",
+                  "Prices: $54.99, $55, $52, $54.97, $55",
+                  "5/5 in range"
+                ]
+              },
+              "interestCoverage": {
+                "score": 100,
+                "reasoning": "Deterministic: 2/2 interests covered [tea, reading]. 5/5 products match at least one interest.",
+                "evidence": [
+                  "Stated interests: [tea, reading]",
+                  "Covered: [tea, reading]",
+                  "5/5 products match"
+                ]
+              },
+              "presentationCohesion": {
+                "score": 85,
+                "reasoning": "The gifts feel curated for a professional thank you, with a clear focus on the recipient's interests.",
+                "evidence": [
+                  "The combination of tea and reading gifts creates a cohesive theme.",
+                  "Each item reflects sophistication and thoughtfulness appropriate for a boss."
+                ]
+              }
+            },
+            "agentEvaluations": [
+              {
+                "agentName": "Listener",
+                "rating": 80,
+                "inputSignals": [
+                  "Thank you gift for my boss who helped me get a promotion. She likes tea and reading. Something tasteful and professional, around $60."
+                ],
+                "outputSignals": [
+                  "interest:tea",
+                  "interest:reading",
+                  "budget:$50-$60",
+                  "recipient:boss"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 0.9,
+                "issues": []
+              },
+              {
+                "agentName": "Explorer",
+                "rating": 100,
+                "inputSignals": [
+                  "interest:tea",
+                  "interest:reading"
+                ],
+                "outputSignals": [
+                  "matched:reading",
+                  "matched:wellness",
+                  "matched:tea",
+                  "matched:fiction",
+                  "matched:poetry",
+                  "matched:meditation",
+                  "matched:foodie"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              },
+              {
+                "agentName": "Validator",
+                "rating": 80,
+                "inputSignals": [
+                  "10 candidates"
+                ],
+                "outputSignals": [
+                  "10 passed"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              },
+              {
+                "agentName": "Storyteller",
+                "rating": 100,
+                "inputSignals": [
+                  "10 products to narrate"
+                ],
+                "outputSignals": [
+                  "10 meaningful stories"
+                ],
+                "lostSignals": [],
+                "informationPreservation": 1,
+                "issues": []
+              }
+            ],
+            "overallScore": 92,
+            "summary": "The gift recommendations are highly relevant and personalized, effectively covering the recipient's interests in tea and reading. All items adhere to the budget and present a cohesive selection suitable for a professional thank you gift. Overall, these gifts are thoughtful and appropriate for the occasion.",
+            "criticalFailures": [],
+            "attemptNumber": 0,
+            "evaluatedAt": "2026-02-24T12:04:25.820Z"
+          }
+        }
+      },
+      "evaluation": [
+        {
+          "check": "clarification_flow",
+          "expected": false,
+          "actual": false,
+          "passed": true
+        },
+        {
+          "check": "bar_raiser_score",
+          "expected": ">= 60",
+          "actual": 92,
+          "passed": true
+        },
+        {
+          "check": "budget_respect",
+          "expected": "$40-$75 (with 30% tolerance)",
+          "actual": "prices: ['$55', '$55', '$52', '$55', '$55']",
+          "out_of_range": 0,
+          "passed": true
+        },
+        {
+          "check": "giver_reference_leakage",
+          "expected": "no 'unknown shopper' in reasoning",
+          "actual": "clean",
+          "passed": true
+        },
+        {
+          "check": "product_urls",
+          "expected": "all 5 recs have valid URLs",
+          "actual": "5/5 have URLs",
+          "passed": true
+        }
+      ],
+      "refinement_questions": [
+        {
+          "id": "recipient_age",
+          "type": "essential",
+          "field": "recipient.age",
+          "question": "How old are they?",
+          "suggestedAnswers": [
+            {
+              "label": "Child (under 13)",
+              "value": 10
+            },
+            {
+              "label": "Teen (13-17)",
+              "value": 15
+            },
+            {
+              "label": "Young adult (18-25)",
+              "value": 22
+            },
+            {
+              "label": "Adult (26-40)",
+              "value": 33
+            },
+            {
+              "label": "Middle-aged (41-60)",
+              "value": 50
+            },
+            {
+              "label": "Senior (60+)",
+              "value": 65
+            }
+          ],
+          "priority": 5,
+          "impactOnConfidence": 0.1,
+          "rationale": "Age helps narrow down appropriate gift types"
+        },
+        {
+          "id": "refine_reading",
+          "type": "refinement",
+          "field": "interests",
+          "question": "You mentioned reading - can you be more specific?",
+          "suggestedAnswers": [
+            {
+              "label": "Fiction",
+              "value": "fiction-reader",
+              "description": "Novels, stories"
+            },
+            {
+              "label": "Non-fiction",
+              "value": "non-fiction-reader",
+              "description": "Biography, history, science"
+            },
+            {
+              "label": "Specific genre",
+              "value": "genre-reader",
+              "description": "Mystery, sci-fi, fantasy, etc."
+            },
+            {
+              "label": "All types",
+              "value": "avid-reader"
+            }
+          ],
+          "priority": 6,
+          "impactOnConfidence": 0.12,
+          "rationale": "\"reading\" is broad - refinement will improve product matching"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "bar_raiser_avg": 91.2,
+    "bar_raiser_scores": {
+      "vague-gift": 91,
+      "dad-coffee": 89,
+      "wife-yoga": 93,
+      "nephew-teen": 91,
+      "boss-thankyou": 92
+    },
+    "total_checks": 26,
+    "checks_passed": 26,
+    "avg_response_time_s": 41.4
+  }
+}
