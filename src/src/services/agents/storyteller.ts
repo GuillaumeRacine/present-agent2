@@ -30,8 +30,9 @@ export class StorytellerAgent extends BaseAgent<StorytellerInput, StorytellerOut
         validatorContext: input.validatorContext,
         stories,
         craftedAt: new Date(),
-        avgStoryLength:
-          stories.reduce((sum, s) => sum + s.reasoning.length, 0) / stories.length,
+        avgStoryLength: stories.length > 0
+          ? stories.reduce((sum, s) => sum + s.reasoning.length, 0) / stories.length
+          : 0,
       };
     } catch (error) {
       return this.handleError(error, 'process');

@@ -53,6 +53,10 @@ interface Recommendation {
     price: number;
     vendor: string;
     imageUrl?: string;
+    isBestseller?: boolean;
+    giftProven?: boolean;
+    currency?: string;
+    tags?: string;
   };
   reasoning: string;
   confidence: number;
@@ -178,6 +182,18 @@ export default function ChatPage() {
         setMessages((prev) => [...prev, questionsMessage]);
         setIsAnsweringQuestions(true);
         setQuestionAnswers({}); // Reset answers for new questions
+      } else if (data.mode === 'no_results') {
+        // No products found — show helpful guidance
+        const suggestions = (data.suggestions || []).map((s: string) => `• ${s}`).join('\n');
+        const content = `${data.message || "I couldn't find matching products."}\n\n${suggestions ? `Try:\n${suggestions}` : ''}`;
+        const noResultsMessage: Message = {
+          role: 'assistant',
+          content,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, noResultsMessage]);
+        setIsAnsweringQuestions(false);
+        setQuestionAnswers({});
       } else {
         // Backend is showing recommendations (mode: 'recommendations' or 'recommendations_with_refinement')
         const assistantMessage: Message = {

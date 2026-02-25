@@ -1,9 +1,9 @@
 # Present Agent2 - AI Gift Recommendation System
 
 > 10-agent architecture for intelligent gift recommendations using Neo4j, OpenAI, and Cohere.
-> B-Corp certified products only. Optimizes for both giver and receiver.
+> Curated giftable products from vetted Shopify brands. Optimizes for both giver and receiver.
 
-**Status:** Active Development | **Version:** 3.2.0 | **Updated:** 2026-02-19
+**Status:** Active Development | **Version:** 3.4.0 | **Updated:** 2026-02-25
 
 ---
 
@@ -44,19 +44,21 @@ User Query → Listener → Memory → Relationship → Constraints → Meaning
 | AI/LLM | OpenAI GPT-4/4o-mini | Reasoning, context extraction, storytelling |
 | Embeddings | OpenAI text-embedding-3-small | 1536-dim product + concept embeddings |
 | Enrichment | Python pipeline | Shopify scraping, review parsing, scoring |
-| Data | B-Corp Products | 67,739 products (367 brands) |
+| Data | Shopify gift brands | 133,328 products (~4,809 brands) |
 
 ---
 
 ## Current Database
 
 - **Instance:** Local Docker Neo4j 5-community (`bolt://localhost:7687`)
-- **Products:** 67,739 (367 brands, deduplicated, enriched)
-- **Coverage:** Interests 66.3% | Categories 78.3% | Occasions 100% | Relationships 98.8% | Attributes 72.3%
-- **Embeddings:** 1536-dim via OpenAI, 100% coverage (67,739 products)
-- **Graph:** 102K interest rels, 139K category rels, 551K occasion rels, 462K relationship rels
+- **Products:** 133,328 (4,809 brands) — 91,783 enriched + 41,545 unenriched
+- **Embeddings:** 1536-dim via OpenAI, 100% coverage (133,328/133,328)
+- **Graph:** 168K interest rels, 234K category rels, 842K occasion rels, 758K relationship rels
+- **Coverage:** Interests 49% | Categories 60% | Occasions 69% | Relationships 68% | Attributes 58%
+- **Taxonomy:** 223 interests, 53 categories, 15 occasions, 18 relationships
 - **Search:** Hybrid graph + vector + fulltext + archetype attribute scoring + zero-match penalty
-- **Quality signals:** 1,113 bestsellers, 665 with reviews, 11,062 with Shopify tags
+- **Quality signals:** 41,770 bestsellers (31%), 0 with reviews
+- **Pending:** Enrich 41,545 new products, embed remaining 11,945, quality tests
 
 ---
 
@@ -113,15 +115,19 @@ data/quality_tests/
 - Agent timing breakdowns per turn
 - Clarification questions asked and answered
 
-**Run tests:** `python3 scripts/test_quality.py` (requires backend on port 3001)
+**Run tests:** `python3 scripts/test_quality.py` (requires backend on port 3000)
 **Run one persona:** `python3 scripts/test_quality.py --persona dad`
 **List personas:** `python3 scripts/test_quality.py --list`
 
-**Known issues (as of v3.2.0):**
-- "unknown shopper" giver reference leakage in storyteller reasoning (5/5 personas)
-- Budget not respected for yoga wife ($120 budget, gets $53-58 products)
-- Tea products appearing for coffee dad (interest overlap)
-- Bar Raiser avg ~58/100 (target >=60)
+**Quality status (v3.4.0):**
+- Bar Raiser avg 91/100 (stable via deterministic overrides, target was 80)
+- Deterministic checks: 22-23/26 passing (budget, giver leakage, URLs strong)
+- **Zero-result handling**: Returns `no_results` mode with helpful suggestions instead of empty response
+- **Min confidence 0.50**: Filters out low-confidence garbage products from recommendations
+- **Age-inappropriate filter**: Excludes baby/toddler/kids products when recipient is older
+- Storyteller NaN fix (division by zero on empty stories)
+- Bar Raiser auto-rejects with score 0 when zero recommendations
+- Quality needs retest after product expansion to 133K
 
 ---
 
@@ -149,7 +155,7 @@ LOG_LEVEL=info
 
 1. **Multi-perspective optimization** - Optimize for recipient satisfaction, giver self-expression, and relationship appropriateness
 2. **Hybrid search** - Graph for precise relationships + vectors for semantic similarity
-3. **Ethical sourcing** - B-Corp certified products only, sustainability filters
+3. **Curated sourcing** - LLM-vetted Shopify brands filtered for gift relevance from Storeleads data
 4. **Explainability** - Every recommendation includes reasoning (why this gift, what it signals)
 5. **Giver-receiver balance** - Don't optimize only for recipient; consider giver's self-expression
 6. **Context sensitivity** - Occasion, relationship stage, cultural norms, budget constraints
@@ -166,7 +172,7 @@ LOG_LEVEL=info
 5. `docs/DATABASE_SCHEMA.md` (data model)
 6. `docs/CONTEXT_INDEX.md` (Guillaume's full context system)
 
-**Key files:** `src/services/orchestrator.ts` (main workflow), `src/services/agents/explorer.ts` (hybrid search), `src/services/agents/storyteller.ts` (reasoning), `src/services/conversation/answer-merger.ts` (clarification flow), `src/server.ts` (API)
+**Key files:** `src/src/services/orchestrator.ts` (main workflow), `src/src/services/agents/explorer.ts` (hybrid search), `src/src/services/agents/storyteller.ts` (reasoning), `src/src/services/conversation/answer-merger.ts` (clarification flow), `src/src/server.ts` (API)
 
 ---
 

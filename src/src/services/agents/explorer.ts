@@ -248,8 +248,12 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
 
       this.log(`Found ${candidates.length} candidates from hybrid search`);
 
+      // Filter age-inappropriate products
+      const recipientAge = listenerContext?.recipient?.age;
+      const ageSafeCandidates = this.filterAgeInappropriate(candidates, recipientAge);
+
       // Ensure diversity
-      const diverseCandidates = await this.ensureDiversity(candidates);
+      const diverseCandidates = await this.ensureDiversity(ageSafeCandidates);
 
       this.log(`Narrowed to ${diverseCandidates.length} diverse candidates`);
 
@@ -883,10 +887,14 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         description: product.description,
         price: typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0,
         vendor: product.brand_url || product.vendor || 'unknown',
-        imageUrl: product.imageUrl || null,
+        imageUrl: product.images ? String(product.images).split('|')[0] : undefined,
         url: product.product_url || product.url,
         attributes: {},
         giftAttributes,
+        isBestseller: product.is_bestseller === true,
+        giftProven: product.gift_proven === true,
+        currency: product.currency || 'USD',
+        tags: product.tags || undefined,
       },
       scores: {
         graphScore: interestScore,
@@ -1128,6 +1136,57 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
    * - Vendor variety
    * - Type variety
    */
+
+  // ---------------------------------------------------------------------------
+  // Age-inappropriate product filtering
+  // ---------------------------------------------------------------------------
+
+  private parseAge(age: any): number | null {
+    if (age === null || age === undefined) return null;
+    if (typeof age === 'number') return age;
+    const s = String(age).toLowerCase().trim();
+    // "30s", "40s" etc.
+    const decadeMatch = s.match(/^(\d+)s$/);
+    if (decadeMatch) return parseInt(decadeMatch[1], 10) + 5;
+    // Plain number string
+    const num = parseInt(s, 10);
+    if (!isNaN(num)) return num;
+    // Named ranges
+    const namedAges: Record<string, number> = {
+      'baby': 1, 'infant': 0, 'toddler': 2, 'child': 8, 'kid': 8,
+      'preteen': 11, 'teen': 15, 'teenager': 15, 'young adult': 22,
+      'adult': 35, 'middle-aged': 50, 'senior': 70, 'elderly': 75,
+    };
+    return namedAges[s] ?? null;
+  }
+
+  private filterAgeInappropriate(candidates: any[], recipientAge: any): any[] {
+    const age = this.parseAge(recipientAge);
+    if (age === null || age < 5) return candidates; // No age info or very young — skip filter
+
+    const babyPattern = /\b(baby|toddler|infant|newborn|nursery|onesie|diaper|nappy|sippy\s*cup|teether|pacifier|crib|stroller|bib)\b/i;
+    const kidsPattern = /\b(kids|children'?s|kid'?s|child'?s)\b/i;
+
+    const before = candidates.length;
+    const filtered = candidates.filter((c) => {
+      const title = c.product?.title || '';
+      if (age >= 13 && babyPattern.test(title)) {
+        this.log(`Age filter: removed "${title}" (baby/toddler product for age ${age})`);
+        return false;
+      }
+      if (age >= 18 && kidsPattern.test(title)) {
+        this.log(`Age filter: removed "${title}" (kids product for age ${age})`);
+        return false;
+      }
+      return true;
+    });
+
+    if (filtered.length < before) {
+      this.log(`Age filter: removed ${before - filtered.length} age-inappropriate products (recipient age: ${age})`);
+    }
+    return filtered;
+  }
+
   private calculateDiversityScore(candidates: ProductCandidate[]): number {
     if (candidates.length === 0) return 0;
 
@@ -1348,8 +1407,12 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
             description: product.description,
             price: typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0,
             vendor: product.brand_url || product.vendor || 'unknown',
-            imageUrl: product.imageUrl || null,
+            imageUrl: product.images ? String(product.images).split('|')[0] : undefined,
             url: product.product_url || product.url,
+            isBestseller: product.is_bestseller === true,
+            giftProven: product.gift_proven === true,
+            currency: product.currency || 'USD',
+            tags: product.tags || undefined,
           },
           scores: {
             graphScore: 0,

@@ -539,6 +539,10 @@ export interface ProductCandidate {
     url?: string;
     attributes?: Partial<GiftAttributes>;
     giftAttributes?: Partial<GiftAttributes>;
+    isBestseller?: boolean;
+    giftProven?: boolean;
+    currency?: string;
+    tags?: string;
   };
 
   // Scoring breakdown
@@ -770,6 +774,10 @@ export interface FinalRecommendation {
     url?: string;
     attributes?: Partial<GiftAttributes>;
     giftAttributes?: Partial<GiftAttributes>;
+    isBestseller?: boolean;
+    giftProven?: boolean;
+    currency?: string;
+    tags?: string;
   };
   reasoning: string; // The personal story
   confidence: number; // 0-1
@@ -997,6 +1005,32 @@ export type OrchestratorOutput =
       /** Backward compatibility */
       finalRecommendations?: PresenterOutput;
       orchestratedAt?: Date;
+    }
+  | {
+      /** Mode: No products found — helpful guidance for user */
+      mode: 'no_results';
+      /** User-facing message explaining why no results were found */
+      message: string;
+      /** Actionable suggestions for the user to try */
+      suggestions: string[];
+      /** Session identifier */
+      sessionId: string;
+      /** When processed */
+      timestamp: Date;
+      /** Performance metrics */
+      performance: {
+        totalExecutionTimeMs: number;
+        agentTimings: Record<string, number>;
+      };
+      /** Partial execution trace */
+      executionTrace: {
+        listener: ListenerOutput;
+        memory: MemoryOutput;
+        relationship?: RelationshipOutput;
+        constraints?: ConstraintsOutput;
+        meaning?: MeaningOutput;
+        explorer?: ExplorerOutput;
+      };
     };
 
 // ============================================================================

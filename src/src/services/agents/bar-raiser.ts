@@ -40,6 +40,25 @@ export class BarRaiserAgent extends BaseAgent<BarRaiserInput, BarRaiserOutput> {
   async process(input: BarRaiserInput): Promise<BarRaiserOutput> {
     this.log(`Evaluating recommendation quality (attempt ${input.attemptNumber + 1})`);
 
+    // Zero recommendations = automatic rejection (no LLM call needed)
+    const recCount = input.presenterOutput?.recommendations?.length || 0;
+    if (recCount === 0) {
+      this.log('Zero recommendations — auto-rejecting with score 0');
+      return {
+        verdict: 'REJECTED',
+        overallScore: 0,
+        scorecard: {},
+        feedback: {
+          missedInterests: [],
+          additionalSearchQueries: [],
+          searchDirection: 'broader',
+          budgetEnforcement: undefined,
+        },
+        summary: 'Zero recommendations generated — nothing to evaluate',
+        attemptNumber: input.attemptNumber,
+      } as any;
+    }
+
     try {
       // Step 1: Check for critical failures (fast, no LLM needed)
       let criticalFailures: string[] = [];

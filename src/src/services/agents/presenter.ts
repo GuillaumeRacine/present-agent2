@@ -13,6 +13,9 @@ import {
 import OpenAI from 'openai';
 import { extractAttributesFromProductProps } from '../../types/gift-attributes';
 
+/** Minimum confidence score to include a product in recommendations */
+const MIN_CONFIDENCE = 0.50;
+
 export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
   name = 'Presenter';
 
@@ -91,16 +94,24 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
       story: stories.find((s: any) => s.productId === candidate.product.id),
     }));
 
+    // Filter out low-confidence garbage products
+    const confident = combined.filter((c: any) => (c.scores?.confidenceScore ?? 1) >= MIN_CONFIDENCE);
+    if (confident.length === 0) {
+      this.log(`All ${combined.length} candidates below MIN_CONFIDENCE ${MIN_CONFIDENCE} — returning empty`);
+      return [];
+    }
+    this.log(`Confidence filter: ${combined.length} → ${confident.length} (min ${MIN_CONFIDENCE})`);
+
     const inBudget = (c: any) =>
       !effectiveBudget || (c.product.price >= effectiveBudget.min && c.product.price <= effectiveBudget.max);
 
     // Sort by hybridScore descending
-    const sorted = combined
+    const sorted = confident
       .filter(inBudget)
       .sort((a: any, b: any) => b.scores.hybridScore - a.scores.hybridScore);
 
     if (sorted.length === 0) {
-      return combined.sort((a: any, b: any) => b.scores.hybridScore - a.scores.hybridScore).slice(0, 5);
+      return confident.sort((a: any, b: any) => b.scores.hybridScore - a.scores.hybridScore).slice(0, 5);
     }
 
     // Interest-aware diversity selection:
@@ -211,9 +222,16 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
     const inBudget = (c: any) =>
       !budget || (c.product.price >= budget.min && c.product.price <= budget.max);
 
+    // Filter out low-confidence products
+    const confidentCandidates = allCandidates.filter((c: any) => (c.scores?.confidenceScore ?? 1) >= MIN_CONFIDENCE);
+    if (confidentCandidates.length === 0) {
+      this.log(`Fallback: all ${allCandidates.length} candidates below MIN_CONFIDENCE ${MIN_CONFIDENCE} — returning empty`);
+      return [];
+    }
+
     // Sort by vector score (most reliable when graph scores are 0)
     // and take top 3 as fallback
-    const sorted = allCandidates.sort((a: any, b: any) => b.scores.vectorScore - a.scores.vectorScore);
+    const sorted = confidentCandidates.sort((a: any, b: any) => b.scores.vectorScore - a.scores.vectorScore);
     const prioritized = sorted.filter(inBudget);
     return (prioritized.length > 0 ? prioritized : sorted).slice(0, 3);
   }

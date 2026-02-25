@@ -1,32 +1,61 @@
 # Project Status for Claude Code
 
-**Last Updated**: February 19, 2026
-**Version**: 3.2.0 - Quality Fixes + Product Expansion
+**Last Updated**: February 25, 2026
+**Version**: 3.4.0 - Quality Edge Cases + Zero-Result Handling
 
 ---
 
-## Current State: Active Development - Quality Testing & Product Expansion
+## Current State: Active Development - Product Expansion + Enrichment
 
 ```
 +===========================================================+
 |              PRESENT-AGENT2 STATUS                        |
 +===========================================================+
-|  Version:       3.2.0 - Quality Fixes + Expansion         |
-|  Products (DB): 67,739 (367 brands)                        |
-|  Interest Coverage:  66.3% (44,911 products)               |
-|  Category Coverage:  78.3% (53,006 products)               |
-|  Occasion Coverage:  100%  (67,729 products)               |
-|  Relationship Coverage: 98.8% (66,920 products)            |
-|  Attribute Coverage: 72.3% (48,973 products, 14 flags)     |
-|  Embeddings:    100% (67,739 products)                     |
+|  Version:       3.4.0 - Quality Edge Cases + Zero-Result  |
+|  Products (DB): 133,328 (4,809 brands)                     |
+|  Embeddings:    100% (133,328/133,328)                     |
+|  Interest Coverage:  49% (65,998 products, 223 interests)  |
+|  Category Coverage:  60% (79,412 products, 53 categories)  |
+|  Occasion Coverage:  69% (91,774 products, 15 occasions)   |
+|  Relationship Coverage: 68% (90,490 products, 18 rels)     |
+|  Attribute Coverage: 58% (77,294 products, 14 flags)       |
+|  Bestsellers:   31% (41,770 products)                      |
 |  Neo4j Instance: Local Docker (bolt://localhost:7687)      |
-|  Bar Raiser Avg: ~64/100 (target: ≥60)                    |
+|  Bar Raiser Avg: 91/100 (deterministic overrides, pre-exp) |
 +===========================================================+
 ```
 
+**Note:** Coverage percentages dropped from near-100% to 49-69% because 41,545 new products were added without enrichment. The original 91,783 products remain fully enriched.
+
 ---
 
-## Recent: Quality Fixes (February 19, 2026)
+## Recent: Quality Edge Case Fixes v3.4.0 (February 25, 2026)
+
+Extensive quality testing (20 edge cases) revealed 71% failure rate on non-standard queries. Three root causes fixed:
+
+### Fix 1: Zero-Result Response Handling
+- **Files:** `orchestrator.ts`, `types/agents.ts`, `chat_tui.py`, `page.tsx`
+- New `no_results` mode in OrchestratorOutput discriminated union
+- Returns helpful message + actionable suggestions instead of empty response
+- Chat TUI and web frontend both render no-results gracefully
+
+### Fix 2: Minimum Confidence Threshold (0.50)
+- **File:** `presenter.ts`
+- Products with confidenceScore < 0.50 filtered out in both `selectTopCandidates` and `selectFallbackCandidates`
+- If all candidates below threshold, returns empty → triggers no_results path
+
+### Fix 3: Age-Inappropriate Product Filtering
+- **File:** `explorer.ts`
+- Title regex filter: baby/toddler patterns excluded for age ≥ 13, kids patterns for age ≥ 18
+- Handles numeric, decade ("30s"), and named ("teen", "elderly") age formats
+
+### Bug Fixes
+- Storyteller NaN division-by-zero when no stories generated
+- Bar Raiser auto-rejects with score 0 when zero recommendations (skip LLM call)
+
+---
+
+## Previous: Quality Fixes (February 19, 2026)
 
 End-to-end quality testing with 5 personas revealed 7 critical issues (avg Bar Raiser score 52/100). Six fixes were implemented:
 

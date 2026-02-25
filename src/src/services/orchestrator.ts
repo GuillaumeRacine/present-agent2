@@ -513,6 +513,34 @@ export class RecommendationOrchestrator {
       const finalValidator = bestAttempt!.validatorOutput;
       const finalStoryteller = bestAttempt!.storytellerOutput;
 
+      // Zero-result detection — return helpful guidance instead of empty recommendations
+      const finalRecCount = finalPresenter?.recommendations?.length || 0;
+      if (finalRecCount === 0) {
+        const totalExecutionTimeMs = Date.now() - startTime;
+        logger.warn('Zero recommendations after all attempts — returning no_results mode');
+        return {
+          mode: 'no_results' as const,
+          message: "I couldn't find products that match your criteria well enough to recommend. This can happen with very specific or unusual requests.",
+          suggestions: [
+            'Try broadening your budget range',
+            'Add more details about the recipient\'s interests',
+            'Try a different occasion or relationship type',
+            'Simplify your request and let me ask follow-up questions',
+          ],
+          sessionId: input.sessionId,
+          timestamp: new Date(),
+          performance: { totalExecutionTimeMs, agentTimings },
+          executionTrace: {
+            listener: listenerOutput,
+            memory: memoryOutput,
+            relationship: relationshipOutput,
+            constraints: constraintsOutput,
+            meaning: meaningOutput,
+            explorer: finalExplorer,
+          },
+        };
+      }
+
       // Persist quality record (async, don't block response)
       if (this.qualityTracker && finalBarRaiserOutput) {
         const record = this.qualityTracker.buildQualityRecord(
