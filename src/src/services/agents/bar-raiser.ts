@@ -175,9 +175,13 @@ export class BarRaiserAgent extends BaseAgent<BarRaiserInput, BarRaiserOutput> {
 
     // All products out of budget
     if (presenter.recommendations?.length > 0 && listener.budget) {
-      const allOutOfBudget = presenter.recommendations.every(
-        (r) => r.product.price > listener.budget!.max || r.product.price < listener.budget!.min
-      );
+      const allOutOfBudget = presenter.recommendations.every((r) => {
+        const { minPrice, maxPrice } = r.product;
+        if (minPrice != null && maxPrice != null) {
+          return minPrice > listener.budget!.max || maxPrice < listener.budget!.min;
+        }
+        return r.product.price > listener.budget!.max || r.product.price < listener.budget!.min;
+      });
       if (allOutOfBudget) {
         failures.push('ALL_OUT_OF_BUDGET: Every recommendation exceeds stated budget');
       }
@@ -434,17 +438,26 @@ SCORING CRITERIA (evaluate based on the ACTUAL context provided above):
       this.log(`Deterministic interestCoverage: ${score}/100 (${coveredInterests.size}/${listenerInterests.length} interests, ${productsMatchingInterest}/${recCount} products)`);
     }
 
-    // Budget adherence: deterministic check
+    // Budget adherence: deterministic check (supports price range products)
     if (listener.budget && recCount > 0) {
       const budgetMin = typeof listener.budget.min === 'number' && !isNaN(listener.budget.min) ? listener.budget.min : 0;
       const budgetMax = typeof listener.budget.max === 'number' && !isNaN(listener.budget.max) ? listener.budget.max : Infinity;
 
-      const inBudget = presenter.recommendations.filter(
-        (r) => r.product.price >= budgetMin && r.product.price <= budgetMax
-      ).length;
+      const inBudget = presenter.recommendations.filter((r) => {
+        const { minPrice, maxPrice } = r.product;
+        if (minPrice != null && maxPrice != null) {
+          return minPrice <= budgetMax && maxPrice >= budgetMin;
+        }
+        return r.product.price >= budgetMin && r.product.price <= budgetMax;
+      }).length;
       const score = Math.round((inBudget / recCount) * 100);
 
-      const prices = presenter.recommendations.map(r => `$${r.product.price}`).join(', ');
+      const prices = presenter.recommendations.map(r => {
+        if (r.product.minPrice != null && r.product.maxPrice != null) {
+          return `$${r.product.minPrice}-$${r.product.maxPrice}`;
+        }
+        return `$${r.product.price}`;
+      }).join(', ');
       result.budgetAdherence = {
         score,
         reasoning: `Deterministic: ${inBudget}/${recCount} products within $${budgetMin}-$${budgetMax}. Prices: ${prices}`,
@@ -476,14 +489,18 @@ SCORING CRITERIA (evaluate based on the ACTUAL context provided above):
         }
       }
 
-      // Count products in budget
+      // Count products in budget (supports price range products)
       let productsInBudget = recCount;
       if (hasBudget) {
         const bMin = typeof listener.budget!.min === 'number' ? listener.budget!.min : 0;
         const bMax = typeof listener.budget!.max === 'number' ? listener.budget!.max : Infinity;
-        productsInBudget = presenter.recommendations.filter(
-          r => r.product.price >= bMin && r.product.price <= bMax
-        ).length;
+        productsInBudget = presenter.recommendations.filter((r) => {
+          const { minPrice, maxPrice } = r.product;
+          if (minPrice != null && maxPrice != null) {
+            return minPrice <= bMax && maxPrice >= bMin;
+          }
+          return r.product.price >= bMin && r.product.price <= bMax;
+        }).length;
       }
 
       // Base relevance: context factors provided (20pts each) + product-interest match ratio
@@ -555,12 +572,16 @@ SCORING CRITERIA (evaluate based on the ACTUAL context provided above):
         : 0;
     const relevanceScore = Math.round(avgConfidence * 100);
 
-    // Budget adherence
+    // Budget adherence (supports price range products)
     let budgetScore = 100;
     if (listener.budget && recCount > 0) {
-      const inBudget = presenter.recommendations.filter(
-        (r) => r.product.price >= listener.budget!.min && r.product.price <= listener.budget!.max
-      ).length;
+      const inBudget = presenter.recommendations.filter((r) => {
+        const { minPrice, maxPrice } = r.product;
+        if (minPrice != null && maxPrice != null) {
+          return minPrice <= listener.budget!.max && maxPrice >= listener.budget!.min;
+        }
+        return r.product.price >= listener.budget!.min && r.product.price <= listener.budget!.max;
+      }).length;
       budgetScore = Math.round((inBudget / recCount) * 100);
     }
 

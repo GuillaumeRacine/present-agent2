@@ -7,8 +7,18 @@ interface Product {
   title: string;
   description: string;
   price: number;
+  minPrice?: number;
+  maxPrice?: number;
+  isDigital?: boolean;
   vendor: string;
   imageUrl?: string;
+}
+
+function formatPriceDisplay(product: Product): string {
+  if (product.minPrice != null && product.maxPrice != null) {
+    return `$${product.minPrice.toFixed(0)} - $${product.maxPrice.toFixed(0)}`;
+  }
+  return `$${product.price.toFixed(2)}`;
 }
 
 interface ComparisonItem {
@@ -84,7 +94,7 @@ export function ProductComparison({ items, onClose }: ProductComparisonProps) {
                   </div>
 
                   <div className="text-lg font-medium text-foreground">
-                    ${item.product.price.toFixed(2)}
+                    {formatPriceDisplay(item.product)}
                   </div>
 
                   <p className="text-xs text-muted-foreground line-clamp-3 flex-1">
@@ -150,7 +160,7 @@ export function ProductComparison({ items, onClose }: ProductComparisonProps) {
                     </td>
                     {items.map((item) => (
                       <td key={item.product.id} className="px-4 py-3 text-foreground">
-                        ${item.product.price.toFixed(2)}
+                        {formatPriceDisplay(item.product)}
                       </td>
                     ))}
                   </tr>

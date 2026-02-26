@@ -10,6 +10,9 @@ interface ProductCardProps {
     title: string;
     description: string;
     price: number;
+    minPrice?: number;
+    maxPrice?: number;
+    isDigital?: boolean;
     vendor: string;
     imageUrl?: string;
     url?: string;
@@ -21,6 +24,13 @@ interface ProductCardProps {
   isSelected?: boolean;
   onFeedback?: (type: 'like' | 'dislike' | 'purchase') => void;
   feedbackBusy?: boolean;
+}
+
+function formatPriceDisplay(product: ProductCardProps['product']): string {
+  if (product.minPrice != null && product.maxPrice != null) {
+    return `$${product.minPrice.toFixed(0)} - $${product.maxPrice.toFixed(0)}`;
+  }
+  return `$${product.price.toFixed(2)}`;
 }
 
 export function ProductCard({
@@ -88,7 +98,7 @@ export function ProductCard({
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
                 <span className="truncate">{product.vendor}</span>
                 <span className="hidden sm:inline">·</span>
-                <span className="text-foreground font-medium">${product.price.toFixed(2)}</span>
+                <span className="text-foreground font-medium">{formatPriceDisplay(product)}</span>
               </div>
             </div>
           </div>

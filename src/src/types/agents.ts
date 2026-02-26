@@ -534,6 +534,9 @@ export interface ProductCandidate {
     title: string;
     description: string;
     price: number;
+    minPrice?: number;
+    maxPrice?: number;
+    isDigital?: boolean;
     vendor: string;
     imageUrl?: string;
     url?: string;
@@ -769,6 +772,9 @@ export interface FinalRecommendation {
     title: string;
     description: string;
     price: number;
+    minPrice?: number;
+    maxPrice?: number;
+    isDigital?: boolean;
     vendor: string;
     imageUrl?: string;
     url?: string;

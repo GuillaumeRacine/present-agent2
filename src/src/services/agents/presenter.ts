@@ -102,8 +102,14 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
     }
     this.log(`Confidence filter: ${combined.length} → ${confident.length} (min ${MIN_CONFIDENCE})`);
 
-    const inBudget = (c: any) =>
-      !effectiveBudget || (c.product.price >= effectiveBudget.min && c.product.price <= effectiveBudget.max);
+    const inBudget = (c: any) => {
+      if (!effectiveBudget) return true;
+      const { minPrice, maxPrice } = c.product;
+      if (minPrice != null && maxPrice != null) {
+        return minPrice <= effectiveBudget.max && maxPrice >= effectiveBudget.min;
+      }
+      return c.product.price >= effectiveBudget.min && c.product.price <= effectiveBudget.max;
+    };
 
     // Sort by hybridScore descending
     const sorted = confident
@@ -219,8 +225,14 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
       return [];
     }
 
-    const inBudget = (c: any) =>
-      !budget || (c.product.price >= budget.min && c.product.price <= budget.max);
+    const inBudget = (c: any) => {
+      if (!budget) return true;
+      const { minPrice, maxPrice } = c.product;
+      if (minPrice != null && maxPrice != null) {
+        return minPrice <= budget.max && maxPrice >= budget.min;
+      }
+      return c.product.price >= budget.min && c.product.price <= budget.max;
+    };
 
     // Filter out low-confidence products
     const confidentCandidates = allCandidates.filter((c: any) => (c.scores?.confidenceScore ?? 1) >= MIN_CONFIDENCE);
@@ -282,6 +294,7 @@ export class PresenterAgent extends BaseAgent<PresenterInput, PresenterOutput> {
     const tags = [];
 
     if (rank === 0) tags.push('Best Match');
+    if (candidate.product.isDigital) tags.push('Digital Gift');
     if (candidate.product.price < 50) tags.push('Budget Friendly');
     if (candidate.scores.hybridScore > 0.85) tags.push('Highly Recommended');
     if (candidate.matchReasons.socialProofCount > 10) tags.push('Popular Choice');

@@ -302,7 +302,14 @@ export class ValidatorAgent extends BaseAgent<ValidatorInput, ValidatorOutput> {
       };
     }
 
-    const inBudget = price >= budget.min && price <= budget.max;
+    // Price range products (gift cards): check range overlap with budget
+    const { minPrice, maxPrice } = candidate.product;
+    let inBudget: boolean;
+    if (minPrice != null && maxPrice != null) {
+      inBudget = minPrice <= budget.max && maxPrice >= budget.min;
+    } else {
+      inBudget = price >= budget.min && price <= budget.max;
+    }
 
     return {
       passed: inBudget,

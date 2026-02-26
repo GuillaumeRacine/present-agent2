@@ -525,8 +525,12 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       const cypher = `
         CALL db.index.vector.queryNodes('product_embedding', $vectorLimit, $queryEmbedding)
         YIELD node AS product, score AS vectorScore
-        WHERE product.price >= $budgetMin AND product.price <= $budgetMax
-          AND product.available = true
+        WHERE (
+          (product.min_price IS NOT NULL AND product.max_price IS NOT NULL
+            AND product.min_price <= $budgetMax AND product.max_price >= $budgetMin)
+          OR
+          (product.min_price IS NULL AND product.price >= $budgetMin AND product.price <= $budgetMax)
+        ) AND product.available = true
 
         WITH product, vectorScore
 
@@ -596,12 +600,20 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
           CASE WHEN rel IS NOT NULL THEN 1.0 ELSE 0.0 END AS relationshipMatch,
           CASE WHEN persona IS NOT NULL THEN 0.5 ELSE 0.0 END AS personaMatch
 
-        // Price fitness
+        // Price fitness (supports price ranges for gift cards)
         WITH product, vectorScore, matchedInterests, interestScore,
           giftQualityScore, popularityScore, giftProvenBonus, bestsellerBonus, socialProofBonus,
           occasionMatch, relationshipMatch, personaMatch,
           CASE
             WHEN product.price = 0 THEN 0.0
+            WHEN product.min_price IS NOT NULL AND product.max_price IS NOT NULL THEN
+              CASE
+                WHEN $budgetMin >= product.min_price AND $budgetMax <= product.max_price THEN 1.0
+                ELSE toFloat(
+                  CASE WHEN $budgetMax < product.max_price THEN $budgetMax ELSE product.max_price END -
+                  CASE WHEN $budgetMin > product.min_price THEN $budgetMin ELSE product.min_price END
+                ) / ($budgetMax - $budgetMin + 0.01)
+              END
             WHEN $budgetMax = $budgetMin THEN 1.0
             ELSE 1.0 - (ABS(product.price - ($budgetMin + $budgetMax) / 2.0) / (($budgetMax - $budgetMin) / 2.0 + 0.01))
           END AS priceFitScore
@@ -668,8 +680,12 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       const cypher = `
         CALL db.index.vector.queryNodes('product_embedding', $vectorLimit, $queryEmbedding)
         YIELD node AS product, score AS vectorScore
-        WHERE product.price >= $budgetMin AND product.price <= $budgetMax
-          AND product.available = true
+        WHERE (
+          (product.min_price IS NOT NULL AND product.max_price IS NOT NULL
+            AND product.min_price <= $budgetMax AND product.max_price >= $budgetMin)
+          OR
+          (product.min_price IS NULL AND product.price >= $budgetMin AND product.price <= $budgetMax)
+        ) AND product.available = true
 
         WITH product, vectorScore
 
@@ -701,6 +717,14 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
           CASE WHEN COALESCE(product.avg_rating, 0) >= 4.5 AND COALESCE(product.review_count, 0) >= 3 THEN 0.08 ELSE 0.0 END AS socialProofBonus,
           CASE
             WHEN product.price = 0 THEN 0.0
+            WHEN product.min_price IS NOT NULL AND product.max_price IS NOT NULL THEN
+              CASE
+                WHEN $budgetMin >= product.min_price AND $budgetMax <= product.max_price THEN 1.0
+                ELSE toFloat(
+                  CASE WHEN $budgetMax < product.max_price THEN $budgetMax ELSE product.max_price END -
+                  CASE WHEN $budgetMin > product.min_price THEN $budgetMin ELSE product.min_price END
+                ) / ($budgetMax - $budgetMin + 0.01)
+              END
             WHEN $budgetMax = $budgetMin THEN 1.0
             ELSE 1.0 - (ABS(product.price - ($budgetMin + $budgetMax) / 2.0) / (($budgetMax - $budgetMin) / 2.0 + 0.01))
           END AS priceFitScore
@@ -777,8 +801,12 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         // Start from Interest nodes directly
         UNWIND $interests AS interestName
         MATCH (i:Interest {name: interestName})<-[mi:MATCHES_INTEREST]-(product:Product)
-        WHERE product.price >= $budgetMin AND product.price <= $budgetMax
-          AND product.available = true
+        WHERE (
+          (product.min_price IS NOT NULL AND product.max_price IS NOT NULL
+            AND product.min_price <= $budgetMax AND product.max_price >= $budgetMin)
+          OR
+          (product.min_price IS NULL AND product.price >= $budgetMin AND product.price <= $budgetMax)
+        ) AND product.available = true
 
         WITH product,
           COLLECT(DISTINCT i.name) AS matchedInterestNames,
@@ -799,6 +827,14 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
           CASE WHEN COALESCE(product.avg_rating, 0) >= 4.5 AND COALESCE(product.review_count, 0) >= 3 THEN 0.08 ELSE 0.0 END AS socialProofBonus,
           CASE
             WHEN product.price = 0 THEN 0.0
+            WHEN product.min_price IS NOT NULL AND product.max_price IS NOT NULL THEN
+              CASE
+                WHEN $budgetMin >= product.min_price AND $budgetMax <= product.max_price THEN 1.0
+                ELSE toFloat(
+                  CASE WHEN $budgetMax < product.max_price THEN $budgetMax ELSE product.max_price END -
+                  CASE WHEN $budgetMin > product.min_price THEN $budgetMin ELSE product.min_price END
+                ) / ($budgetMax - $budgetMin + 0.01)
+              END
             WHEN $budgetMax = $budgetMin THEN 1.0
             ELSE 1.0 - (ABS(product.price - ($budgetMin + $budgetMax) / 2.0) / (($budgetMax - $budgetMin) / 2.0 + 0.01))
           END AS priceFitScore
@@ -886,6 +922,9 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
         title: product.title,
         description: product.description,
         price: typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0,
+        minPrice: product.min_price != null ? (typeof product.min_price === 'number' ? product.min_price : parseFloat(product.min_price) || undefined) : undefined,
+        maxPrice: product.max_price != null ? (typeof product.max_price === 'number' ? product.max_price : parseFloat(product.max_price) || undefined) : undefined,
+        isDigital: product.is_digital === true ? true : undefined,
         vendor: product.brand_url || product.vendor || 'unknown',
         imageUrl: product.images ? String(product.images).split('|')[0] : undefined,
         url: product.product_url || product.url,
@@ -1358,9 +1397,12 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
       const cypher = `
         CALL db.index.fulltext.queryNodes('product_search', $query)
         YIELD node AS product, score AS fulltextScore
-        WHERE product.price >= $budgetMin
-          AND product.price <= $budgetMax
-          AND product.available = true
+        WHERE (
+          (product.min_price IS NOT NULL AND product.max_price IS NOT NULL
+            AND product.min_price <= $budgetMax AND product.max_price >= $budgetMin)
+          OR
+          (product.min_price IS NULL AND product.price >= $budgetMin AND product.price <= $budgetMax)
+        ) AND product.available = true
           AND fulltextScore > 0.5
 
         // Extract matched terms from product text
@@ -1406,6 +1448,9 @@ export class ExplorerAgent extends BaseAgent<ExplorerInput, ExplorerOutput> {
             title: product.title,
             description: product.description,
             price: typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0,
+            minPrice: product.min_price != null ? (typeof product.min_price === 'number' ? product.min_price : parseFloat(product.min_price) || undefined) : undefined,
+            maxPrice: product.max_price != null ? (typeof product.max_price === 'number' ? product.max_price : parseFloat(product.max_price) || undefined) : undefined,
+            isDigital: product.is_digital === true ? true : undefined,
             vendor: product.brand_url || product.vendor || 'unknown',
             imageUrl: product.images ? String(product.images).split('|')[0] : undefined,
             url: product.product_url || product.url,
