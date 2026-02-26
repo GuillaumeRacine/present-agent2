@@ -1,7 +1,7 @@
 # Architecture Overview - Present-Agent2
 
-**Last Updated**: October 29, 2025
-**Version**: 2.1.0
+**Last Updated**: February 26, 2026
+**Version**: 3.4.0
 
 ---
 
@@ -73,8 +73,8 @@ Present-Agent2 is a sophisticated multi-agent AI system that provides personaliz
 │  ┌──────────────────────┐      ┌──────────────────────┐        │
 │  │    Neo4j Database    │      │    External APIs     │        │
 │  │                      │      │                      │        │
-│  │  • Products (~88k, see DATA_STATUS_CURRENT) │      │  • OpenAI (GPT-4)   │        │
-│  │  • Interests (710+)  │      │  • Cohere (embeds)  │        │
+│  │  • Products (133K)   │      │  • OpenAI (GPT-4o)  │        │
+│  │  • Interests (223)   │      │  • OpenAI (embeds)  │        │
 │  │  • Recipients        │      │  • Anthropic        │        │
 │  │  • Conversations     │      │                      │        │
 │  │  • Relationships     │      │                      │        │
@@ -216,7 +216,8 @@ User Query: "Gift for my wine-loving mom, budget $50"
 **Recent Changes**:
 - Phase A: Expanded vector window 30→100 products
 - Phase A: Added intelligent text fallback
-- Phase C: Rebuilding interest graph (710→10,000+ interests)
+- v3.3.1: Rebalanced hybrid scoring (interest 35% + vector 25% + quality 15% + price 15% + context 10% + archetype 8%)
+- v3.3.1: Zero-match penalty (x0.3), zero-interest product filter, graph path boost (1.25x)
 
 #### 7. Validator Agent
 **Purpose**: Quality control and appropriateness
@@ -306,11 +307,14 @@ User Query: "Gift for my wine-loving mom, budget $50"
 
 | Node Type | Count | Status |
 |-----------|-------|--------|
-| Products | ~88k (see DATA_STATUS_CURRENT) | ✅ Complete |
-| Interests | 710 (growing) | 🚀 Phase C |
-| Recipients | Variable | 📈 Growing |
-| Users | Variable | 📈 Growing |
-| Conversations | Variable | 📈 Growing |
+| Products | 133,328 (4,809 brands) | 91% embedded |
+| Interests | 223 | 49% coverage |
+| Categories | 53 | 60% coverage |
+| GiftOccasion | 15 | 69% coverage |
+| GiftRelationship | 18 | 68% coverage |
+| Recipients | Variable | Growing |
+| Users | Variable | Growing |
+| Conversations | Variable | Growing |
 
 ### Indexes
 

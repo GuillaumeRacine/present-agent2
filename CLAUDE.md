@@ -3,7 +3,7 @@
 > 10-agent architecture for intelligent gift recommendations using Neo4j, OpenAI, and Cohere.
 > Curated giftable products from vetted Shopify brands. Optimizes for both giver and receiver.
 
-**Status:** Active Development | **Version:** 3.4.0 | **Updated:** 2026-02-25
+**Status:** Active Development | **Version:** 3.4.0 | **Updated:** 2026-02-26
 
 ---
 
@@ -38,7 +38,7 @@ User Query → Listener → Memory → Relationship → Constraints → Meaning
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| Frontend | Next.js 14/15 | Chat UI, logs viewer, product explorer |
+| Frontend | Next.js 16 | Chat UI, logs viewer, product explorer |
 | Backend | Express + TypeScript | API server, agent orchestration |
 | Database | Neo4j 5 (Docker) | Graph relationships + vector search |
 | AI/LLM | OpenAI GPT-4/4o-mini | Reasoning, context extraction, storytelling |
@@ -57,8 +57,9 @@ User Query → Listener → Memory → Relationship → Constraints → Meaning
 - **Coverage:** Interests 49% | Categories 60% | Occasions 69% | Relationships 68% | Attributes 58%
 - **Taxonomy:** 223 interests, 53 categories, 15 occasions, 18 relationships
 - **Search:** Hybrid graph + vector + fulltext + archetype attribute scoring + zero-match penalty
-- **Quality signals:** 41,770 bestsellers (31%), 0 with reviews
-- **Pending:** Enrich 41,545 new products, embed remaining 11,945, quality tests
+- **Quality signals:** 41,770 bestsellers (31%), 0 with reviews (API enrichment pipeline ready)
+- **API Enrichment:** Google Shopping + Amazon via RapidAPI (`RAPIDAPI_KEY` in `src/.env.local`)
+- **Pending:** Run expand-* scripts on 41,545 unenriched products; then review RapidAPI enrichment for ratings/reviews
 
 ---
 
@@ -120,7 +121,7 @@ data/quality_tests/
 **List personas:** `python3 scripts/test_quality.py --list`
 
 **Quality status (v3.4.0):**
-- Bar Raiser avg 91/100 (stable via deterministic overrides, target was 80)
+- Bar Raiser avg 89/100 (latest run 2026-02-25, target was 80)
 - Deterministic checks: 22-23/26 passing (budget, giver leakage, URLs strong)
 - **Zero-result handling**: Returns `no_results` mode with helpful suggestions instead of empty response
 - **Min confidence 0.50**: Filters out low-confidence garbage products from recommendations
@@ -136,18 +137,23 @@ data/quality_tests/
 Required in `src/.env.local`:
 
 ```bash
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
+NEO4J_URL=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=presentagent2024
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=...          # Fallback LLM
 GEMINI_API_KEY=...             # Fallback LLM
 COHERE_API_KEY=...             # Re-ranking (optional)
+RAPIDAPI_KEY=...               # Google Shopping + Amazon enrichment (RapidAPI)
 ETSY_API_KEY=...               # Product expansion (pending activation)
 BACKEND_PORT=3000
 PORT=3001
 LOG_LEVEL=info
 ```
+
+Notes:
+- The code accepts `NEO4J_USERNAME` or `NEO4J_USER` (legacy).
+- Some scripts also accept `NEO4J_URI` as a legacy alias for `NEO4J_URL`.
 
 ---
 

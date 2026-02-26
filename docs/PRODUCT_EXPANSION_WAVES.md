@@ -3,7 +3,7 @@
 > Comprehensive plan for building an exhaustive, delightful gift catalog.
 > Goal: For ANY user, ANY occasion, ANY relationship — always relevant, thoughtful, curated options.
 
-**Created:** 2026-02-17 | **Status:** Planning | **Based on:** 6 parallel research agents
+**Created:** 2026-02-17 | **Updated:** 2026-02-26 | **Status:** Wave 0 complete, Waves 1-4 planned | **Based on:** 6 parallel research agents
 
 ---
 
@@ -35,26 +35,28 @@
 - **61%** of US consumers factor sustainability into gift-buying decisions
 - **37%** B-Corp brand awareness (growing, especially in 25-34 age group)
 
-### Current Catalog: Strong Foundation, Critical Gaps
+### Current Catalog: Strong Foundation, Enrichment Gap
 
 | Metric | Current State |
 |--------|--------------|
-| Products | 64,964 |
-| Brands | 347 |
-| Embedding coverage | 100% |
-| Interests mapped | 105 (59K+ relationships) |
-| Categories mapped | 53+ (138K+ relationships) |
-| **Occasion tagging** | **0.14% (90 rels) — CRITICAL GAP** |
-| **Relationship tagging** | **0.26% (172 rels) — CRITICAL GAP** |
-| Review data | 1% of products |
-| Bestseller flagging | 0.33% of products |
+| Products | 133,328 |
+| Brands | 4,809 |
+| Embedding coverage | 100% (133,328/133,328) |
+| Interests mapped | 49% (65,998 products, 223 interests, 335K rels) |
+| Categories mapped | 60% (79,412 products, 53 categories, 469K rels) |
+| Occasion tagging | 69% (91,774 products, 1.68M rels) |
+| Relationship tagging | 68% (90,490 products, 1.52M rels) |
+| Attribute flags | 58% (77,294 products, 14 boolean flags) |
+| Bestseller flagging | 31% (41,770 products) |
 | Experience gifts | 0 |
 | Digital gift cards | 0 |
 | Subscription options | 0 |
 
+**Note:** Coverage dropped from ~100% to 49-69% because 41,545 new products were loaded via the acquisition pipeline but haven't been enriched yet. The original 91,783 products remain fully enriched.
+
 ### Strategy in One Sentence
 
-**Complete the existing B-Corp Shopify scraping (265 remaining brands), then layer in 3 new data source types (gift card APIs, Etsy artisan marketplace, experience platforms) organized in 4 implementation waves.**
+**Physical product sourcing (Wave 0) exceeded target at 133K products. Next: enrich new products, then layer in 3 new data source types (gift card APIs, Etsy artisan marketplace, experience platforms) in Waves 1-4.**
 
 ---
 
@@ -62,36 +64,26 @@
 
 ### What's Working
 
-- Large product base (64,964) with full embedding coverage
-- Interest graph is rich (105 interests, 59K+ MATCHES_INTEREST)
-- Category graph is deep (53+ categories, 138K+ IN_CATEGORY)
-- Price distribution covers full range ($0-$212K, median $45)
-- Existing Shopify scraping pipeline is robust and resumable
+- Large product base (133,328) from 4,809 brands
+- 100% embedding coverage (133,328 products)
+- Interest graph: 223 interests, 335K MATCHES_INTEREST rels
+- Category graph: 53 categories, 469K IN_CATEGORY rels
+- Occasion graph: 15 occasions, 1.68M GIFT_FOR_OCCASION rels
+- Relationship graph: 18 relationships, 1.52M GIFT_FOR_RELATIONSHIP rels
+- 8-stage acquisition pipeline operational (`scripts/pipeline/`)
+- Bar Raiser quality scoring at 89/100 avg (latest run 2026-02-25)
+- Brand diversity enforced in explorer search
 
-### Critical Problems
+### Remaining Problems
 
 | Problem | Impact | Fix |
 |---------|--------|-----|
-| **Occasion tagging near-zero** | Can't differentiate birthday vs. wedding vs. Valentine's | Run enrichment on all 64K products |
-| **Relationship tagging near-zero** | Can't differentiate boss vs. best friend vs. spouse | Run enrichment on all 64K products |
-| **Brand concentration** | Marine Layer = ~14% of catalog (9K products) | Diversify with new brands |
-| **20 thin interests** | podcasts=1, gaming=6, chess=4, board-games=7 | Source products specifically for thin interests |
-| **Only 665 products with reviews** | Weak social proof for recommendations | Prioritize review scraping |
-| **Only 215 bestsellers flagged** | Can't reliably surface "proven" gifts | Expand bestseller collection detection |
+| **41,545 unenriched products** | New batch 2+ products have no graph links | Run enrichment scripts on new products |
+| **Interest data too broad** | Enrichment assigns interests aggressively | Manual cleanup after each enrichment run |
+| **No age/context filtering** | Explorer returns baby clothes for dad queries | Add recipient age filtering to explorer |
+| **No experience/digital/subscription** | Missing fastest-growing gift segments | Integrate new data sources (Waves 2-4) |
 | **0 Value nodes** | Values-based matching not possible | Populate from B-Corp data |
-| **Price outliers** | Products at $212K skew scoring | Cap or exclude > $5K |
-| **No experience/digital/subscription** | Missing fastest-growing gift segments | Integrate new data sources |
-| **50/315 brands scraped** | 83% of known brands have no product data | Complete scraping pipeline |
-
-### Price Distribution (Current)
-
-| Band | Count | % | Assessment |
-|------|-------|---|-----------|
-| Under $25 | 18,217 | 28% | Good (target: 20-25%) |
-| $25-50 | 16,094 | 25% | Good (target: 25-30%) |
-| $50-100 | 13,538 | 21% | Needs growth (target: 25-30%) |
-| $100-200 | 6,605 | 10% | **Thin** (target: 15-20%) |
-| $200+ | 10,510 | 16% | Includes outliers, needs cleanup |
+| **Limited review data** | Weak social proof for recommendations | Prioritize review scraping |
 
 ---
 
@@ -214,31 +206,37 @@ Entirely new category — currently 0 coverage.
 
 ## 5. Wave Implementation Plan
 
-### Wave 0: Foundation Fix (Week 1-2) — Prerequisites
+### Wave 0: Foundation Fix — COMPLETE
 
-**Goal:** Fix the data quality problems that undermine everything else.
+**Status:** Done. Original 91,783 products fully enriched. 41,545 new products loaded but pending enrichment.
 
-| Task | Details | Impact |
-|------|---------|--------|
-| **Enrich occasion tagging** | Run LLM-based tagging on all 64,964 products for occasion suitability (birthday, wedding, Valentine's, Mother's Day, etc.) | Goes from 90 → ~50,000+ tagged products |
-| **Enrich relationship tagging** | Run LLM-based tagging for relationship appropriateness (spouse, parent, friend, coworker, etc.) | Goes from 172 → ~50,000+ tagged products |
-| **Clean price outliers** | Cap products > $5,000 or flag as "luxury"; fix $0 products | Improves price-based filtering |
-| **Deduplicate brand URLs** | Fix marinelayer.com vs marinelayer.com/ etc. | Accurate brand analytics |
-| **Populate Value nodes** | Extract from B-Corp certification data (sustainability, fair trade, etc.) | Enables values-based matching |
+| Task | Status | Result |
+|------|--------|--------|
+| **Occasion tagging** | Done (original batch) | 91,774 products, 1.68M rels, 15 occasions |
+| **Relationship tagging** | Done (original batch) | 90,490 products, 1.52M rels, 18 relationships |
+| **Attribute flags** | Done (original batch) | 77,294 products, 14 boolean flags |
+| **Interest mapping** | Done + cleanup | 65,998 products, 223 interests, 335K rels |
+| **Category mapping** | Done (original batch) | 79,412 products, 53 categories, 469K rels |
+| **Bestseller flagging** | Done | 41,770 products (31%) |
+| **Embedding generation** | Done (100%) | 133,328/133,328 products |
+| **Explorer overhaul** | Done (v3.3.1) | 7-factor scoring, zero-match penalty, archetype boost |
+| **Bar Raiser overhaul** | Done (v3.3.1) | Deterministic overrides, avg 91/100 |
 
-### Wave 1: Complete B-Corp Catalog (Week 2-4)
+**Remaining:** Enrich the 41,545 batch 2+ products (run expand-occasions, expand-relationships, expand-attributes, expand-interests, expand-categories on new products).
 
-**Goal:** Maximize the existing pipeline. Scrape remaining 265 brands + add 52 new B-Corp brands.
+### Wave 1: Complete B-Corp Catalog — IN PROGRESS
 
-| Task | Details | Volume |
-|------|---------|--------|
-| **Scrape remaining 265 Shopify brands** | Use existing `shopify_scraper.py --resume-from` pipeline | Est. ~30,000 new products |
-| **Add 52 new B-Corp brands** | From research: Tony's Chocolonely, Pela, Bellroy, Peak Design, Who Gives A Crap, Bombas, SOKO, Parachute, etc. | Add to `shopify_data.json` |
-| **Priority scrape: Top 20 highest-gift-potential** | Dr. Squatch, Dogeared, Jeni's, Rumpl, MiiR, Parks Project, Allbirds, Athletic Brewing, MPOWERD, Narrative Food, etc. | Focus bestseller collections |
-| **Run full enrichment pipeline** | `review_parser.py` → `recipient_signals.py` → `composite_scorer.py` → `load_neo4j.py` | All new products scored |
-| **Expand interest mapping** | Run `expand-interests.ts --live` on new products | Fill thin interests (gaming, podcasts, chess, etc.) |
+**Goal:** Maximize the existing pipeline. 8-stage acquisition pipeline operational.
 
-**Expected result:** ~95,000 total products, 400+ brands, much better interest coverage.
+| Task | Status | Result |
+|------|--------|--------|
+| **Build acquisition pipeline** | Done | `scripts/pipeline/` — 8 stages |
+| **Scrape Shopify brands** | Done (133,328 products) | 4,809 brands loaded from Storeleads CSV |
+| **Enrich new products** | Pending | 41,545 products need graph links |
+| **Interest data cleanup** | Ongoing | Manual fixes after each enrichment run |
+| **Continue sourcing** | Available | More offsets in Storeleads CSV |
+
+**Current result:** 133,328 products from 4,809 brands. Exceeded original 125K target for physical products.
 
 ### Wave 2: Digital Gift Layer (Week 4-6)
 
@@ -330,13 +328,13 @@ Entirely new category — currently 0 coverage.
 
 | Dimension | Current | Target | Action |
 |-----------|---------|--------|--------|
-| Occasion tagging | 0.14% | 80%+ | Wave 0: LLM enrichment |
-| Relationship tagging | 0.26% | 80%+ | Wave 0: LLM enrichment |
-| Review data | 1% | 30%+ | Wave 1: prioritize review scraping |
-| Bestseller flags | 0.33% | 10%+ | Wave 1: bestseller collection detection |
-| Gift-proven score | ~0.4% (252 products) | 50%+ | Wave 0-1: composite scorer on all |
-| Products per interest (min) | 1 (podcasts) | 50+ | Wave 1-4: targeted sourcing |
-| Brands with full scrape | 25/315 | 300+ | Wave 1: complete pipeline |
+| Occasion tagging | 69% (91,774 products) | 80%+ | Enrich batch 2+ products |
+| Relationship tagging | 68% (90,490 products) | 80%+ | Enrich batch 2+ products |
+| Attribute flags | 58% (77,294 products) | 60%+ | Enrich batch 2+ products |
+| Interest mapping | 49% (65,998 products) | 80%+ | Enrich + cleanup |
+| Embeddings | 100% (133,328 products) | 95%+ | Done — exceeded target |
+| Bestseller flags | 31% (41,770 products) | 10%+ | Done — exceeded target |
+| Interest data quality | Broad assignments | Clean, precise | Manual cleanup after enrichment |
 | Experience products | 0 | 500+ | Wave 2-3 |
 | Digital gift options | 0 | 2,000+ | Wave 2 |
 | Subscription options | 0 | 100+ | Wave 3 |
@@ -483,17 +481,17 @@ From `research/B_CORP_SHOPIFY_BRANDS_RESEARCH.md`:
 
 ### D. Target Catalog Composition (After Wave 4)
 
-| Type | Count | % |
-|------|-------|---|
-| B-Corp physical products (Shopify) | 75,000 | 60% |
-| Etsy artisan/handmade (API) | 15,000 | 12% |
-| Digital gift cards (aggregator API) | 5,000 | 4% |
-| Affiliate network products (Datafeedr) | 20,000 | 16% |
-| Experience gifts (curated affiliate) | 500 | 0.4% |
-| Subscription boxes (Cratejoy + curated) | 200 | 0.2% |
-| Outdoor/adventure (AvantLink) | 5,000 | 4% |
-| Other ethical brands | 4,300 | 3.4% |
-| **Total** | **~125,000** | **100%** |
+| Type | Count | % | Status |
+|------|-------|---|--------|
+| Shopify physical products (Storeleads + B-Corp) | 133,328 | 76% | Done (Wave 0-1) |
+| Etsy artisan/handmade (API) | 15,000 | 9% | Planned (Wave 3) |
+| Digital gift cards (aggregator API) | 5,000 | 3% | Planned (Wave 2) |
+| Affiliate network products (Datafeedr) | 10,000 | 6% | Planned (Wave 4) |
+| Experience gifts (curated affiliate) | 500 | 0.3% | Planned (Wave 3) |
+| Subscription boxes (Cratejoy + curated) | 200 | 0.1% | Planned (Wave 3) |
+| Outdoor/adventure (AvantLink) | 5,000 | 3% | Planned (Wave 4) |
+| Other ethical brands | 5,000 | 3% | Planned (Wave 4) |
+| **Total** | **~174,000** | **100%** | |
 
 ### E. Metrics to Track Post-Expansion
 

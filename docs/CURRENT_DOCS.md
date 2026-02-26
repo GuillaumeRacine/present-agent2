@@ -36,7 +36,6 @@ If a doc is not listed here, treat it as historical context and verify before us
 
 - `data/quality_tests/latest.md` - Most recent quality run summary.
 - `data/quality_tests/latest.json` - Most recent quality run structured output.
-- `src/docs/reports/DATA_STATUS_CURRENT.md` - Current dataset metrics.
 
 ## 6) Archive Rules
 
@@ -50,4 +49,3 @@ When docs conflict, precedence is:
 1. `CLAUDE.md`
 2. `docs/CURRENT_DOCS.md` listed files
 3. Everything else
-
