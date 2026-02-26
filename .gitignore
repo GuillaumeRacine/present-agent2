@@ -50,6 +50,13 @@ data/export/products.json
 data/processed/unified_catalog.json
 data/raw/products*.json
 data/export/*.bak.*
+data/audits/
+data/pipeline/
+data/quality_tests/run_*
+data/quality_tests/*_raw/
+data/quality_tests/all_chats.jsonl
+data/tui_tests/
+domains_export*.csv
 
 # Checkpoint files
 .tmp/
@@ -57,6 +64,7 @@ data/export/*.bak.*
 *-checkpoint.json
 *-failures.json
 *.tsbuildinfo
+__pycache__/
 
 # Claude Code session transcripts (large, ephemeral)
 .claude/projects/*/[0-9a-f]*.jsonl

@@ -1,8 +1,8 @@
 # Present-Agent2 - Start Here
 
 **Repository:** https://github.com/GuillaumeRacine/present-agent2
-**Version:** 2.5.0 - Multi-LLM Enrichment Complete
-**Status:** ✅ Production Ready - Continue Building This Repo
+**Version:** 3.4.0 - Quality Stabilized, Enrichment Gaps Remain
+**Status:** ✅ Active Development - Continue Building This Repo
 
 ---
 
@@ -55,29 +55,32 @@ npm run chat
 
 ## Current Status
 
-### Data Quality ✅
-- **88,674 B-Corp products** in Neo4j
-- **99.3% interest coverage** (88,053 products)
-- **84.6% occasion coverage** (75,060 products)
-- **74.6% attribute coverage** (66,134 products)
+### Data Quality ⚠️
+- **133,328 products** in Neo4j (4,809 brands)
+- **49% interest coverage** (65,998 products)
+- **60% category coverage** (79,412 products)
+- **69% occasion coverage** (91,774 products)
+- **68% relationship coverage** (90,490 products)
+- **58% attribute coverage** (77,294 products)
+- **41,554 products** have **no enrichment edges** (31.2% of catalog)
 
 ### System Status ✅
 - **190/190 tests passing**
-- **Multi-LLM enrichment complete** (Dec 8, 2025)
 - **10-agent architecture operational**
-- **Neo4j database active** (instance: a92dc9b7)
+- **Neo4j database active** (local Docker + optional Aura)
+- **Latest quality run:** 2026-02-25 (Avg Bar Raiser **89/100**)
 
 ### Known Issues ⚠️
-- Recommendation quality: 40% (target: 70%+) - needs tuning
-- Response time: 29-46s (target: <10s) - needs optimization
-- Validator too strict - causes zero-recommendation scenarios
-- Budget overruns - needs verification of fix
+- **Enrichment gaps:** 31.2% of products have no graph edges
+- **Response time:** 36-107s (target: <10s)
+- **Thin interests:** 19 interests have <100 products
+- **Over-tagged categories:** "Experiences" and "Subscriptions" are labels, not real experiences/subscriptions
 
 ---
 
 ## Next Steps
 
-1. **Read the comprehensive analysis:**
+1. **Read the comprehensive analysis (historical + context):**
    ```bash
    cat "/Volumes/Seagate 2TB/1_Projects/Protoypes/PRESENT_AGENT2_ANALYSIS.md"
    ```
@@ -96,19 +99,18 @@ npm run chat
    npm run attributes:status
    ```
 
-4. **Start tuning:**
-   - Lower validator thresholds
-   - Fix budget overruns
-   - Improve interest matching
-   - Optimize performance
+4. **Close enrichment gaps first:**
+   - Run expand scripts on the 41,545 unenriched products
+   - Merge duplicate interests
+   - Re-tag thin interests
 
 ---
 
 ## Path to Production
 
-**Timeline:** 2-4 weeks of quality tuning
+**Timeline:** 2-4 weeks of quality + performance tuning
 
-**Phase 1 (Week 1-2):** Quality tuning to 70%+
+**Phase 1 (Week 1-2):** Close enrichment gaps + stabilize quality
 **Phase 2 (Week 1):** Performance optimization to <10s
 **Phase 3 (Week 1):** Deploy MVP
 
@@ -138,4 +140,4 @@ npm run test:real-users:easy    # Real scenarios
 
 **Ready to start. Read `PRESENT_AGENT2_ANALYSIS.md` for full context.**
 
-**Last updated:** 2026-02-15
+**Last updated:** 2026-02-26

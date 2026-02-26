@@ -1,12 +1,22 @@
 # Present-Agent2 - Comprehensive Analysis
 
-**Date:** 2026-02-15
+**Date:** 2026-02-15 (historical analysis; see current snapshot below)
 **Analyzer:** Claude Sonnet 4.5
 **Repository:** https://github.com/GuillaumeRacine/present-agent2
 
 ---
 
-## Executive Summary
+## Current Snapshot (2026-02-25)
+
+- **Version:** 3.4.0
+- **Products:** 133,328 (4,809 brands)
+- **Quality:** Avg Bar Raiser 89/100 (latest run 2026-02-25)
+- **Enrichment gap:** 41,554 products with zero graph edges (31.2%)
+- **Primary doc index:** `docs/CURRENT_DOCS.md`
+
+---
+
+## Executive Summary (Historical)
 
 **STATUS: ✅ PRODUCTION READY - Continue Building This Repo**
 
@@ -24,7 +34,7 @@ Present-agent2 is a **mature, production-ready gift recommendation system** with
 
 ---
 
-## Version & Status
+## Version & Status (Historical)
 
 | Aspect | Status |
 |--------|--------|
@@ -88,6 +98,8 @@ Final Recommendations
 ---
 
 ## Data Quality (December 8, 2025)
+
+Historical snapshot. For current coverage and gaps, see `docs/DATABASE_SCHEMA.md` and `docs/ROADMAP.md`.
 
 ### Product Catalog
 

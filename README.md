@@ -7,7 +7,7 @@
 ## Quick Links
 
 - **CLAUDE.md** - Complete context for LLM agents
-- **docs/CURRENT_DOCS.md** - Authoritative active documentation index
+- **docs/CURRENT_DOCS.md** - Authoritative active documentation index (start here for docs)
 - **docs/PRODUCT_INVENTORY_PLAYBOOK.md** - Short-term inventory expansion plan
 - **docs/CANONICAL_PRODUCT_SCHEMA.md** - Connector output contract
 - **GitHub:** `GuillaumeRacine/present-agent2` (private)
@@ -23,15 +23,16 @@ AI-powered gift recommendation system using:
 - Neo4j graph database + vector search
 - OpenAI GPT-4 for reasoning
 - Cohere embeddings
-- 102MB B-Corp product catalog (1.28M records)
+- 133,328 curated products loaded in Neo4j (4,809 brands)
+- 102MB B-Corp raw catalog (1.28M records) as upstream source
 - 14 academic research papers on gift psychology
 
 ---
 
 ## Tech Stack
 
-- **Frontend:** Next.js 14/15, React, TypeScript
-- **Backend:** Next.js API routes
+- **Frontend:** Next.js 16, React 19, TypeScript
+- **Backend:** Express + TypeScript (API server)
 - **Database:** Neo4j (graph + vector)
 - **AI:** OpenAI GPT-4, Cohere embeddings
 - **Data:** B-Corp ethical product catalog
@@ -66,19 +67,15 @@ present-agent2/
 
 ```bash
 # Install dependencies
-npm install
+cd src && npm install
+cd frontend && npm install && cd ..
 
 # Configure environment
-cp .env.example .env.local
+cp .env.local.example .env.local
 # Edit .env.local with your API keys
 
-# Start Neo4j
-docker run -p 7474:7474 -p 7687:7687 \
-  -e NEO4J_AUTH=neo4j/password \
-  neo4j:5.latest
-
-# Load product data
-npm run load-products
+# Start Neo4j (local)
+./start-local.sh --neo4j
 
 # Start dev server
 npm run dev
@@ -103,9 +100,9 @@ npm run dev
 
 ## Current Status
 
-**Last worked:** Dec 11, 2025
-**In progress:** NewsAPI integration for trending gifts
-**Next:** Complete agent orchestration, launch MVP
+**Last verified:** February 25, 2026
+**In progress:** Enrichment coverage recovery + performance
+**Next:** Close enrichment gaps on batch 2+ products
 
 ---
 
@@ -131,4 +128,4 @@ Start here:
 
 ---
 
-*Last updated: 2026-02-15*
+*Last updated: 2026-02-26*

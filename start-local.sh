@@ -22,9 +22,10 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENRICHMENT_DIR="$PROJECT_DIR/scripts/product_enrichment"
 OUTPUT_DIR="$ENRICHMENT_DIR/output"
 
-NEO4J_URI="bolt://localhost:7687"
-NEO4J_USER="neo4j"
-NEO4J_PASSWORD="presentagent2024"
+# Allow env overrides for consistency with src/.env.local
+NEO4J_URI="${NEO4J_URL:-${NEO4J_URI:-bolt://localhost:7687}}"
+NEO4J_USER="${NEO4J_USERNAME:-${NEO4J_USER:-neo4j}}"
+NEO4J_PASSWORD="${NEO4J_PASSWORD:-presentagent2024}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

@@ -1,9 +1,11 @@
 # Present-Agent2: Implementation Plan to 95%+ Quality
 
-**Date:** 2026-02-15
+**Date:** 2026-02-26
 **Goal:** Reach 95%+ recommendation quality with self-improving agents
-**Current:** 40% quality (4.0/10 relevance)
-**Timeline:** 4-6 weeks intensive development
+**Current:** Avg Bar Raiser 89/100 (latest run 2026-02-25)
+**Timeline:** 2-4 weeks focused gap closure + performance
+
+**Note:** This plan is historical. The live plan and gap metrics are in `docs/ROADMAP.md`.
 
 ---
 
@@ -15,7 +17,7 @@
 - ✅ Multi-agent systems (familiar - emailLLM2, present-agent2)
 - ✅ RAG architecture (tao-substack-daily-notes, founders_transcripts_RAG)
 - ✅ Neo4j experience (defi-portfolio-dashboard)
-- ✅ Next.js 14-15, React 19, TypeScript
+- ✅ Next.js 16, React 19, TypeScript
 - ✅ OpenAI, Anthropic, Cohere APIs
 - ✅ n8n automation workflows
 - ✅ Python + JavaScript/Node stacks
@@ -43,7 +45,7 @@
 |------|--------|-----------------|
 | **API Keys** | ❌ Missing | Create `.env.local` with OPENAI_API_KEY, NEO4J credentials, ANTHROPIC_API_KEY, GEMINI_API_KEY |
 | **Neo4j Database** | ❌ Unknown | Verify Neo4j Aura instance (a92dc9b7) is accessible, credentials valid |
-| **Product Data** | ✅ In database | 88,674 products already loaded (per PROJECT_STATUS.md) |
+| **Product Data** | ✅ In database | 133,328 products loaded (4,809 brands) |
 | **Node Modules** | ❌ Not installed | Run `npm install` in src/ and src/frontend/ |
 
 ### Environment Setup Checklist
@@ -54,7 +56,7 @@
    - OPENAI_API_KEY=sk-...
    - ANTHROPIC_API_KEY=sk-ant-...
    - GEMINI_API_KEY=...
-   - NEO4J_URI=neo4j+s://a92dc9b7.databases.neo4j.io
+   - NEO4J_URL=neo4j+s://a92dc9b7.databases.neo4j.io
    - NEO4J_USERNAME=neo4j
    - NEO4J_PASSWORD=...
    - NEO4J_DATABASE=neo4j

@@ -2,7 +2,7 @@
 
 > 8-stage pipeline that discovers Shopify stores, vets them for gift relevance, scrapes their products, normalizes/loads into Neo4j, enriches with graph relationships, and validates quality.
 
-**Status:** Active | **Last run:** 2026-02-24 | **Output:** 47,509 products from 1,664 brands
+**Status:** Active | **Last run:** 2026-02-24 | **Output:** 133,328 products from 4,809 brands (multiple batches)
 
 ---
 
@@ -42,7 +42,7 @@
 
 | Setting | Value | Where stored |
 |---------|-------|-------------|
-| URI | `bolt://localhost:7687` | `src/.env.local` (line 26) |
+| URL | `bolt://localhost:7687` | `src/.env.local` (line 26) |
 | Username | `neo4j` | `src/.env.local` (line 27) |
 | Password | `presentagent2024` | `src/.env.local` (line 28) |
 | Container | `present-agent-neo4j` | `start-local.sh` |
@@ -259,18 +259,35 @@ Sets `product.available = true` — required by the Explorer agent's Cypher quer
 # Must run from src/ directory
 cd src
 
-tsx ../scripts/pipeline/load_products.ts                         # Dry run
-tsx ../scripts/pipeline/load_products.ts --live                  # Load only
-tsx ../scripts/pipeline/load_products.ts --live --embed          # Load + embeddings
-tsx ../scripts/pipeline/load_products.ts --live --wipe           # Wipe first
-tsx ../scripts/pipeline/load_products.ts --live --embed --wipe --yes  # Full, no confirm
+npx tsx ../scripts/pipeline/load_products.ts                         # Dry run
+npx tsx ../scripts/pipeline/load_products.ts --live                  # Load only
+npx tsx ../scripts/pipeline/load_products.ts --live --embed          # Load + embeddings
+npx tsx ../scripts/pipeline/load_products.ts --live --wipe           # Wipe first
+npx tsx ../scripts/pipeline/load_products.ts --live --embed --wipe --yes  # Full, no confirm
 ```
+
+### Batch embedding for already-loaded products
+
+When products are loaded without embeddings (e.g., `--live` without `--embed`), use the standalone batch embedder:
+
+**Script:** `src/scripts/embed-missing.ts`
+
+```bash
+# Run from src/ directory
+cd src && npx tsx scripts/embed-missing.ts 2>&1 | tee ../data/pipeline/embed_missing.log
+```
+
+**Performance:** Uses `generateEmbeddingsBatch()` — sends 100 texts per OpenAI API call (~3.4 products/sec, ~215 min for 44K products). Writes to Neo4j in 500-product sub-batches. Recreates vector index on completion.
+
+**Log:** `data/pipeline/embed_missing.log`
 
 ### Cost
 ~$1.00 for 50K products (text-embedding-3-small)
 
 ### Last run stats
-- 47,509 loaded, 0 embedding failures, 100% coverage
+- 133,328 loaded total (47,509 batch 0 + 44,274 batch 1 + 41,545 subsequent batches)
+- 133,328 embedded (100%)
+- Enrichment coverage varies (49-69% depending on relationship type)
 
 ---
 
@@ -283,11 +300,13 @@ Creates graph relationships between products and taxonomy nodes using LLM classi
 
 | Script | Creates | Nodes | Relationships | Coverage |
 |--------|---------|-------|---------------|----------|
-| `expand-interests.ts --live` | `MATCHES_INTEREST` | 110 Interest nodes | ~60K rels | 66% |
-| `expand-categories.ts --live` | `IN_CATEGORY` | 59 Category nodes | ~119K rels | 78% |
-| `expand-occasions.ts --live` | `GIFT_FOR_OCCASION` | 15 Occasion nodes | ~434K rels | 100% |
-| `expand-relationships.ts --live` | `GIFT_FOR_RELATIONSHIP` | 18 Relationship nodes | ~391K rels | 99% |
-| `expand-attributes.ts --live` | 14 boolean flags | (on Product nodes) | ~40K products | 84% |
+| `expand-interests.ts --live` | `MATCHES_INTEREST` | 223 Interest nodes | 167K rels | 49% |
+| `expand-categories.ts --live` | `IN_CATEGORY` | 53 Category nodes | 234K rels | 60% |
+| `expand-occasions.ts --live` | `GIFT_FOR_OCCASION` | 15 Occasion nodes | 842K rels | 69% |
+| `expand-relationships.ts --live` | `GIFT_FOR_RELATIONSHIP` | 18 Relationship nodes | 758K rels | 68% |
+| `expand-attributes.ts --live` | 14 boolean flags | (on Product nodes) | 77K products | 58% |
+
+**Note:** Coverage percentages are against 133K total products. The original 91K products have near-100% enrichment; the remaining 41K need enrichment.
 
 ### Boolean attribute flags
 `is_practical`, `is_luxury`, `is_consumable`, `is_experiential`, `is_sentimental`, `is_personalized`, `is_eco_friendly`, `is_handcrafted`, `is_artistic`, `is_educational`, `is_wellness`, `is_shared`, `is_lasting_value`, `is_conversation_starter`
@@ -375,7 +394,7 @@ python3 scripts/pipeline/bar_raiser.py --sample-size 100        # Larger sample
 ## Stage 8: Quality Tests
 
 **Script:** `scripts/test_quality.py`
-**Input:** Live backend on port 3001
+**Input:** Live backend on port 3000
 **Output:** `data/quality_tests/run_YYYYMMDD_HHMMSS.md` + `.json` + `_raw/`
 
 ### What it does
@@ -422,6 +441,129 @@ data/quality_tests/
 
 ---
 
+## API Enrichment Pipeline (Stages E1-E5)
+
+External API enrichment via RapidAPI (Google Shopping + Amazon). Activates the Explorer's `socialProofBonus` scoring by adding real ratings and reviews to products.
+
+### Prerequisites
+
+- RapidAPI account with subscriptions to:
+  - **Real-Time Product Search** (by letscrape/OpenWebNinja) — Google Shopping data
+  - **Real-Time Amazon Data** (by letscrape) — Amazon data
+- `RAPIDAPI_KEY` set in `src/.env.local`
+- Free tier: 500 calls/mo, Pro tier: 20K calls/mo ($50), Ultra: 50K calls/mo ($75)
+
+### Pipeline Overview
+
+```
+[E1] Google Shopping Enrich  → Match existing products → ratings/reviews
+[E2] Amazon Bestsellers      → Category bestseller lists → enrichment + discovery
+[E3] Amazon Enrich           → Match existing products → Amazon ratings/reviews
+[E4] Google Shopping Discover → Interest-based search → new product discovery
+[E5] Load Enrichments        → Aggregate multi-source → write to Neo4j
+```
+
+### Stage E1: Google Shopping Review Enrichment
+
+**Script:** `scripts/pipeline/google_shopping_enrich.py`
+**Output:** `data/pipeline/review_enrichments/google_shopping_YYYYMMDD.jsonl`
+
+Searches Google Shopping for existing Neo4j products, matches by title+brand+price composite scoring, extracts ratings and review counts.
+
+**Priority tiers:**
+1. Bestsellers with 2+ interest matches, $25-250
+2. `gift_proven=true` OR `popularity_score >= 80`
+3. `gift_suitability_score >= 70`
+
+```bash
+python3 scripts/pipeline/google_shopping_enrich.py --dry-run --limit 5
+python3 scripts/pipeline/google_shopping_enrich.py --limit 50 --priority bestseller
+python3 scripts/pipeline/google_shopping_enrich.py --limit 100 --reviews
+python3 scripts/pipeline/google_shopping_enrich.py --resume --limit 500
+```
+
+**Budget:** ~1.5 calls/product → ~6,600 products/month at Pro tier.
+
+### Stage E2: Amazon Bestseller Ingestion
+
+**Script:** `scripts/pipeline/amazon_bestsellers.py`
+**Output:** `data/pipeline/review_enrichments/amazon_bestsellers_YYYYMMDD.jsonl` + `data/pipeline/discovery_products/amazon_bestsellers_YYYYMMDD.jsonl`
+
+Pulls Amazon bestseller lists in 20 gift-relevant categories. Cross-references with Neo4j — matches become enrichment records, non-matches become discovery candidates.
+
+```bash
+python3 scripts/pipeline/amazon_bestsellers.py --dry-run
+python3 scripts/pipeline/amazon_bestsellers.py --categories "home,kitchen,beauty"
+python3 scripts/pipeline/amazon_bestsellers.py --pages 2
+```
+
+**Budget:** ~40 calls per full run (20 cats × 2 pages). Extremely efficient.
+
+### Stage E3: Amazon Review Enrichment
+
+**Script:** `scripts/pipeline/amazon_enrich.py`
+**Output:** `data/pipeline/review_enrichments/amazon_YYYYMMDD.jsonl`
+
+Same pattern as E1 but via Amazon search. Higher match threshold (0.7 vs 0.6) since different marketplace.
+
+```bash
+python3 scripts/pipeline/amazon_enrich.py --dry-run --limit 5
+python3 scripts/pipeline/amazon_enrich.py --limit 100 --reviews
+python3 scripts/pipeline/amazon_enrich.py --resume --limit 500
+```
+
+### Stage E4: Google Shopping Product Discovery
+
+**Script:** `scripts/pipeline/google_shopping_discover.py`
+**Output:** `data/pipeline/discovery_products/google_shopping_YYYYMMDD.jsonl`
+
+Searches Google Shopping by interest keywords ("gifts for X lovers", "best X gifts 2026", "unique X gift ideas"). Dedupes against Neo4j. Output feeds into `load_products.ts --live --embed`.
+
+```bash
+python3 scripts/pipeline/google_shopping_discover.py --dry-run
+python3 scripts/pipeline/google_shopping_discover.py --interests "coffee,tea,yoga" --results-per 20
+python3 scripts/pipeline/google_shopping_discover.py --limit 10
+```
+
+### Stage E5: Load Enrichments to Neo4j
+
+**Script:** `scripts/pipeline/load_review_enrichments.py`
+**Output:** Updated Product nodes in Neo4j
+
+Aggregates multi-source enrichment data (Google Shopping + Amazon) per product:
+- `avg_rating` = weighted average by review_count
+- `review_count` = sum across sources
+- `review_source` = "google_shopping" | "amazon" | "multi_source"
+
+```bash
+python3 scripts/pipeline/load_review_enrichments.py --dry-run
+python3 scripts/pipeline/load_review_enrichments.py --aggregate --live
+python3 scripts/pipeline/load_review_enrichments.py --input data/pipeline/review_enrichments/google_shopping_20260225.jsonl --live
+```
+
+### Shared Utilities
+
+**Module:** `scripts/pipeline/api_utils.py`
+
+All enrichment scripts import from this. Stdlib-only (urllib.request). Includes:
+- `RapidAPIClient` — HTTP client with rate limiting, disk cache (48h TTL), retry+backoff, circuit breaker
+- `RateLimiter` — Token bucket + monthly budget tracking (`data/pipeline/api_budget.json`)
+- `DiskCache` — File cache in `data/pipeline/api_cache/{google_shopping,amazon}/`
+- `EnrichmentProgress` — JSON checkpoint for `--resume` support
+- `match_product()` — Weighted composite: 0.5×title + 0.3×brand + 0.2×price
+- `neo4j_connect()` — Neo4j driver from env vars
+
+### Cost Projection
+
+| Phase | Products | API Calls | Cost |
+|-------|----------|-----------|------|
+| Free tier test | ~50 | 200 | $0 |
+| Month 1 (Pro) | ~5,750 | 20K | $50 |
+| Month 2 | +5,750 | 20K | $50 |
+| Ultra upgrade | +16,500/mo | 50K | $75 |
+
+---
+
 ## Data Files
 
 ```
@@ -435,10 +577,25 @@ data/pipeline/
 ├── normalized_products.jsonl           # Stage 4 output (canonical schema)
 ├── normalized_products_stats.json      # Stage 4 rejection stats
 ├── scrape_progress.json                # Stage 3 resume tracker
+├── embed_missing.log                   # Batch embedding log (embed-missing.ts)
+├── batch_runs/                         # Per-batch orchestration logs
+│   ├── batch_1_offset_0.log
+│   └── batch_1_offset_4000.log
 ├── run_learnings.json                  # Stage 6 output
 ├── bar_raiser_report.md                # Stage 7 markdown report
 ├── bar_raiser_report.json              # Stage 7 structured data
-└── run_log.json                        # Orchestrator run metadata
+├── run_log.json                        # Orchestrator run metadata
+├── api_budget.json                     # API call budget tracker (E1-E4)
+├── api_cache/                          # Disk cache for API responses
+│   ├── google_shopping/                # Google Shopping API cache (48h TTL)
+│   └── amazon/                         # Amazon API cache (48h TTL)
+├── review_enrichments/                 # E1/E2/E3 output (JSONL per source per day)
+│   ├── google_shopping_YYYYMMDD.jsonl
+│   ├── amazon_YYYYMMDD.jsonl
+│   └── amazon_bestsellers_YYYYMMDD.jsonl
+└── discovery_products/                 # E2/E4 output (new products for load pipeline)
+    ├── amazon_bestsellers_YYYYMMDD.jsonl
+    └── google_shopping_YYYYMMDD.jsonl
 ```
 
 ---
@@ -486,15 +643,11 @@ curl -s -X POST http://localhost:7474/db/neo4j/tx/commit \
 
 Use this exact section to resume the paused 20K acquisition sequence.
 
-### Last confirmed state before pause
+### Last confirmed state (2026-02-24)
 - Branch: `codex/acquisition-batch-runner`
-- Batch runner: `scripts/pipeline/run_acquisition_batches.sh`
-- Active log from last run: `data/pipeline/batch_runs/batch_1_offset_4000.log`
-- Pipeline metadata file: `data/pipeline/run_log.json`
-- All pipeline processes were manually stopped (no active acquisition jobs)
-- Neo4j checkpoint at pause:
-  - `MATCH (p:Product) RETURN count(p)` -> `91783`
-  - `MATCH (p:Product) WHERE p.embedding IS NOT NULL RETURN count(p)` -> `47689`
+- Neo4j: 133,328 products, 4,809 brands, 100% embedded
+- Batches 0+1 fully enriched, subsequent batches loaded but unenriched
+- Next step: enrich 41,545 new products (expand-occasions, expand-relationships, expand-attributes, expand-interests, expand-categories)
 
 ### Pre-resume checks (required)
 ```bash
@@ -504,33 +657,23 @@ docker ps | grep neo4j
 test -f src/.env.local && echo "env ok"
 ```
 
-### Resume options
-
-#### Option A: Continue the interrupted offset-4000 work (recommended first)
-This finishes the in-progress dataset before starting the next offset window.
+### Resume: Continue batch acquisition
 ```bash
-./scripts/pipeline/run_acquisition.sh --stage 5 --live --embed --skip-recs 2>&1 | tee data/pipeline/batch_runs/resume_stage5_offset_4000.log
+./scripts/pipeline/run_acquisition_batches.sh --start-offset 6000 --batches 8 --batch-size 2000 --products 30
 ```
 
-#### Option B: Restart clean batch loop from offset 4000
-Use this if you intentionally want to rerun full stages with current resume files.
+### Embed products loaded without embeddings (if needed)
 ```bash
-./scripts/pipeline/run_acquisition_batches.sh --start-offset 4000 --batches 10 --batch-size 2000 --products 30
+cd src && npx tsx scripts/embed-missing.ts 2>&1 | tee ../data/pipeline/embed_missing.log
 ```
 
-### Continue the 10-batch / 20K plan
+### 10-batch / 20K plan
 - Batch size: `2000`
 - Planned windows:
-  - Batch 1: offset `4000`
-  - Batch 2: offset `6000`
-  - Batch 3: offset `8000`
-  - Batch 4: offset `10000`
-  - Batch 5: offset `12000`
-  - Batch 6: offset `14000`
-  - Batch 7: offset `16000`
-  - Batch 8: offset `18000`
-  - Batch 9: offset `20000`
-  - Batch 10: offset `22000`
+  - ~~Batch 0: offset `0` (done — 47,509 products, enriched)~~
+  - ~~Batch 1: offset `4000` (done — 44,274 products, enriched)~~
+  - ~~Batches 2+: offset `6000`+ (done — 41,545 products loaded, needs enrichment)~~
+  - **Total loaded: 133,328 products**
 
 ### Post-batch validation (run after each batch)
 ```bash
@@ -540,13 +683,25 @@ echo 'MATCH (p:Product) RETURN count(p);' | docker exec -i present-agent-neo4j c
 # Embedding coverage
 echo 'MATCH (p:Product) WHERE p.embedding IS NOT NULL RETURN count(p);' | docker exec -i present-agent-neo4j cypher-shell -u neo4j -p presentagent2024
 
+# Enrichment coverage (should match total products)
+echo 'MATCH (p:Product)-[:MATCHES_INTEREST]-() RETURN count(DISTINCT p);' | docker exec -i present-agent-neo4j cypher-shell -u neo4j -p presentagent2024
+
 # Last pipeline config used
 cat data/pipeline/run_log.json
 ```
 
-### Notes from fixes applied in this run
-- Stage 5 now runs from `src/` using `npx tsx scripts/pipeline/load_products.ts`.
-- This avoids prior failures from missing global `tsx` and CommonJS/top-level-await mismatch.
+### Post-embedding steps (after embed-missing.ts completes)
+1. Verify 100% embedding coverage: `MATCH (p:Product) WHERE p.embedding IS NULL RETURN count(p)`
+2. Set `available = true` if not set: `MATCH (p:Product) WHERE p.available IS NULL SET p.available = true`
+3. Run enrichment pipeline (Stage 5b) — all 5 expand scripts
+4. Run interest data cleanup (see MEMORY.md "Interest Data Cleanup" section)
+5. Run quality tests: `python3 scripts/test_quality.py`
+
+### Notes from fixes applied
+- Stage 5 must run from `src/` using `npx tsx` (not global `tsx`)
+- `load_products.ts`: Dynamic imports moved inside `main()` to avoid CJS top-level-await error
+- `embed-missing.ts`: LIMIT hardcoded in Cypher (not as parameter) to avoid Neo4j float→integer type error
+- `embed-missing.ts`: Uses `generateEmbeddingsBatch()` for 100-text batch API calls (~3.4/s)
 
 ---
 
@@ -565,7 +720,7 @@ cat data/pipeline/run_log.json
 
 - **Headless Shopify stores** — 130 stores block `/products.json` API (Uncommon Goods, Mejuri, Skims, etc.). Need sitemap or HTML scraping as alternative.
 - **Noisy interest matching** — Enrichment scripts assign interests too broadly (e.g., "music" linked to wind chimes). Manual cleanup required after enrichment.
-- **Bar Raiser score stochasticity** — LLM-evaluating-LLM swings 30+ points between runs. Use deterministic checks (budget, giver leakage, URLs) as reliable metrics.
+- **Bar Raiser score stochasticity** — LLM-evaluating-LLM swings 30+ points between runs. Deterministic overrides (v3.3.1) now provide stable scoring for relevance, personalization, interestCoverage, and budgetAdherence.
 - **`available = true` required** — Explorer Cypher filters on this. Must be set on all products after load.
 
 ---
@@ -581,4 +736,4 @@ To improve quality, loop through:
 5. **Restart backend** → clear caches
 6. **Re-test** → verify improvement
 7. **If catalog gaps** → run pipeline with more stores or targeted store additions
-8. **Repeat** until Bar Raiser avg >= 80/100
+8. **Repeat** until Bar Raiser avg >= 80/100 (currently 91/100 with deterministic overrides)

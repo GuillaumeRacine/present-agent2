@@ -89,7 +89,8 @@ Embeddings are generated via the TypeScript codebase using OpenAI `text-embeddin
 ```bash
 # From src/ directory
 npm run setup:schema     # Creates vector indexes
-npm run embed:products   # Generates embeddings (if script exists)
+npx tsx scripts/generate-embeddings-local.ts --limit 100    # Test run
+npx tsx scripts/generate-embeddings-local.ts                # Full run
 ```
 
 ### Check Embedding Status
@@ -123,18 +124,34 @@ Shows: Docker version, Neo4j container status, data file inventory, database sta
 
 ---
 
-## Migrating from Aura to Local
+## Current Database Size
 
-The project previously used Neo4j Aura (`a92dc9b7.databases.neo4j.io`, 88,674 products). The local Docker instance has 64,964 deduplicated products. Key differences:
-
-| Feature | Aura Free | Local Docker |
-|---------|-----------|-------------|
-| Fulltext indexes | Not available | Available |
-| Performance | Limited compute | Local SSD speed |
-| Uptime | Pauses after inactivity | Always available |
-| Cost | Free | Free (Docker) |
-| Products | 88,674 | 64,964 (deduplicated) |
+| Metric | Value |
+|--------|-------|
+| Products | 133,328 |
+| Brands | 4,809 |
+| Embeddings | 133,328 (100%) |
+| Bestsellers | 41,770 (31%) |
 
 ---
 
-*Last updated: 2026-02-17*
+## Check Embedding Status
+
+```bash
+docker exec present-agent-neo4j cypher-shell -u neo4j -p presentagent2024 \
+  "MATCH (p:Product) WHERE p.embedding IS NOT NULL RETURN count(p)"
+```
+
+---
+
+## Product Audit TUI
+
+```bash
+./pa
+```
+
+Terminal UI for browsing and spot-checking products. See `docs/PRODUCT_AUDIT_TUI.md`.
+
+---
+
+*Last updated: 2026-02-24*

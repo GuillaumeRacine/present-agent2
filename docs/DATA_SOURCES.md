@@ -6,7 +6,7 @@ All data used by Present Agent2 for gift recommendations.
 
 ## Current Data Sources
 
-### 1. Product Catalog (B-Corp Brands)
+### 1. Product Catalog (Shopify Gift Brands)
 
 #### Raw Catalog (iCloud)
 
@@ -33,6 +33,8 @@ All data used by Present Agent2 for gift recommendations.
 ```
 
 **Sample Brands:** Marine Layer, Ten Thousand Villages, and other sustainable DTC / B-Corp certified companies.
+
+**Active repo location:** `/Volumes/Seagate 2TB/1_Projects/Protoypes/present-agent2/` (this working copy).
 
 #### Enriched Catalog (Local)
 
@@ -78,8 +80,11 @@ See `research/RESEARCH_INDEX.md` for full index with key insights.
 - `--bestsellers-only --max-bestsellers 15` mode for lightweight scraping
 
 **TypeScript Enrichment Scripts:**
-- `scripts/expand-interests.ts --live` — Interest nodes + MATCHES_INTEREST (105 interests, 59K+ rels)
-- `scripts/expand-categories.ts --live` — Category nodes + IN_CATEGORY (53 cats, 138K+ rels)
+- `scripts/expand-interests.ts --live` — Interest nodes + MATCHES_INTEREST (223 interests, 168K rels)
+- `scripts/expand-categories.ts --live` — Category nodes + IN_CATEGORY (53 cats, 234K rels)
+- `scripts/expand-occasions.ts --live` — Occasion nodes + GIFT_FOR_OCCASION (15 occasions, 842K rels)
+- `scripts/expand-relationships.ts --live` — Relationship nodes + GIFT_FOR_RELATIONSHIP (18 rels, 758K rels)
+- `scripts/expand-attributes.ts --live` — 14 boolean attribute flags (77K products)
 
 ---
 
@@ -87,69 +92,65 @@ See `research/RESEARCH_INDEX.md` for full index with key insights.
 
 **Instance:** Local Docker Neo4j 5-community (`bolt://localhost:7687`)
 **Container:** `present-agent-neo4j`
-**Products:** 64,964 (deduplicated from 88,674 Aura dataset)
+**Products:** 133,328 total (4,809 brands)
+**Embeddings:** 133,328/133,328 (100%)
 
-### Enrichment Coverage
+### Enrichment Coverage (verified 2026-02-24)
 
-| Enrichment | Coverage | Details |
-|------------|----------|---------|
-| Interests | 99.3% | 105 canonical interests, 872 synonyms, avg 5.2/product |
-| Categories | 100% | 53+ categories, 138K+ IN_CATEGORY rels |
-| Embeddings | 100% | 64,964 products, 1536-dim OpenAI text-embedding-3-small |
-| Attributes | 75.4% | 14 boolean flags via heuristic tagger (expand-attributes.ts) |
-| Occasions | 100% | 15 occasions, 539K+ GIFT_FOR_OCCASION rels |
-| Relationships | 98.7% | 18 relationships, 453K+ GIFT_FOR_RELATIONSHIP rels |
-| Shopify tags | 17% | 11,062 products with cleaned Shopify tags |
-| Shopify product_type | 15.8% | 10,239 products with Shopify product_type |
-| Reviews | 1% | 665 products with review data |
-| Bestsellers | 1.7% | 1,113 products flagged across 159 brands (Shopify scrape) |
-| Shopify tags | 15.1% | 9,793 products with cleaned Shopify tags |
-| Shopify product_type | 14.8% | 9,603 products with Shopify product type |
+~91,783 products are enriched (original batches). ~41,545 recently-added products are unenriched (embeddings only).
 
-### Multi-LLM Enrichment (Completed Dec 8, 2025)
+| Enrichment | Products | Coverage | Details |
+|------------|----------|----------|---------|
+| Embeddings | 133,328 | 100% | 1536-dim OpenAI text-embedding-3-small |
+| Interests | 65,998 | 49% | 223 interests, 167K MATCHES_INTEREST rels |
+| Categories | 79,412 | 60% | 53 categories, 234K IN_CATEGORY rels |
+| Occasions | 91,774 | 69% | 15 occasions, 842K GIFT_FOR_OCCASION rels |
+| Relationships | 90,490 | 68% | 18 relationships, 758K GIFT_FOR_RELATIONSHIP rels |
+| Attributes | 77,294 | 58% | 14 boolean flags |
+| Reviews | 0 | 0% | API enrichment pipeline ready (Google Shopping + Amazon) |
+| Bestsellers | 41,770 | 31% | Shopify bestseller flag |
 
-- 29,124 products enriched with 14 boolean attributes
-- 99.99% success rate (3 failures)
-- Cost: $1.12 total
-- Providers: OpenAI gpt-4o-mini (97.5%), Gemini 2.0 Flash (2.5%)
+**Note:** Interest enrichment assigns too broadly — cleanup needed after each enrichment run (see MEMORY.md).
 
 ---
 
-## Planned Data Sources (Expansion Waves)
+## Product Acquisition (Current Strategy)
 
-Full details: `docs/PRODUCT_EXPANSION_WAVES.md`
+**Primary source:** Storeleads CSV export (2.8M Shopify stores) → 8-stage pipeline
+**Pipeline doc:** `docs/PRODUCT_ACQUISITION_PIPELINE.md`
 
-### Tier 1: Highest Priority
+| Batch | Offset | Products | Status |
+|-------|--------|----------|--------|
+| 0 | 0-2000 | 47,509 | Complete (enriched) |
+| 1 | 4000 | 44,274 | Complete (enriched) |
+| 2+ | 6000+ | 41,545 | Loaded, **embedded**, needs graph enrichment |
+| **Total** | | **133,328** | **100% embedded, 49-69% enriched** |
 
-| Source | Type | Products | Integration | Status |
-|--------|------|----------|-------------|--------|
-| Remaining B-Corp Shopify (265 brands) | Physical | ~15,000 | Existing scraper | Wave 1 |
-| New B-Corp brands (52 identified) | Physical | ~5,000 | Shopify scraper | Wave 1 |
-| Non-B-Corp ethical brands (45 identified) | Physical | ~5,000 | Shopify scraper | Wave 1 |
-| Gift card aggregator (Runa/Tango/Reloadly) | Digital | 2K-14K brands | REST API | Wave 2 |
-| Etsy API v3 | Artisan/Handmade | ~30,000 curated | REST API (OAuth2) | Wave 3 |
+### API Enrichment Sources (Review Data)
 
-### Tier 2: High Value
+| Source | API | Purpose | Status |
+|--------|-----|---------|--------|
+| Google Shopping | Real-Time Product Search (RapidAPI) | Ratings, review counts, price ranges | Ready (scripts built) |
+| Amazon | Real-Time Amazon Data (RapidAPI) | Ratings, reviews, bestseller lists | Ready (scripts built) |
 
-| Source | Type | Products | Integration | Status |
-|--------|------|----------|-------------|--------|
-| Cratejoy API | Subscription boxes | ~500 curated | REST API | Wave 3 |
-| Tinggly / Cloud 9 Living | Experiences | ~1,000 | Affiliate/scrape | Wave 3 |
-| MasterClass / Audible | Digital subscriptions | ~50 | Manual curation | Wave 2 |
+**Pipeline:** `scripts/pipeline/google_shopping_enrich.py`, `amazon_enrich.py`, `amazon_bestsellers.py`, `google_shopping_discover.py`, `load_review_enrichments.py`
+**Shared utils:** `scripts/pipeline/api_utils.py`
+**Budget:** Pro tier = 20K calls/mo ($50), ~6,600 products enriched per month
+**Key:** `RAPIDAPI_KEY` in `src/.env.local` (same key for both APIs)
 
-### Tier 3: Broad Coverage
+### Future Sources (lower priority)
 
-| Source | Type | Products | Integration | Status |
-|--------|------|----------|-------------|--------|
-| Datafeedr aggregator | Multi-marketplace | ~10K curated from ~1B | REST API | Wave 4 |
-| AvantLink | Outdoor/lifestyle | ~2,000 | Affiliate feed | Wave 4 |
-| ShareASale / CJ Affiliate | Broad retail | Variable | Affiliate feed | Wave 4 |
+| Source | Type | Integration | Status |
+|--------|------|-------------|--------|
+| Etsy API v3 | Artisan/Handmade | REST API (OAuth2) | Pending activation |
+| Gift card aggregator (Runa/Tango/Reloadly) | Digital | REST API | Research |
+| Cratejoy API | Subscription boxes | REST API | Research |
 
 ### DO NOT Integrate
 
 | Source | Reason |
 |--------|--------|
-| **Amazon PA-API** | **Explicitly prohibits LLM/ML use in TOS** |
+| **Amazon PA-API** | **Explicitly prohibits LLM/ML use in TOS** (Real-Time Amazon Data on RapidAPI is a third-party scraper, not the official PA-API) |
 | StubHub API | Gated access, not publicly available |
 
 ### Research Documents
@@ -162,4 +163,4 @@ Full details: `docs/PRODUCT_EXPANSION_WAVES.md`
 
 ---
 
-*Last updated: 2026-02-18*
+*Last verified against Neo4j: 2026-02-26*

@@ -75,7 +75,8 @@ Present-Agent2 uses a 10-agent architecture to understand context, analyze relat
    ```
 
    Notes:
-   - The code accepts both `NEO4J_USERNAME` and `NEO4J_USER` for compatibility.
+   - The code accepts `NEO4J_USERNAME` or `NEO4J_USER` (legacy).
+   - Some scripts also accept `NEO4J_URI` (legacy alias for `NEO4J_URL`).
    - Do not commit or edit real keys in the repo. Keep secrets only in your local `.env.local`.
    - Never paste real keys into issues/PRs/docs. See SECURITY.md for policy.
 
