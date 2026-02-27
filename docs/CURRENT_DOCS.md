@@ -7,12 +7,11 @@ If a doc is not listed here, treat it as historical context and verify before us
 ## 1) Start Here
 
 - `CLAUDE.md` - Canonical project snapshot, architecture, quality status.
-- `README_START_HERE.md` - Operational quick start for local setup.
 - `docs/CURRENT_DOCS.md` - This file.
 
 ## 2) Product Inventory Expansion (Active)
 
-- `docs/PRODUCT_ACQUISITION_PIPELINE.md` - 8-stage pipeline: filter → vet → scrape → normalize → load → enrich → learn → validate.
+- `docs/PRODUCT_ACQUISITION_PIPELINE.md` - 8-stage pipeline: filter -> vet -> scrape -> normalize -> load -> enrich -> learn -> validate.
 - `docs/PRODUCT_INVENTORY_PLAYBOOK.md` - Source strategy, connector plan, and execution order.
 - `docs/CANONICAL_PRODUCT_SCHEMA.md` - Canonical ingestion schema and quality gates.
 - `docs/PRODUCT_EXPANSION_WAVES.md` - Medium-term source expansion waves.
@@ -31,15 +30,39 @@ If a doc is not listed here, treat it as historical context and verify before us
 - `src/docs/API.md` - Detailed request/response API reference.
 - `src/docs/ARCHITECTURE.md` - System architecture deep dive (implementation-focused).
 - `src/docs/SECURITY.md` - Security controls and handling policy.
+- `src/.claude/CODEBASE_SUMMARY.md` - Code patterns, agent flow, key files.
 
-## 5) Quality + Validation
+## 5) Quality + Tracking
 
 - `data/quality_tests/latest.md` - Most recent quality run summary.
 - `data/quality_tests/latest.json` - Most recent quality run structured output.
+- `docs/CHANGELOG.md` - Version history and interest cleanup log.
+- `docs/KNOWN_ISSUES.md` - Active bugs and limitations.
 
-## 6) Archive Rules
+## 6) Reference
 
-- Archive location: `docs/archive/` (root) and `src/docs/archive/` (app-level).
+- `research/RESEARCH_INDEX.md` - 14 academic papers on gift psychology.
+- `research/IDEAL_PRODUCT_CATALOG_ANALYSIS.md` - Market data, gift psychology, price strategy.
+- `research/B_CORP_SHOPIFY_BRANDS_RESEARCH.md` - 150+ ethical brands by category.
+- `research/EXPERIENCE_GIFT_DATA_SOURCES.md` - 50+ experience/subscription/digital gift platforms.
+- `docs/CONTEXT_INDEX.md` - Cross-reference to Guillaume's full context system.
+
+## 7) Task-Based Loading Guide
+
+| Task | Load These Files |
+|------|-----------------|
+| Code fix / feature | `src/.claude/CODEBASE_SUMMARY.md` |
+| Agent behavior | + `docs/AGENT_REGISTRY.md` |
+| Database / Cypher | + `docs/DATABASE_SCHEMA.md` |
+| Product pipeline | + `docs/PRODUCT_ACQUISITION_PIPELINE.md` |
+| API changes | + `src/docs/API.md` |
+| Architecture | + `src/docs/ARCHITECTURE.md` |
+| Quality testing | + `data/quality_tests/latest.md` |
+| Known issues | + `docs/KNOWN_ISSUES.md` |
+
+## 8) Archive Rules
+
+- Archive location: `docs/archive/` (all archived docs, including legacy src/docs/).
 - A document is "active" only if:
   1. It is listed in this file.
   2. It has been updated within the current quarter or explicitly marked "evergreen".

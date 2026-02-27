@@ -1,7 +1,7 @@
 # Codebase Summary - Quick Reference
 
-**Last Updated**: February 19, 2026
-**Version**: 3.2.0
+**Last Updated**: February 27, 2026
+**Version**: 3.5.0
 
 ---
 
@@ -54,7 +54,7 @@ Present-Agent2/
 │   │   ├── load_bestsellers.py   # Load bestseller flags
 │   │   ├── load_shopify_tags.py  # Load Shopify tags + product_type
 │   │   └── run_pipeline.sh       # Full pipeline runner
-│   ├── expand-interests.ts       # Interest nodes + MATCHES_INTEREST (110 interests, 102K rels)
+│   ├── expand-interests.ts       # Interest nodes + MATCHES_INTEREST (223 interests, 168K rels)
 │   ├── expand-categories.ts      # Category nodes + IN_CATEGORY (59 cats, 139K rels)
 │   ├── expand-occasions.ts       # GiftOccasion tagging (15 occasions, 551K rels)
 │   ├── expand-relationships.ts   # GiftRelationship tagging (18 rels, 462K rels)
@@ -178,7 +178,7 @@ Return top N candidates
 
 | Node | Count | Key Properties |
 |------|-------|---------------|
-| **Product** | 67,739 | product_url (unique), title, description, price, brand_url, embedding, 14 boolean attrs |
+| **Product** | 133,328 | product_url (unique), title, description, price, brand_url, embedding, 14 boolean attrs |
 | **Interest** | 110 | name (unique) |
 | **Category** | 59 | name (unique) |
 | **GiftOccasion** | 15 | name (unique) |
@@ -274,7 +274,7 @@ Each persona scored by Bar Raiser on: product relevance, reasoning quality, dive
 5. **`src/server.ts`** — API endpoints
 
 ### Enrichment Scripts
-6. **`scripts/expand-interests.ts`** — Interest graph builder (110 interests, 102K rels)
+6. **`scripts/expand-interests.ts`** — Interest graph builder (223 interests, 168K rels)
 7. **`scripts/expand-occasions.ts`** — Occasion tagger (15 occasions, 551K rels)
 8. **`scripts/expand-relationships.ts`** — Relationship tagger (18 rels, 462K rels)
 9. **`scripts/expand-attributes.ts`** — Boolean attribute flagger (14 attrs)
